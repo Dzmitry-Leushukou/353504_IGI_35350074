@@ -18,6 +18,9 @@ def menu():
 
         n = Input.number(0,5)
 
+        if n==0:
+            return
+        
         print("Choose input method")
         print("1. Manual")
         print("2. Auto (random data)")
@@ -35,8 +38,6 @@ def menu():
                 task4(method)
             case 5:
                 task5(method)
-            case _:
-                break
 
 def task1(method):
     print("This task find value of ln(1 - x) with eps precise")
@@ -59,9 +60,18 @@ def task1(method):
         print(f"ERROR: {e}")
 
 def task2(method):
+    print("10000 - a - b. For exit result must be negative")
+    Task2.task(method)
     return
 
 def task3(method):
+    s = ""
+    if(method == 1):
+        s = input("Write string: ")
+    if(method == 2):
+        s = Input.gen(1,150,str)
+        print(s)
+    print(Task3.task(s))
     return
 
 def task4(method):

@@ -18,5 +18,26 @@ def gen(min, max, datatype = int):
 
     if datatype == float:
         return random.uniform(min,max)
+    
+    if datatype == str:
+        gen_str = ""
+        size = gen(min,max)
+        while size>0:
+            group = gen(1,5)
+            match(group):
+                case 1:
+                    gen_str+=" "
+                case 2:
+                    gen_str+=","    
+                case 3:
+                    gen_str+=chr(65+gen(0,25))
+                case 4:
+                    gen_str+=chr(97+gen(0,25))
+                case 5:
+                    gen_str+=chr(49+gen(0,8))
+            size-=1
+        return gen_str
+
+
 
     
