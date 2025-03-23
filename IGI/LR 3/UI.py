@@ -4,7 +4,19 @@ import Task3
 import Task4
 import Task5
 import Input
+import sys
 
+
+def repeat_infinity(func):
+    """
+    Decorator to infinity exec function
+    """
+    def wrapper(*args, **kwargs):
+        while True:
+            func(*args, **kwargs)
+    return wrapper
+
+@repeat_infinity
 def menu():
     """
     Function to display the main menu and execute the selected task.
@@ -12,40 +24,40 @@ def menu():
     The function displays a menu with options for each task and prompts the user for input.
     Based on the user's choice, it executes the corresponding task or exits the program.
     """
-    while True:
-        print("==Menu==")
-        print("Choose task:")
-        print("1. Task 1")
-        print("2. Task 2")
-        print("3. Task 3")
-        print("4. Task 4")
-        print("5. Task 5")
-        print("0. Exit")
+    
+    print("==Menu==")
+    print("Choose task:")
+    print("1. Task 1")
+    print("2. Task 2")
+    print("3. Task 3")
+    print("4. Task 4")
+    print("5. Task 5")
+    print("0. Exit")
 
-        n = Input.number(0,5)
+    n = Input.number(0,5)
 
-        if n==0:
-            return
+    if n==0:
+        sys.exit()
         
-        if n==4:
-            Task4.task()
-            continue
+    if n==4:
+        Task4.task()
+        return
 
-        print("Choose input method")
-        print("1. Manual")
-        print("2. Auto (random data)")
-        method = Input.number(1,2)
+    print("Choose input method")
+    print("1. Manual")
+    print("2. Auto (random data)")
+    method = Input.number(1,2)
 
 
-        match n:
-            case 1:
-                task1(method)
-            case 2:
-                task2(method)
-            case 3:
-                task3(method)
-            case 5:
-                task5(method)
+    match n:
+        case 1:
+            task1(method)
+        case 2:
+            task2(method)
+        case 3:
+            task3(method)
+        case 5:
+            task5(method)
 
 def task1(method):
     """
@@ -104,4 +116,5 @@ def task5(method):
     print(f"==List==\n{lst}")
 
     Task5.task(lst)
-    return
+    
+
