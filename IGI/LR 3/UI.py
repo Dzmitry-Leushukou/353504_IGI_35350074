@@ -6,6 +6,12 @@ import Task5
 import Input
 
 def menu():
+    """
+    Function to display the main menu and execute the selected task.
+
+    The function displays a menu with options for each task and prompts the user for input.
+    Based on the user's choice, it executes the corresponding task or exits the program.
+    """
     while True:
         print("==Menu==")
         print("Choose task:")
@@ -42,6 +48,9 @@ def menu():
                 task5(method)
 
 def task1(method):
+    """
+    Function to get input data to execute Task1.task()
+    """
     print("This task find value of ln(1 - x) with eps precise")
     eps = 0
     x = 0
@@ -62,11 +71,17 @@ def task1(method):
         print(f"ERROR: {e}")
 
 def task2(method):
+    """
+    Function to get input data to execute Task2.task()
+    """
     print("10000 - a - b. For exit result must be negative")
     Task2.task(method)
     return
 
 def task3(method):
+    """
+    Function to get input data to execute Task3.task()
+    """
     s = ""
     if(method == 1):
         s = input("Write string: ")
@@ -78,4 +93,15 @@ def task3(method):
 
 
 def task5(method):
+    """
+    Function to get input data to execute Task5.task()
+    """
+    lst = []
+    if(method == 1):
+        lst=Input.input_list()
+    if(method == 2):
+        lst=Input.gen_list()
+    print(f"==List==\n{lst}")
+
+    Task5.task(lst)
     return

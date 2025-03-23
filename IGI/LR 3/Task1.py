@@ -1,7 +1,19 @@
 import math
 from tabulate import tabulate # type: ignore
 def task(x, eps):
+    """
+    Function to compute ln(1 - x) approximation using Taylor series expansion by 500 iterations or less and with math funciton
 
+    Args: 
+    - x (float): Argument of ln(1 - x)
+    - eps (float): Approximate value aim
+
+    Returns:
+    - table (tabulate): Table of found values
+
+     Raises:
+    - ValueError: If to find answer need more than 500 iterations
+    """
     iter = 0
     mn = -1.0
     f = 0
