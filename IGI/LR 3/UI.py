@@ -21,6 +21,10 @@ def menu():
         if n==0:
             return
         
+        if n==4:
+            Task4.task()
+            continue
+
         print("Choose input method")
         print("1. Manual")
         print("2. Auto (random data)")
@@ -34,8 +38,6 @@ def menu():
                 task2(method)
             case 3:
                 task3(method)
-            case 4:
-                task4(method)
             case 5:
                 task5(method)
 
@@ -74,8 +76,6 @@ def task3(method):
     print(Task3.task(s))
     return
 
-def task4(method):
-    return
 
 def task5(method):
     return
