@@ -39,7 +39,7 @@ def find_sum(lst):
     - ValueError: If lst has zero positive elements
    
     Returns:
-    - sum(float): sum of list elements between first and last
+    - sum(float): sum of list elements between first and last positive
     """
     l = -1
     r = -1
@@ -52,8 +52,9 @@ def find_sum(lst):
     if l==-1 and r==-1:
         raise ValueError("Not enough positive elements (1) to run task")
     
+    ans=0
     while l<=r:
-        sum=lst[l]
+        ans = ans + lst[l]
         l+=1
 
-    return sum
+    return ans

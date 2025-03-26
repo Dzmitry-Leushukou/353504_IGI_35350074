@@ -95,6 +95,7 @@ def task3(method):
     Function to get input data to execute Task3.task()
     """
     s = ""
+    print("Find amount of , and spaces in the string")
     if(method == 1):
         s = input("Write string: ")
     if(method == 2):
@@ -109,6 +110,7 @@ def task5(method):
     Function to get input data to execute Task5.task()
     """
     lst = []
+    print("Find the absolute minimal element and sum between first and last positive elements")
     if(method == 1):
         lst=Input.input_list()
     if(method == 2):
