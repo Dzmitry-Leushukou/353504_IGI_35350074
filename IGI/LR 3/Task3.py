@@ -2,22 +2,22 @@ from tabulate import tabulate
 
 def task(str):
     """
-    Function to compute amount of ',' and '.' in string
+    Function to compute amount of puncto sign in string
 
     Args: 
     - str (str): string to analyse
 
     Returns:
-    - table (tabulate): Table of found values
+    - kol(dictionary): dictionary
     """
-    spaces = 0
-    commas = 0
+    kol = {}
     for char in str:
-        if char == ' ':
-            spaces+=1
-        if char == ',':
-            commas+=1
-    data=[[spaces, commas]]
-    headers = ["spaces", "commas"]
+        if char == '!' or char == ',' or char == '.' or char == '?'or char == ';'or char == ':':
+            if char in kol:
+                kol[char]+=1
+            else:
+                kol[char]=1
+    data = [[key, kol[key]] for key in kol.keys()]
+    headers = ["puncto", "amount"]
     table = tabulate(data, headers=headers)
     return table

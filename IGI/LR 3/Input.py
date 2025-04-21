@@ -26,6 +26,18 @@ def number(min, max, datatype = int):
 
     return val
 
+def gen_int(min,max):
+    rng = [i for i in range(min, max)]
+    for i in rng:
+         yield i
+
+
+def gen_float(min,max):
+    step = 1000000
+    rng = [i for i in range(step + 1)]
+    for i in rng:
+        yield min + (max - min) * (i / step)
+
 def gen(min, max, datatype = int):
     """
     Function to generate input with data type validation and value range.
@@ -46,20 +58,21 @@ def gen(min, max, datatype = int):
     
     if datatype == str:
         gen_str = ""
-        size = gen(min,max)
+        size = random.randint(5,100)
+        gent=gen_int(1,1000)
         while size>0:
-            group = gen(1,5)
+            group = next(gent)%5+1
             match(group):
                 case 1:
                     gen_str+=" "
                 case 2:
                     gen_str+=","    
                 case 3:
-                    gen_str+=chr(65+gen(0,25))
+                    gen_str+=chr(65+next(gent)%26)
                 case 4:
-                    gen_str+=chr(97+gen(0,25))
+                    gen_str+=chr(97+next(gent)%26)
                 case 5:
-                    gen_str+=chr(49+gen(0,8))
+                    gen_str+=chr(49+next(gent)%9)
             size-=1
         return gen_str
 
@@ -88,9 +101,10 @@ def gen_list():
     - lst (list of float): The validated list.
     """
     lst = []
-    size = gen(1, 100)
+    size = random.randint(3,10)
+    genCh = gen_int(-3,100000)
     while size > 0:
-        lst.append(gen(-1000000,1000000,float))
+        lst.append(next(genCh))
         size-=1
     return lst
 

@@ -1,6 +1,6 @@
 def task(lst):
     """
-    Function to find absolute minimal value and sum between first and last positive in list
+    Function to find sum and multiplication of non-negative numbers stayed between absolute min & max elements
 
     Args: 
     - lst (list of float): list of float to analyse
@@ -8,29 +8,22 @@ def task(lst):
      Raises:
     - ValueError: If lst has zero positive elements
     """
-    print(f"Absolute minimal element in list: {find_min(lst)}")
-    try:
-        print(f"Sum between first and last positive element: {find_sum(lst)}")
-    except ValueError as e:
-        print(f"{e}")
-        
+    max_elem = max(lst, key=abs)
+    min_elem = min(lst, key=abs)
+
+
+    max_index = lst.index(max_elem)
+    min_index = lst.index(min_elem)
+
+
+    start_index = min(max_index, min_index)+1
+    end_index = max(max_index, min_index)
+    find_sum(lst[start_index:end_index])
     return
-
-def find_min(lst):
-    """
-    Function to find absolute minimal value in list
-
-    Args: 
-    - lst (list of float): list of float to analyse
-
-    Returns:
-    - absolute minimal value in
-    """
-    return min(lst, key=abs)
 
 def find_sum(lst):
     """
-    Function to find sum between first and last positive 
+    Function to find sum and multiplication between first and last positive 
 
     Args: 
     - lst (list of float): list of float to analyse
@@ -41,20 +34,15 @@ def find_sum(lst):
     Returns:
     - sum(float): sum of list elements between first and last positive
     """
-    l = -1
-    r = -1
-    for i in range(len(lst)):
-        if lst[i]>0:
-            if l == -1:
-                l = i
-            r = i
-    
-    if l==-1 and r==-1:
-        raise ValueError("Not enough positive elements (1) to run task")
-    
-    ans=0
-    while l<=r:
-        ans = ans + lst[l]
-        l+=1
-
-    return ans
+    sum=0
+    mul=1
+    flag = False
+    print(f"Take: {lst}")
+    for numb in lst:
+        if numb>=0:
+            sum+=numb
+            mul*=numb
+            flag = True
+    if flag == False:
+        mul=0
+    print(f"Sum = {sum}\t Multiply = {mul}")

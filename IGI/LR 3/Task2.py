@@ -1,24 +1,27 @@
 import Input
 def task(method):
     """
-    Function to compute 10000 - a - b while 10000 - a - b not negative
+    Function to compute amount of even natural number
 
     Args: 
     - method (int): Method to input (1 - manual, 2 - auto)
     """
+    amount = 0
+    geni=Input.gen_int(-100000,100000)
     while True:
+        a=0
         if method == 1:
-            print("Write a(|a|<=100000): ")
             a=Input.number(-100000,100000)
-            print("Write b(|b|<=100000): ")
-            b=Input.number(-100000,100000)
         else:
-            a=Input.gen(-100000,100000)
-            b=Input.gen(-100000,100000)
-            print(f"a = {a}\nb = {b}")
-        result=10000-a-b
-        print(f"10000 - {a} - {b} = {result}")
-        if result < 0:
-            print("Negative result => Task closed")
+            a=next(geni)
+            print(f"number = {a}")
+
+        if a == 0:
+            print(f"Zero result => Task closed\nTotal amount of even natural number: {amount}")
             break
+
+        if a > 0 and a % 2 == 0:
+            amount+=1
+        
+        print(f"Amount of even natural numbers = {amount}")
         

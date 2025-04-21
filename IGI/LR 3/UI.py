@@ -67,8 +67,8 @@ def task1(method):
     eps = 0
     x = 0
     if method == 2:
-        eps = Input.gen(-0.999999999999,0.999999999999,float)
-        x = Input.gen(0,1,float)
+        x = next(Input.gen_float(-0.999999999999,0.999999999999))
+        eps = next(Input.gen_float(0,1))
         print(f"x: {x}")
         print(f"eps: {eps}") 
     else:
@@ -86,7 +86,7 @@ def task2(method):
     """
     Function to get input data to execute Task2.task()
     """
-    print("10000 - a - b. For exit result must be negative")
+    print("Amount of natural even numbers. For exit write 0")
     Task2.task(method)
     return
 
@@ -95,7 +95,7 @@ def task3(method):
     Function to get input data to execute Task3.task()
     """
     s = ""
-    print("Find amount of , and spaces in the string")
+    print("Find amount of puncto chars in the string")
     if(method == 1):
         s = input("Write string: ")
     if(method == 2):
@@ -110,7 +110,7 @@ def task5(method):
     Function to get input data to execute Task5.task()
     """
     lst = []
-    print("Find the absolute minimal element and sum between first and last positive elements")
+    print("Find sum and multiplication of non-negative numbers stayed between absolute min & max elements")
     if(method == 1):
         lst=Input.input_list()
     if(method == 2):
