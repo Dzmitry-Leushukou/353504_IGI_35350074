@@ -6,6 +6,12 @@ import Task4
 import Task5
 
 def main_menu():
+    """
+    Displays the main menu and allows the user to choose a task to execute.
+
+    The menu contains options for five tasks and an option to exit the program.
+    The user can select a task by entering the corresponding number.
+    """
     while True:
         print("1. Task 1\n2. Task 2\n3. Task 3\n4. Task 4\n5. Task 5\n0. Exit\n")
         i = Input.get("Choose task: ",int,0,5)

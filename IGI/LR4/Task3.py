@@ -7,47 +7,75 @@ from decimal import Decimal
 import numpy as np
 
 class Analyzer:
+    """
+    Base class for different types of analyzers.
+    """
     def graph(self):
+        """Placeholder method for graphing functionality."""
         print("Grapha ne budet")
 
 class SequenceAnalyzer(Analyzer):
+    """
+    Analyzes a sequence for statistical properties and computes the sine of x using the Taylor series expansion.
 
+    Attributes:
+    - __seq (list): The sequence of approximations.
+    - _x (float): The input value for which the sine is calculated.
+    - _eps (float): The precision for the approximation.
+    """
     def __init__(self,x,eps):
+        """
+        Initializes the SequenceAnalyzer with given x and epsilon values.
+
+        Parameters:
+        - x (float): The value for which to calculate sin(x).
+        - eps (float): The precision for the approximation.
+        """
         self.__seq = []
         self._x = x
         self._eps = eps
     
     @property
     def sequence(self):
+        """Returns the sequence of approximations."""
         return self.__seq
     
     def calculate_mean(self):
-        # Calculates the mean of the sequence
+        """Calculates the mean of the sequence."""
         return sum(self.sequence) / len(self.sequence)
 
     def calculate_median(self):
-        # Calculates the median of the sequence
+        """Calculates the median of the sequence."""
         return median(self.sequence)
 
     def calculate_mode(self):
-        # Calculates the mode of the sequence
+        """Calculates the mode of the sequence."""
         return mode(self.sequence)
 
     def calculate_variance(self):
-        # Calculates the variance of the sequence
+        """Calculates the variance of the sequence."""
         return variance(self.sequence)
 
     def calculate_standard_deviation(self):
-        # Calculates the variance of the sequence
+        """Calculates the standard deviation of the sequence."""
         return stdev(self.sequence)
     
     @staticmethod
     def calculate_actual_value(x):
-        # Calculates the actual value based on a given input 'x'
+        """Calculates the actual value based on the input x using the natural logarithm."""
         return math.log(1 + x)
 
    
     def find(self):
+        """
+        Computes the approximation of sin(x) using Taylor series expansion.
+
+        Returns:
+        - float: The approximation of sin(x).
+
+        Raises:
+        - ValueError: If more than 500 iterations are needed to reach the desired precision.
+        """
         iter = 0
         sign = 1  
         approximation = Decimal(0)
@@ -66,27 +94,33 @@ class SequenceAnalyzer(Analyzer):
         return float(approximation)
     
     def table(self):
+        """
+        Creates a table of results including x, number of iterations, approximated value, actual value, and epsilon.
+
+        Returns:
+        - str: A formatted table as a string.
+        """
         data = [[self._x, self._iter, float(self._approximation), math.sin(self._x), self._eps]]
         headers = ["x", "n", "F(x)", "Math F(x)", "eps"]
         table = tabulate(data, headers=headers)
         return table
 
     def real(self,x):
+        """Calculates the actual sine of x using the math library."""
         return math.sin(x)
 def task3():
     """
-    Function to compute sin(x) approximation using Taylor series expansion by 500 iterations or less and with math function.
+    Function to compute sin(x) approximation using Taylor series expansion with user-defined precision.
+
     Args: 
-    - x (float): Argument of sin(x)
-    - eps (float): Approximate value aim
+    - None
 
     Returns:
-    - table (tabulate): Table of found values
-
-    Raises:
-    - ValueError: If to find answer need more than 500 iterations
-    """
+    - None
     
+    Raises:
+    - ValueError: If the required precision cannot be achieved within 500 iterations.
+    """
     x = Input.get("Write x (x = [-0.999999999999; 0.999999999999]): ",float,-0.999999999999,0.999999999999)
     eps = Input.get("Write eps (eps = [0; 1]): ",float,0,1)
     analyzer = SequenceAnalyzer(x,eps)

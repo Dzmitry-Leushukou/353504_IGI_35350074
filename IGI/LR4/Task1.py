@@ -4,6 +4,16 @@ import csv
 import pickle
 
 def task1():
+    """
+    Main function to manage a list of musicians with various operations.
+    
+    Features:
+    - Add a musician to the list.
+    - Show the list of musicians.
+    - Sort the list of musicians.
+    - Find musicians by instrument.
+    - Save and load the list to/from CSV and pickle files.
+    """
     musicians = []
     while True:
         print("1. Add musician to the list\n2. Show list of musicians\n3. Sort musicians list\n4. Find a musician by musical genre")
@@ -53,6 +63,12 @@ def task1():
 
 
 def save_to_csv(musicians):
+    """
+    Saves the list of musicians to a CSV file.
+    
+    Parameters:
+    - musicians (list): A list of MusicianApplicant objects.
+    """
     try:
         with open("musician.csv", mode="w", newline="") as file:
             writer = csv.writer(file)
@@ -64,6 +80,12 @@ def save_to_csv(musicians):
         print(f"Can`s save data [{e}]")
 
 def load_from_csv():
+    """
+    Loads the list of musicians from a CSV file.
+    
+    Returns:
+    - list: A list of MusicianApplicant objects.
+    """
     try:
         with open("musician.csv", mode="r") as file:
             reader = csv.reader(file)
@@ -79,6 +101,12 @@ def load_from_csv():
     return musician_list
 
 def save_to_pickle(musician_list):
+    """
+    Saves the list of musicians to a pickle file.
+    
+    Parameters:
+    - musician_list (list): A list of MusicianApplicant objects.
+    """
     try:
         with open("musicians.pkl", mode="wb") as file:
             pickle.dump(musician_list, file)
@@ -87,6 +115,12 @@ def save_to_pickle(musician_list):
         print(f"Can`s save data [{e}]")
 
 def load_from_pickle():
+    """
+    Loads the list of musicians from a pickle file.
+    
+    Returns:
+    - list: A list of MusicianApplicant objects.
+    """
     try:
         with open("musicians.pkl", mode="rb") as file:
             musician_list = pickle.load(file)
@@ -98,6 +132,12 @@ def load_from_pickle():
 
 
 class Applicant:
+    """
+    Base class representing an applicant.
+    
+    Attributes:
+    - surname (str): The surname of the applicant.
+    """
     def __init__(self, surname):
         self._surname=surname
     
@@ -109,6 +149,12 @@ class Applicant:
         self._surname = val
 
 class MusicianApplicant(Applicant):
+    """
+    Class representing a musician applicant, inheriting from Applicant.
+    
+    Attributes:
+    - instrument (str): The instrument played by the musician.
+    """
     def __init__(self, surname, instrument):
         super().__init__(surname)
         self._instrument = instrument
