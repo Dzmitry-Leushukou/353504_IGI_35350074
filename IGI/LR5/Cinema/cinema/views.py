@@ -1,5 +1,5 @@
 from django.views import View
-from .models import News, Movie, About, Contact, Employee
+from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy,reverse
@@ -13,6 +13,36 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.views.generic import DetailView
 from django.db.models import F
+from django.utils.translation import gettext_lazy as _
+
+class VacancyView(View):
+    def get(self, request):
+        vacancies = Vacancy.objects.filter(is_active=True).order_by('-created_at')
+    
+        context = {
+        'page_title': _("Актуальные вакансии"),
+        'vacancies': vacancies
+    }
+        return render(request, 'cinema/vacancy_list.html', context)
+
+class PrivacyPolicyView(View):
+    def get(self, request):
+        return render(request, 'cinema/privacy_policy.html')
+
+
+class FAQListView(ListView):
+    model = FAQ
+    template_name = 'cinema/faq.html'
+    context_object_name = 'faqs'
+    ordering = ['-created_at']
+    
+    # Если нужно добавить дополнительный контекст
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Разделяем FAQ и термины для удобства в шаблоне (опционально)
+        context['questions'] = FAQ.objects.filter(entry_type=FAQ.QUESTION).order_by('-created_at')
+        context['terms'] = FAQ.objects.filter(entry_type=FAQ.TERM).order_by('-created_at')
+        return context
 
 class ContactView(ListView):
     def get(self, request):
@@ -47,7 +77,6 @@ class MovieDetailView(DetailView):
             start_time__gte=current_time
         ).order_by('start_time')
         context['current_time'] = current_time
-        context['reviews'] = self.object.reviews.select_related('user').order_by('-created_at')
         
         return context
     

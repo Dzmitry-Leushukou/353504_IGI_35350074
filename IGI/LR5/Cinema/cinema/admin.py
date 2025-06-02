@@ -1,11 +1,17 @@
-from django.contrib import admin
+from django.contrib import admin,messages
 from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy, FAQ, Contact, About
 from .forms import EmployeeAdminForm
+from django.db import models
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    form = EmployeeAdminForm  
-    list_display = ('user', 'position', 'phone')
+    fform = EmployeeAdminForm
+    list_display = ('full_name', 'position', 'phone')
+    search_fields = ('user__first_name', 'user__last_name',)
+    
+    def full_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
+    full_name.short_description = 'Имя сотрудника'
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
@@ -24,6 +30,29 @@ class VacancyAdmin(admin.ModelAdmin):
     list_display = ('title', 'salary', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('title', 'description')
+    actions = ['activate_vacancies', 'deactivate_vacancies']  # Регистрация действий
+
+    # Действие для активации
+    def activate_vacancies(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(
+            request,
+            f"Активировано вакансий: {updated}",
+            messages.SUCCESS
+        )
+
+    # Действие для деактивации
+    def deactivate_vacancies(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(
+            request,
+            f"Деактивировано вакансий: {updated}",
+            messages.SUCCESS
+        )
+    
+    # Настройка отображения названий действий
+    activate_vacancies.short_description = "Активировать выбранные вакансии"
+    deactivate_vacancies.short_description = "Деактивировать выбранные вакансии"
 
 @admin.register(About)
 class CompanyInfoAdmin(admin.ModelAdmin):
@@ -39,8 +68,23 @@ class CompanyInfoAdmin(admin.ModelAdmin):
 
 @admin.register(FAQ)
 class FAQAdmin(admin.ModelAdmin):
-    list_display = ('question', 'created_at')
+    list_display = ('entry_type', 'truncated_question', 'created_at')
+    list_filter = ('entry_type', 'created_at')
     search_fields = ('question', 'answer')
+    fieldsets = (
+        (None, {
+            'fields': ('entry_type', 'question', 'answer')
+        }),
+        ('Даты', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')
+
+    def truncated_question(self, obj):
+        return obj.question[:75] + ("..." if len(obj.question) > 75 else "")
+    truncated_question.short_description = "Вопрос/Термин"
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):

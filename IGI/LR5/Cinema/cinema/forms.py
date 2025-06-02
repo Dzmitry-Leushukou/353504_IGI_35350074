@@ -27,7 +27,11 @@ class EmployeeAdminForm(forms.ModelForm):
         fields = '__all__'
     
     def clean(self):
-        if not self.cleaned_data.get('birth_date'):
-            raise forms.ValidationError("Поле 'Дата рождения' обязательно для заполнения")
+        birth_date = self.cleaned_data.get('birth_date')
+        
+        if not birth_date:
+            raise forms.ValidationError(
+                {'birth_date': "Поле 'Дата рождения' обязательно для заполнения"}
+            )
         
         return super().clean()

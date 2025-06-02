@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.db.models import Q, F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 
 def calculate_age(birth_date):
@@ -336,6 +337,9 @@ class Employee(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Пользователь"
     )
+    @property
+    def full_name(self):
+        return self.user.get_full_name() or self.user.username
     position = models.CharField(
         max_length=20,
         choices=POSITIONS,
@@ -429,46 +433,65 @@ class News(models.Model):
 class Vacancy(models.Model):
     title = models.CharField(
         max_length=200,
-        verbose_name="Название вакансии"
+        verbose_name=_("Название вакансии")
     )
     description = models.TextField(
-        verbose_name="Описание"
+        verbose_name=_("Описание")
     )
     requirements = models.TextField(
-        verbose_name="Требования"
+        verbose_name=_("Требования")
     )
     salary = models.DecimalField(
         max_digits=8,
         decimal_places=2,
-        verbose_name="Зарплата ($)",
+        verbose_name=_("Зарплата ($)"),
         null=True,
         blank=True
     )
     is_active = models.BooleanField(
         default=True,
-        verbose_name="Активна"
+        verbose_name=_("Активна")
     )
     created_at = models.DateField(
         auto_now_add=True,
-        verbose_name="Дата размещения"
+        verbose_name=_("Дата размещения")
     )
 
     class Meta:
-        verbose_name = "Вакансия"
-        verbose_name_plural = "Вакансии"
+        verbose_name = _("Вакансия")
+        verbose_name_plural = _("Вакансии")
         ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.title} ({'активна' if self.is_active else 'закрыта'})"
     
+    def get_formatted_salary(self):
+        if self.salary:
+            return f"{self.salary:,.2f}".replace(',', ' ').replace('.', ',')
+        return _("По договорённости")
     
 class FAQ(models.Model):
+    # Типы записей
+    QUESTION = 'question'
+    TERM = 'term'
+    ENTRY_TYPE_CHOICES = [
+        (QUESTION, 'Частый вопрос'),
+        (TERM, 'Термин глоссария'),
+    ]
+    
+    # Поля модели
+    entry_type = models.CharField(
+        max_length=10,
+        choices=ENTRY_TYPE_CHOICES,
+        default=QUESTION,
+        verbose_name="Тип записи"
+    )
     question = models.CharField(
         max_length=300,
-        verbose_name="Вопрос"
+        verbose_name="Вопрос/Термин"
     )
     answer = models.TextField(
-        verbose_name="Ответ"
+        verbose_name="Ответ/Определение"
     )
     created_at = models.DateField(
         auto_now_add=True,
@@ -480,12 +503,15 @@ class FAQ(models.Model):
     )
 
     class Meta:
-        verbose_name = "FAQ"
-        verbose_name_plural = "FAQ"
+        verbose_name = "Запись"
+        verbose_name_plural = "Словарь терминов и FAQ"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['entry_type']),
+        ]
 
     def __str__(self):
-        return self.question[:50] + "..."
+        return self.question[:50] + ("..." if len(self.question) > 50 else "")
     
 class Contact(models.Model):
     company_name = models.CharField(

@@ -1,0 +1,89 @@
+{% extends 'cinema/base.html' %}
+
+{% block content %}
+<div class="faq-container">
+    <!-- Секция FAQ -->
+    <h1>Часто задаваемые вопросы</h1>
+    {% if questions %}
+        {% for item in questions %}
+        <div class="faq-item">
+            <h3>{{ item.question }}</h3>
+            <div class="faq-answer">
+                {{ item.answer|linebreaks }}
+            </div>
+            <small>Добавлено: {{ item.created_at|date:"d.m.Y" }}</small>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty-message">Пока нет часто задаваемых вопросов</p>
+    {% endif %}
+
+    <!-- Секция глоссария -->
+    <h1>Глоссарий терминов</h1>
+    {% if terms %}
+        {% for item in terms %}
+        <div class="glossary-item">
+            <h3>{{ item.question }}</h3>
+            <div class="glossary-definition">
+                {{ item.answer|linebreaks }}
+            </div>
+            <small>Добавлено: {{ item.created_at|date:"d.m.Y" }}</small>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="empty-message">Пока нет терминов в глоссарии</p>
+    {% endif %}
+</div>
+
+<style>
+    .faq-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .faq-item, .glossary-item {
+        background-color: #f8f9fa;
+        border-left: 4px solid #3f51b5;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 0 4px 4px 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .faq-item h3, .glossary-item h3 {
+        color: #2c3e50;
+        margin-top: 0;
+        font-size: 1.3em;
+    }
+    
+    .faq-answer, .glossary-definition {
+        margin: 10px 0 15px;
+        line-height: 1.6;
+        color: #34495e;
+    }
+    
+    .faq-item small, .glossary-item small {
+        color: #7f8c8d;
+        font-size: 0.85em;
+        display: block;
+        text-align: right;
+    }
+    
+    .empty-message {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 4px;
+        text-align: center;
+        color: #666;
+    }
+    
+    h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 10px;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
