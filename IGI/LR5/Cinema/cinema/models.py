@@ -67,7 +67,7 @@ def calculate_age(birth_date):
 
 class Profile(models.Model):
     ROLE_CHOICES = (
-        ('superuser', 'Владелец магазина'),
+        ('superuser', 'Владелец'),
         ('registered', 'Зарегистрированный пользователь'),
         ('guest', 'Гостевой пользователь'),
     )
@@ -76,6 +76,16 @@ class Profile(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='guest')
     birth_date = models.DateField(null=True, blank=True)
     phone = models.CharField(max_length=20, blank=True)
+
+    def can_write_reviews(self):
+        return (
+            self.role == 'registered' and 
+            not self.user.is_staff and 
+            not self.user.is_superuser
+        )
+    
+    def __str__(self):
+        return f"{self.user.username} ({self.get_role_display()})"
 
 class Client(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

@@ -3,46 +3,46 @@ from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy
 from .forms import EmployeeAdminForm, PromoCodeForm
 from django.db import models
 from django.utils import timezone
-from .models import Profile, Client
+from .models import Profile
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from .models import Profile
 
-# Создаем инлайн-администратора для Profile
+
 class ProfileInline(admin.StackedInline):
     model = Profile
     can_delete = False
-    verbose_name_plural = 'Профили'
-    fields = ('role', 'birth_date', 'phone', 'address')
+    verbose_name_plural = 'Профиль'
+    fields = ('role', 'birth_date', 'phone')
 
-# Создаем инлайн-администратора для Client
-class ClientInline(admin.StackedInline):
-    model = Client
+class EmployeeInline(admin.StackedInline):
+    model = Employee
     can_delete = False
-    verbose_name_plural = 'Клиенты'
-    fields = ('birth_date', 'phone', 'address')
+    verbose_name_plural = 'Сотрудник'
+    max_num = 1
+    fields = ('position', 'phone', 'birth_date', 'photo', 'hire_date')
 
-# Расширяем стандартного UserAdmin
 class CustomUserAdmin(UserAdmin):
-    inlines = (ProfileInline, ClientInline)
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
-    list_filter = ('is_staff', 'is_superuser', 'is_active')
-    search_fields = ('username', 'email', 'first_name', 'last_name')
+    inlines = (ProfileInline, EmployeeInline)
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'get_role')
+    
+    def get_role(self, obj):
+        try:
+            return obj.profile.get_role_display()
+        except Profile.DoesNotExist:
+            return "-"
+    get_role.short_description = "Роль"
+    
+    def get_inline_instances(self, request, obj=None):
+        # Показываем EmployeeInline только для существующих сотрудников
+        if obj and hasattr(obj, 'employee'):
+            return [ProfileInline(self.model, self.admin_site), 
+                    EmployeeInline(self.model, self.admin_site)]
+        return [ProfileInline(self.model, self.admin_site)]
 
-# Перерегистрируем модель User
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
-# Регистрируем модели напрямую
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role', 'phone')
-    search_fields = ('user__username', 'phone')
-    list_filter = ('role',)
-
-@admin.register(Client)
-class ClientAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone', 'birth_date')
-    search_fields = ('user__username', 'phone')
 @admin.register(PromoCode)
 class PromoCodeAdmin(admin.ModelAdmin):
     form = PromoCodeForm

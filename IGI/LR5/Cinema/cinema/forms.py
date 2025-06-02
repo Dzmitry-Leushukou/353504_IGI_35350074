@@ -22,7 +22,17 @@ class ReviewForm(forms.ModelForm):
             'text': 'Ваш отзыв',
             'rating': 'Ваша оценка'
         }
-        
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.user and not self.user.profile.can_write_reviews():
+            raise ValidationError("У вас нет прав для оставления отзывов")
+        return cleaned_data
+    
+
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'Введите пароль'}),
@@ -87,12 +97,6 @@ class UserRegistrationForm(forms.ModelForm):
                 phone=self.cleaned_data['phone'],
             )
             
-            # Создаем клиента
-            Client.objects.create(
-                user=user,
-                birth_date=self.cleaned_data['birth_date'],
-                phone=self.cleaned_data['phone'],
-            )
         return user
 
 class PromoCodeForm(forms.ModelForm):

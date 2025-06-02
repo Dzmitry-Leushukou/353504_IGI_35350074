@@ -1,5 +1,5 @@
 from django.views import View
-from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy, PromoCode
+from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy, PromoCode, Profile
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy,reverse
@@ -22,12 +22,39 @@ from django.shortcuts import redirect
 from django.contrib.auth.views import LogoutView
 from .models import Review
 from .forms import ReviewForm   
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.http import HttpResponseForbidden
 
 
-class ReviewView(LoginRequiredMixin, View):
+class ReviewView(UserPassesTestMixin, View):
     template_list = 'cinema/reviews.html'
     template_form = 'cinema/review_form.html'
     template_confirm = 'cinema/review_confirm_delete.html'
+    login_url = 'cinema:login'
+    
+    def test_func(self):
+        """Определяет доступ к действиям с отзывами"""
+        # Для просмотра списка всегда доступно
+        if self.request.resolver_match.url_name == 'reviews':
+            return True
+        
+        # Для других действий требуется аутентификация
+        if not self.request.user.is_authenticated:
+            return False
+        
+        # Проверка прав через профиль
+        try:
+            profile = self.request.user.profile
+            return profile.can_write_reviews()
+        except Profile.DoesNotExist:
+            return False
+    
+    def handle_no_permission(self):
+        """Обработка отказа в доступе"""
+        if self.request.user.is_authenticated:
+            messages.error(self.request, 'Только обычные пользователи могут оставлять отзывы')
+            return redirect('cinema:reviews')
+        return super().handle_no_permission()
     
     def get(self, request, *args, **kwargs):
         # Определяем действие по имени URL
@@ -65,7 +92,7 @@ class ReviewView(LoginRequiredMixin, View):
             messages.warning(request, 'Вы уже оставили отзыв')
             return redirect('cinema:reviews')
         
-        form = ReviewForm()
+        form = ReviewForm(user=request.user)
         return render(request, self.template_form, {
             'form': form,
             'title': 'Добавить отзыв',
@@ -77,7 +104,7 @@ class ReviewView(LoginRequiredMixin, View):
             messages.warning(request, 'Вы уже оставили отзыв')
             return redirect('cinema:reviews')
         
-        form = ReviewForm(request.POST)
+        form = ReviewForm(request.POST, user=request.user)
         if form.is_valid():
             review = form.save(commit=False)
             review.user = request.user

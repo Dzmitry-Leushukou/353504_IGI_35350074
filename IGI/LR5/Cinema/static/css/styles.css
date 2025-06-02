@@ -203,3 +203,13 @@ nav a[href*="cart"]:after {
     object-fit: cover;
     object-position: top;
 }
+.permission-warning {
+    background: #2d2d2d;
+    border-left: 4px solid #e50914;
+    padding: 10px 15px;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #aaa;
+}
