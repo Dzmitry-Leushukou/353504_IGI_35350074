@@ -1,5 +1,5 @@
 from django.views import View
-from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy
+from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy, PromoCode
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy,reverse
@@ -14,6 +14,23 @@ from django.utils import timezone
 from django.views.generic import DetailView
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
+
+class PromoCodeListView(ListView):
+    model = PromoCode
+    template_name = 'cinema/promo_codes.html'
+    context_object_name = 'promo_codes'
+    
+    def get_queryset(self):
+        # Сначала активные, затем неактивные
+        return PromoCode.objects.all().order_by(
+            '-is_active', 
+            '-start_date'
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['now'] = timezone.now()
+        return context
 
 class VacancyView(View):
     def get(self, request):

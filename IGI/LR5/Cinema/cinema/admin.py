@@ -1,7 +1,43 @@
 from django.contrib import admin,messages
-from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy, FAQ, Contact, About
-from .forms import EmployeeAdminForm
+from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy, FAQ, Contact, About, PromoCode
+from .forms import EmployeeAdminForm, PromoCodeForm
 from django.db import models
+from django.utils import timezone
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    form = PromoCodeForm
+    list_display = ('code', 'discount', 'status_display', 'start_date', 'end_date', 'used_count', 'max_uses', 'is_active')
+    list_filter = ('is_active', 'start_date', 'end_date')
+    search_fields = ('code',)
+    list_editable = ('is_active', 'discount', 'max_uses')
+    readonly_fields = ('used_count', 'created_at', 'updated_at', 'status_display')
+    fieldsets = (
+        (None, {
+            'fields': ('code', 'discount', 'max_uses', 'used_count')
+        }),
+        ('Статус и активность', {
+            'fields': ('is_active', 'status_display')
+        }),
+        ('Срок действия', {
+            'fields': ('start_date', 'end_date'),
+            'description': 'Дата окончания должна быть позже даты начала'
+        }),
+        ('Даты', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def status_display(self, obj):
+        return obj.status_display
+    status_display.short_description = 'Текущий статус'
+    
+    def save_model(self, request, obj, form, change):
+        # Автоматически устанавливаем end_date если не указано
+        if not obj.end_date:
+            obj.end_date = obj.start_date + timezone.timedelta(days=30)
+        super().save_model(request, obj, form, change)
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):

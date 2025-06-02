@@ -17,6 +17,81 @@ def calculate_age(birth_date):
     today = timezone.now().date()
     return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
 
+class PromoCode(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = 'active', 'Активный'
+        INACTIVE = 'inactive', 'Неактивный'
+        EXPIRED = 'expired', 'Истек'
+        USED = 'used', 'Использован'
+        PENDING = 'pending', 'Ожидает активации'
+    
+    code = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name="Промокод"
+    )
+    discount = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        verbose_name="Скидка (%)"
+    )
+    max_uses = models.PositiveIntegerField(
+        default=1,
+        verbose_name="Максимальное количество использований"
+    )
+    used_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Количество использований"
+    )
+    start_date = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="Действует с"
+    )
+    end_date = models.DateTimeField(
+        verbose_name="Действует до",
+        null=False,
+        blank=False
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активный"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата создания"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата обновления"
+    )
+
+    class Meta:
+        verbose_name = "Промокод"
+        verbose_name_plural = "Промокоды"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.code} ({self.discount}%)"
+    
+    @property
+    def status(self):
+        now = timezone.now()
+        if not self.is_active:
+            return self.Status.INACTIVE
+        if self.used_count >= self.max_uses:
+            return self.Status.USED
+        if now < self.start_date:
+            return self.Status.PENDING
+        if now > self.end_date:
+            return self.Status.EXPIRED
+        return self.Status.ACTIVE
+    
+    @property
+    def status_display(self):
+        return dict(self.Status.choices).get(self.status, self.status)
+    
+    @property
+    def remaining_uses(self):
+        return max(0, self.max_uses - self.used_count)
 
 class About(models.Model):
     content = models.TextField("Текст о компании")

@@ -18,4 +18,5 @@ urlpatterns = [
     path('faq/', views.FAQListView.as_view(), name='faq'),
     path('privacy-policy/', views.PrivacyPolicyView.as_view(), name='privacy_policy'),
     path('vacancies/', views.VacancyView.as_view(), name='vacancy_list'),
+    path('promo-codes/', views.PromoCodeListView.as_view(), name='promo_codes'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

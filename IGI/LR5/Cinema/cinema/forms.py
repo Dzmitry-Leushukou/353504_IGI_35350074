@@ -1,8 +1,27 @@
 from django import forms
-from .models import Employee
+from .models import Employee,PromoCode
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from datetime import date
+
+
+class PromoCodeForm(forms.ModelForm):
+    class Meta:
+        model = PromoCode
+        fields = '__all__'
+        widgets = {
+            'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+    
+    def clean_end_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        end_date = self.cleaned_data.get('end_date')
+        
+        if start_date and end_date and end_date <= start_date:
+            raise forms.ValidationError("Дата окончания должна быть позже даты начала")
+        return end_date
+
 
 class EmployeeForm(forms.ModelForm):
     class Meta:

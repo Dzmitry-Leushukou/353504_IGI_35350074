@@ -1,0 +1,211 @@
+{% extends 'cinema/base.html' %}
+
+{% block content %}
+<div class="promo-container">
+    <h1>Активные промокоды</h1>
+    
+    {% for promo in promo_codes %}
+        {% if promo.status == 'active' %}
+        <div class="promo-card active">
+            <div class="promo-header">
+                <h2 class="promo-code">{{ promo.code }}</h2>
+                <span class="promo-discount">-{{ promo.discount }}%</span>
+            </div>
+            <div class="promo-details">
+                <p>Срок действия: 
+                    <br><strong>{{ promo.start_date|date:"d.m.Y H:i" }} - {{ promo.end_date|date:"d.m.Y H:i" }}</strong>
+                </p>
+                <p>Использований: 
+                    <strong>{{ promo.used_count }} из {{ promo.max_uses }}</strong>
+                    (осталось: {{ promo.remaining_uses }})
+                </p>
+            </div>
+            <div class="promo-status active">{{ promo.status_display }}</div>
+        </div>
+        {% endif %}
+    {% empty %}
+        <div class="no-promos">
+            <p>Сейчас нет активных промокодов</p>
+        </div>
+    {% endfor %}
+
+    <h1>Неактивные промокоды</h1>
+    
+    <div class="inactive-promos">
+        {% for promo in promo_codes %}
+            {% if promo.status != 'active' %}
+            <div class="promo-card inactive">
+                <div class="promo-header">
+                    <h2 class="promo-code">{{ promo.code }}</h2>
+                    <span class="promo-discount">-{{ promo.discount }}%</span>
+                </div>
+                <div class="promo-details">
+                    <p>Срок действия: 
+                        <br><strong>{{ promo.start_date|date:"d.m.Y H:i" }} - {{ promo.end_date|date:"d.m.Y H:i" }}</strong>
+                    </p>
+                    <p>Использований: 
+                        <strong>{{ promo.used_count }} из {{ promo.max_uses }}</strong>
+                        (осталось: {{ promo.remaining_uses }})
+                    </p>
+                    <p>Статус: <strong>{{ promo.status_display }}</strong></p>
+                </div>
+                <div class="promo-status inactive">{{ promo.status_display }}</div>
+            </div>
+            {% endif %}
+        {% empty %}
+            <div class="no-promos">
+                <p>Нет неактивных промокодов</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .promo-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: 'Arial', sans-serif;
+    }
+    
+    .promo-card {
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .promo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+    
+    .promo-card.active {
+        background: linear-gradient(135deg, #e8f4ff 0%, #c2e0ff 100%);
+        border-left: 5px solid #2196f3;
+    }
+    
+    .promo-card.inactive {
+        background-color: #f9f9f9;
+        border-left: 5px solid #b0b0b0;
+    }
+    
+    .promo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #d0d0d0;
+    }
+    
+    .promo-code {
+        font-size: 1.8em;
+        color: #1565c0;
+        margin: 0;
+        font-weight: bold;
+        letter-spacing: 1px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .promo-discount {
+        background-color: #ff4081;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.2em;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .promo-details {
+        line-height: 1.7;
+        color: #333;
+    }
+    
+    .promo-details p {
+        margin: 10px 0;
+    }
+    
+    .promo-details strong {
+        color: #2c3e50;
+    }
+    
+    .promo-status {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 5px 15px;
+        border-radius: 0 0 0 8px;
+        font-weight: bold;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .promo-status.active {
+        background-color: #4caf50;
+        color: white;
+    }
+    
+    .promo-status.inactive {
+        background-color: #f44336;
+        color: white;
+    }
+    
+    .promo-status.pending {
+        background-color: #ff9800;
+        color: white;
+    }
+    
+    .promo-status.expired {
+        background-color: #9e9e9e;
+        color: white;
+    }
+    
+    .promo-status.used {
+        background-color: #607d8b;
+        color: white;
+    }
+    
+    .no-promos {
+        background-color: #fff8e1;
+        padding: 25px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 30px;
+        border-left: 5px solid #ffc107;
+        font-size: 1.1em;
+    }
+    
+    h1 {
+        color: #2c3e50;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 12px;
+        margin-top: 40px;
+        margin-bottom: 25px;
+        font-weight: 600;
+    }
+    
+    .inactive-promos {
+        margin-top: 30px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавляем классы для статусов
+        const cards = document.querySelectorAll('.promo-card');
+        cards.forEach(card => {
+            const statusDiv = card.querySelector('.promo-status');
+            if (statusDiv) {
+                const status = statusDiv.textContent.trim().toLowerCase();
+                statusDiv.classList.add(status);
+            }
+        });
+    });
+</script>
+{% endblock %}
