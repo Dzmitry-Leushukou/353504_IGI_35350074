@@ -1,5 +1,5 @@
 from django.views import View
-from .models import News, Movie, About
+from .models import News, Movie, About, Contact, Employee
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy,reverse
@@ -13,6 +13,18 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.views.generic import DetailView
 from django.db.models import F
+
+class ContactView(ListView):
+    def get(self, request):
+        company_contact = Contact.objects.first()
+
+        employees = Employee.objects.all().select_related('user')
+
+        context = {
+            'company': company_contact,
+            'employees': employees
+        }
+        return render(request, 'cinema/contacts.html', context)
 
 class NewsDetailView(DetailView):
     model = News

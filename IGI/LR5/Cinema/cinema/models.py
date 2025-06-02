@@ -358,7 +358,9 @@ class Employee(models.Model):
                 limit_value=timezone.datetime(1900, 1, 1).date(),
                 message="Дата рождения не может быть ранее 1900 года"
             )
-        ]
+        ],
+        blank=False, 
+        null=False,
     )
     photo = models.ImageField(
         upload_to='employees/',
@@ -379,12 +381,18 @@ class Employee(models.Model):
         return f"{self.user.get_full_name()} ({self.get_position_display()})"
 
     def clean(self):
-        # Проверка возраста (18+)
+    
+        if not self.birth_date:  # Добавленная проверка
+            raise ValidationError("Укажите дату рождения!")
+
         today = timezone.now().date()
-        age = today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        age = today.year - self.birth_date.year - (
+            (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
+        )
+
         if age < 18:
             raise ValidationError("Сотрудник должен быть старше 18 лет!")
-        
+
 class News(models.Model):
     title = models.CharField(
         max_length=200,

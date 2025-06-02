@@ -1,12 +1,16 @@
 from django.contrib import admin
 from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy, FAQ, Contact, About
-
+from .forms import EmployeeAdminForm
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
+    form = EmployeeAdminForm  
     list_display = ('user', 'position', 'phone')
-    list_filter = ('position',)
-    search_fields = ('user__username', 'phone')
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ('company_name', 'phone', 'email')
+
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
@@ -37,10 +41,6 @@ class CompanyInfoAdmin(admin.ModelAdmin):
 class FAQAdmin(admin.ModelAdmin):
     list_display = ('question', 'created_at')
     search_fields = ('question', 'answer')
-
-@admin.register(Contact)
-class ContactAdmin(admin.ModelAdmin):
-    list_display = ('company_name', 'phone', 'email')
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):

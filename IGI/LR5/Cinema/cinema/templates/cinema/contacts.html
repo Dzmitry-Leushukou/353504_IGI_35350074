@@ -1,0 +1,49 @@
+{% extends "cinema/base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Информация о компании -->
+    <section class="company-info mb-5">
+        <h2>Контактная информация</h2>
+        <div class="card h-100 employee-card">
+            <div class="card-body">
+                <h3 class="card-title">{{ company.company_name }}</h3>
+                <p class="card-text">
+                    <strong>Адрес:</strong> {{ company.address }}<br>
+                    <strong>Телефон:</strong> {{ company.phone }}<br>
+                    <strong>Email:</strong> {{ company.email }}<br>
+                    <strong>Реквизиты:</strong> {{ company.requisites }}
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Сотрудники -->
+    <section class="employees">
+        <h2>Наши сотрудники</h2>
+        <div class="row">
+            {% for employee in employees %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <!-- Фото сотрудника -->
+                    <img src="{{ employee.photo.url }}" 
+                         alt="{{ employee.user.get_full_name }}" 
+                         class="card-img-top"
+                         style="max-height: 300px; object-fit: cover">
+                    
+                    <div class="card-body">
+                        <h5 class="card-title">{{ employee.user.get_full_name }}</h5>
+                        <p class="card-text">
+                            <strong>Должность:</strong> {{ employee.get_position_display }}<br>
+                            <strong>Телефон:</strong> {{ employee.phone }}<br>
+                            <strong>Дата рождения:</strong> {{ employee.birth_date|date:"d.m.Y" }}<br>
+                            <strong>Работает с:</strong> {{ employee.hire_date|date:"d.m.Y" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

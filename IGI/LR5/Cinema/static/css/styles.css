@@ -191,3 +191,15 @@ nav a[href*="cart"]:after {
 .bg-gradient {
     background: linear-gradient(45deg, #4b6cb7, #182848);
 }
+.employee-card {
+    transition: transform 0.3s;
+}
+.employee-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.card-img-top {
+    height: 300px;
+    object-fit: cover;
+    object-position: top;
+}
