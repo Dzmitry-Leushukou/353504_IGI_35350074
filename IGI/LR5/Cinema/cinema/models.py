@@ -17,6 +17,24 @@ def calculate_age(birth_date):
     today = timezone.now().date()
     return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
 
+
+class Profile(models.Model):
+    ROLE_CHOICES = (
+        ('superuser', 'Владелец магазина'),
+        ('registered', 'Зарегистрированный пользователь'),
+        ('guest', 'Гостевой пользователь'),
+    )
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='guest')
+    birth_date = models.DateField(null=True, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+
+class Client(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    birth_date = models.DateField(null=True, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+
 class PromoCode(models.Model):
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Активный'

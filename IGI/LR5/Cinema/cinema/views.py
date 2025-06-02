@@ -14,6 +14,64 @@ from django.utils import timezone
 from django.views.generic import DetailView
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
+from .forms import UserRegistrationForm
+from django.contrib.auth import login, authenticate
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.contrib.auth.views import LogoutView
+
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('cinema:login')
+    
+    def dispatch(self, request, *args, **kwargs):
+        messages.info(request, 'Вы успешно вышли из системы.')
+        return super().dispatch(request, *args, **kwargs)
+
+def login_view(request):
+    next_url = request.GET.get('next') or 'cinema:home'
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        next_url = request.POST.get('next') or 'cinema:home'
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'Добро пожаловать, {user.username}!')
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Неверное имя пользователя или пароль.')
+    
+    return render(request, 'cinema/login.html', {'next': next_url})
+
+def register_view(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Автоматический вход после регистрации
+            user = authenticate(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password']
+            )
+            
+            if user is not None:
+                login(request, user)
+                messages.success(request, 'Регистрация прошла успешно!')
+                return redirect('cinema:home')  # Редирект на главную страницу
+            else:
+                messages.error(request, 'Ошибка автоматического входа после регистрации')
+        else:
+            # Если форма невалидна, покажем ошибки
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме')
+    else:
+        form = UserRegistrationForm()
+    
+    return render(request, 'cinema/register.html', {'form': form})
 
 class PromoCodeListView(ListView):
     model = PromoCode

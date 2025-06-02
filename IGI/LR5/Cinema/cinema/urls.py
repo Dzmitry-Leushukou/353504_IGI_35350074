@@ -3,7 +3,8 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.contrib.auth import views as auth_views
 
 app_name = 'cinema'  # Пространство имён для URL
 
@@ -19,4 +20,6 @@ urlpatterns = [
     path('privacy-policy/', views.PrivacyPolicyView.as_view(), name='privacy_policy'),
     path('vacancies/', views.VacancyView.as_view(), name='vacancy_list'),
     path('promo-codes/', views.PromoCodeListView.as_view(), name='promo_codes'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

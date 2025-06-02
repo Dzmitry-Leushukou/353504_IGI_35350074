@@ -1,9 +1,82 @@
 from django import forms
-from .models import Employee,PromoCode
+from .models import Employee,PromoCode, Profile, Client
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from datetime import date
+import re
 
+class UserRegistrationForm(forms.ModelForm):
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'placeholder': 'Введите пароль'}),
+        label='Пароль'
+    )
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput(attrs={'placeholder': 'Подтвердите пароль'}),
+        label='Подтверждение пароля'
+    )
+    phone = forms.CharField(
+        label='Телефон',
+        max_length=20,
+        widget=forms.TextInput(attrs={'placeholder': '+375 (29) XXX-XX-XX'})
+    )
+    birth_date = forms.DateField(
+        label='Дата рождения',
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'placeholder': 'Имя пользователя'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'email@example.com'}),
+        }
+
+    def clean_phone(self):
+        phone = self.cleaned_data['phone']
+        pattern = r'^\+375\s\(\d{2}\)\s\d{3}-\d{2}-\d{2}$'
+        if not re.match(pattern, phone):
+            raise ValidationError('Телефон должен быть в формате +375 (29) XXX-XX-XX')
+        return phone
+
+    def clean_birth_date(self):
+        birth_date = self.cleaned_data['birth_date']
+        today = date.today()
+        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        if age < 18:
+            raise ValidationError('Вам должно быть больше 18 лет для регистрации.')
+        return birth_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+
+        if password and password_confirm and password != password_confirm:
+            self.add_error('password_confirm', "Пароли не совпадают")
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password"])
+        if commit:
+            user.save()
+            
+            # Создаем профиль
+            Profile.objects.create(
+                user=user,
+                role='registered',
+                birth_date=self.cleaned_data['birth_date'],
+                phone=self.cleaned_data['phone'],
+            )
+            
+            # Создаем клиента
+            Client.objects.create(
+                user=user,
+                birth_date=self.cleaned_data['birth_date'],
+                phone=self.cleaned_data['phone'],
+            )
+        return user
 
 class PromoCodeForm(forms.ModelForm):
     class Meta:

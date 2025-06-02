@@ -3,7 +3,46 @@ from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy
 from .forms import EmployeeAdminForm, PromoCodeForm
 from django.db import models
 from django.utils import timezone
+from .models import Profile, Client
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 
+# Создаем инлайн-администратора для Profile
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = 'Профили'
+    fields = ('role', 'birth_date', 'phone', 'address')
+
+# Создаем инлайн-администратора для Client
+class ClientInline(admin.StackedInline):
+    model = Client
+    can_delete = False
+    verbose_name_plural = 'Клиенты'
+    fields = ('birth_date', 'phone', 'address')
+
+# Расширяем стандартного UserAdmin
+class CustomUserAdmin(UserAdmin):
+    inlines = (ProfileInline, ClientInline)
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
+    list_filter = ('is_staff', 'is_superuser', 'is_active')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+
+# Перерегистрируем модель User
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
+
+# Регистрируем модели напрямую
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'phone')
+    search_fields = ('user__username', 'phone')
+    list_filter = ('role',)
+
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone', 'birth_date')
+    search_fields = ('user__username', 'phone')
 @admin.register(PromoCode)
 class PromoCodeAdmin(admin.ModelAdmin):
     form = PromoCodeForm
