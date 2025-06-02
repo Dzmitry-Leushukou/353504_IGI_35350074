@@ -20,6 +20,110 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib.auth.views import LogoutView
+from .models import Review
+from .forms import ReviewForm   
+
+
+class ReviewView(LoginRequiredMixin, View):
+    template_list = 'cinema/reviews.html'
+    template_form = 'cinema/review_form.html'
+    template_confirm = 'cinema/review_confirm_delete.html'
+    
+    def get(self, request, *args, **kwargs):
+        # Определяем действие по имени URL
+        if request.resolver_match.url_name == 'add_review':
+            return self.add_review(request)
+        elif request.resolver_match.url_name == 'edit_review':
+            return self.edit_review(request)
+        elif request.resolver_match.url_name == 'delete_review':
+            return self.confirm_delete_review(request)
+        else:
+            return self.list_reviews(request)
+    
+    def post(self, request, *args, **kwargs):
+        # Определяем действие по имени URL
+        if request.resolver_match.url_name == 'add_review':
+            return self.create_review(request)
+        elif request.resolver_match.url_name == 'edit_review':
+            return self.update_review(request)
+        elif request.resolver_match.url_name == 'delete_review':
+            return self.delete_review(request)
+        else:
+            return self.list_reviews(request)
+    
+    def list_reviews(self, request):
+        reviews = Review.objects.select_related('user').all().order_by('-created_at')
+        user_review = Review.objects.filter(user=request.user).first() if request.user.is_authenticated else None
+        
+        return render(request, self.template_list, {
+            'reviews': reviews,
+            'user_review': user_review
+        })
+    
+    def add_review(self, request):
+        if Review.objects.filter(user=request.user).exists():
+            messages.warning(request, 'Вы уже оставили отзыв')
+            return redirect('cinema:reviews')
+        
+        form = ReviewForm()
+        return render(request, self.template_form, {
+            'form': form,
+            'title': 'Добавить отзыв',
+            'submit_text': 'Отправить отзыв'
+        })
+    
+    def create_review(self, request):
+        if Review.objects.filter(user=request.user).exists():
+            messages.warning(request, 'Вы уже оставили отзыв')
+            return redirect('cinema:reviews')
+        
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.user = request.user
+            review.save()
+            messages.success(request, 'Спасибо за ваш отзыв!')
+            return redirect('cinema:reviews')
+        
+        return render(request, self.template_form, {
+            'form': form,
+            'title': 'Добавить отзыв',
+            'submit_text': 'Отправить отзыв'
+        })
+    
+    def edit_review(self, request):
+        review = get_object_or_404(Review, user=request.user)
+        form = ReviewForm(instance=review)
+        return render(request, self.template_form, {
+            'form': form,
+            'title': 'Редактировать отзыв',
+            'submit_text': 'Обновить отзыв'
+        })
+    
+    def update_review(self, request):
+        review = get_object_or_404(Review, user=request.user)
+        form = ReviewForm(request.POST, instance=review)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Ваш отзыв успешно обновлён')
+            return redirect('cinema:reviews')
+        
+        return render(request, self.template_form, {
+            'form': form,
+            'title': 'Редактировать отзыв',
+            'submit_text': 'Обновить отзыв'
+        })
+    
+    def confirm_delete_review(self, request):
+        review = get_object_or_404(Review, user=request.user)
+        return render(request, self.template_confirm, {'review': review})
+    
+    def delete_review(self, request):
+        review = get_object_or_404(Review, user=request.user)
+        review.delete()
+        messages.success(request, 'Ваш отзыв удалён')
+        return redirect('cinema:reviews')
 
 class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('cinema:login')

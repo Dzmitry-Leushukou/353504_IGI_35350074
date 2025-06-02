@@ -1,0 +1,127 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .review-form-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #1a1a1a;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .review-form-title {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #e50914;
+    }
+    
+    .review-form .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .review-form label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ddd;
+    }
+    
+    .review-form textarea {
+        width: 100%;
+        padding: 12px;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 16px;
+        min-height: 150px;
+    }
+    
+    .review-form textarea:focus {
+        border-color: #e50914;
+        outline: none;
+    }
+    
+    .rating-choices {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+        justify-content: center;
+    }
+    
+    .rating-choice {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .rating-choice input[type="radio"] {
+        margin-top: 5px;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        padding: 12px;
+        background: #e50914;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 20px;
+    }
+    
+    .btn-submit:hover {
+        background: #c40811;
+    }
+    
+    .rating-star {
+        color: #ffd700;
+        font-size: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="review-form-container">
+    <h2 class="review-form-title">{{ title }}</h2>
+    
+    <form method="post" class="review-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_text">Ваш отзыв:</label>
+            {{ form.text }}
+            {% if form.text.errors %}
+                <div class="error">{{ form.text.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label>Ваша оценка:</label>
+            <div class="rating-choices">
+                {% for choice in form.rating %}
+                    <div class="rating-choice">
+                        {{ choice.tag }}
+                        <label for="{{ choice.id_for_label }}">
+                            <div class="rating-star">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>{{ choice.choice_label }}</div>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if form.rating.errors %}
+                <div class="error">{{ form.rating.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn-submit">{{ submit_text }}</button>
+    </form>
+</div>
+{% endblock %}

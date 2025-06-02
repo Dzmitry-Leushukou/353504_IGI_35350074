@@ -13,6 +13,53 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 
+class Review(models.Model):
+    RATING_CHOICES = [
+        (1, '1 звезда'),
+        (2, '2 звезды'),
+        (3, '3 звезды'),
+        (4, '4 звезды'),
+        (5, '5 звёзд'),
+    ]
+    
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name="Пользователь"
+    )
+    text = models.TextField(
+        max_length=2000,
+        verbose_name="Текст отзыва"
+    )
+    rating = models.PositiveSmallIntegerField(
+        choices=RATING_CHOICES,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name="Оценка"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата создания"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата обновления"
+    )
+
+    class Meta:
+        verbose_name = "Отзыв"
+        verbose_name_plural = "Отзывы"
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                name='one_review_per_user'
+            )
+        ]
+
+    def __str__(self):
+        return f"Отзыв от {self.user.username} ({self.created_at.date()})"
+
 def calculate_age(birth_date):
     today = timezone.now().date()
     return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))

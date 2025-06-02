@@ -5,7 +5,24 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from datetime import date
 import re
+from .models import Review
 
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = ['text', 'rating']
+        widgets = {
+            'text': forms.Textarea(attrs={
+                'rows': 5,
+                'placeholder': 'Напишите ваш отзыв о кинотеатре...'
+            }),
+            'rating': forms.RadioSelect(choices=Review.RATING_CHOICES)
+        }
+        labels = {
+            'text': 'Ваш отзыв',
+            'rating': 'Ваша оценка'
+        }
+        
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'Введите пароль'}),
