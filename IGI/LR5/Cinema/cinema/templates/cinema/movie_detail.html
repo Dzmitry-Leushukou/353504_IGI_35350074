@@ -1,0 +1,189 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-xxl py-5">
+    <!-- Хедер фильма -->
+    <div class="movie-header mb-5">
+        <div class="row align-items-center g-5">
+            <!-- Постер -->
+            <div class="col-md-4 col-lg-3">
+                <div class="poster-wrapper rounded-4 overflow-hidden shadow-lg">
+                    <img src="{{ movie.poster.url }}" 
+                         class="img-fluid" 
+                         alt="{{ movie.title }}"
+                         loading="lazy">
+                </div>
+            </div>
+
+            <!-- Основная информация -->
+            <div class="col-md-8 col-lg-9">
+                <div class="d-flex flex-column gap-3">
+                    <h1 class="display-3 fw-bold text-dark">{{ movie.title }}</h1>
+                    
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="age-badge bg-danger text-white px-3 py-2 rounded-pill">
+                            {{ movie.age_limit }}
+                        </div>
+                        <div class="text-muted fs-5">
+                            {{ movie.release_date|date:"Y" }} • {{ movie.duration }} мин.
+                        </div>
+                        <div class="rating-badge bg-warning text-dark px-3 py-2 rounded-pill">
+                            ★ {{ movie.rating }}/10
+                        </div>
+                    </div>
+
+                    <div class="genre-list d-flex gap-2 flex-wrap">
+                        {% for genre in movie.genres.all %}
+                        <span class="badge bg-primary bg-opacity-25 text-primary py-2 px-3">
+                            {{ genre.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детали фильма -->
+    <div class="movie-details mb-5">
+        <div class="row g-5">
+            <!-- Описание -->
+            <div class="col-lg-8">
+                <div class="card border-0 bg-light rounded-4 p-4">
+                    <h3 class="mb-4"><i class="bi bi-file-text me-2"></i>Описание</h3>
+                    <p class="lead text-secondary lh-lg mb-0">{{ movie.description }}</p>
+                </div>
+            </div>
+
+            <!-- Технические детали -->
+            <div class="col-lg-4">
+                <div class="card border-0 bg-light rounded-4 p-4">
+                    <h3 class="mb-4"><i class="bi bi-info-circle me-2"></i>Детали</h3>
+                    <dl class="row g-3">
+                        <dt class="col-5 text-muted">Страна</dt>
+                        <dd class="col-7 fw-bold">{{ movie.country }}</dd>
+
+                        <dt class="col-5 text-muted">Бюджет</dt>
+                        <dd class="col-7 fw-bold">
+                            {% if movie.budget %}
+                                ${{ movie.budget|floatformat:"0" }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-5 text-muted">Премьера</dt>
+                        <dd class="col-7 fw-bold">{{ movie.release_date|date:"d.m.Y" }}</dd>
+
+                        <dt class="col-5 text-muted">В кинотеатре</dt>
+                        <dd class="col-7 fw-bold text-success">Сейчас в прокате</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сеансы -->
+    <section class="sessions mb-5">
+        <h2 class="mb-4"><i class="bi bi-calendar2-event me-2"></i>Расписание сеансов</h2>
+        
+        <div class="row g-4">
+            {% for session in sessions %}
+            <div class="col-12">
+                <div class="session-card card border-0 p-4 rounded-4 shadow-hover">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="text-primary fs-2 fw-bold">
+                                    {{ session.start_time|date:"H:i" }}
+                                </div>
+                                <div class="text-muted">
+                                    {{ session.start_time|date:"d M" }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-door-open fs-4 text-primary"></i>
+                                <div>
+                                    <div class="fw-bold">Зал {{ session.hall.number }}</div>
+                                    <small class="text-muted">{{ session.hall.get_hall_type_display }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="price fs-4 fw-bold text-success">
+                                    {{ session.price }} ₽
+                                </div>
+                                <a href="{% url 'cinema:seat_selection' session.id %}" 
+                                   class="btn btn-primary px-4 rounded-pill">
+                                    Выбрать
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info rounded-4">
+                    <i class="bi bi-info-circle me-2"></i>Нет доступных сеансов
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+<style>
+    .poster-wrapper {
+        aspect-ratio: 2/3;
+        background: #f8f9fa;
+    }
+
+    .shadow-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+
+    .shadow-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+
+    .age-badge {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .rating-badge {
+        font-weight: 500;
+        background: rgba(255, 193, 7, 0.15);
+    }
+
+    .session-card {
+        transition: all 0.2s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .review-card .avatar div {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+        .display-3 {
+            font-size: 2.5rem;
+        }
+        
+        .movie-header .genre-list {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}

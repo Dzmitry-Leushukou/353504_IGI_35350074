@@ -1,0 +1,18 @@
+{% extends 'cinema/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  {% if company_info %}
+    <div class="company-content">
+      {{ company_info.content|linebreaks }}
+    </div>
+    <div class="text-muted mt-3">
+      <small>Обновлено: {{ company_info.updated_at|date:"d.m.Y H:i" }}</small>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      Информация о компании пока не добавлена
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

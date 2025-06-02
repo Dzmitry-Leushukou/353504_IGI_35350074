@@ -1,20 +1,54 @@
 from django.contrib import admin
-from .models import Genre, Hall, Movie, Session, PromoCode, Ticket
+from .models import Genre, Hall, Movie, Session, Ticket, Employee, News, Vacancy, FAQ, Contact, About
+
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'position', 'phone')
+    list_filter = ('position',)
+    search_fields = ('user__username', 'phone')
+
+@admin.register(News)
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ('title', 'publish_date', 'is_published')
+    list_filter = ('is_published', 'publish_date')
+    search_fields = ('title', 'summary')
+    prepopulated_fields = {'summary': ('title',)}
+
+@admin.register(Vacancy)
+class VacancyAdmin(admin.ModelAdmin):
+    list_display = ('title', 'salary', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'description')
+
+@admin.register(About)
+class CompanyInfoAdmin(admin.ModelAdmin):
+    list_display = ('updated_at', 'content_preview')
+    fields = ('content',)
+    
+    def content_preview(self, obj):
+        return obj.content[:100] + '...' if len(obj.content) > 100 else obj.content
+    content_preview.short_description = "Текст (предпросмотр)"
+    
+    def has_add_permission(self, request):
+        return not About.objects.exists()
+
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ('question', 'created_at')
+    search_fields = ('question', 'answer')
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ('company_name', 'phone', 'email')
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
     list_display = ('movie', 'hall', 'start_time', 'end_time', 'price')
     list_filter = ('hall', 'start_time')
     search_fields = ('movie__title', 'hall__number')
-    readonly_fields = ('end_time',)  # Запрещаем ручное редактирование
+    readonly_fields = ('end_time',) 
     date_hierarchy = 'start_time'
-
-@admin.register(PromoCode)
-class PromoCodeAdmin(admin.ModelAdmin):
-    list_display = ('code', 'discount_type', 'discount_value', 'is_active', 'used_count')
-    list_editable = ('is_active',)
-    list_filter = ('discount_type', 'is_active')
-    search_fields = ('code',)
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):

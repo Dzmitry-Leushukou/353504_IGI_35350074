@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Кинотеатр{% endblock %}</title>
+    {% load static %}  
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" 
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<style>
+    body {
+        background: #0a0a0a;
+        color: #e0e0e0;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Arial', sans-serif;
+    }
+
+    main {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        background: transparent;
+    }
+
+    header, footer {
+        background: #111111;
+        border-color: #2a2a2a;
+    }
+
+    footer {
+        padding: 30px;
+        text-align: center;
+        margin-top: 50px;
+        border-top: 1px solid #333;
+    }
+</style>
+<body class="{% block body_class %}{% endblock %}">
+    <header>
+        <nav>
+            <a href="{% url 'cinema:home' %}">Главная</a>
+            <a href="{% url 'cinema:news_list' %}">Новости</a>
+            <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
+            {% if user.is_authenticated %}
+            Мои билеты
+            
+            <a href="{% url 'cinema:movie_list' %}">Отзывы</a>
+            <a href="{% url 'cinema:movie_list' %}">FAQ</a>
+            <a href="{% url 'cinema:about' %}">О нас</a>
+            {% endif %}
+        </nav>
+    </header>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2024 Кинотеатр</p>
+    </footer>
+</body>
+</html>
