@@ -5,6 +5,7 @@
 <div class="container-xxl py-5">
   <div class="row justify-content-center">
     <div class="col-lg-8">
+        
       <h2 class="mb-4">Покупка билета</h2>
       <div class="card border-0 bg-light rounded-4 p-4 shadow-sm mb-5">
         <div class="row mb-4">
@@ -16,9 +17,9 @@
           <div class="col-md-8">
             <h3 class="fw-bold">{{ session.movie.title }}</h3>
             <p class="text-muted mb-1">
-              Зал {{ session.hall.number }} ({{ session.hall.get_hall_type_display }})<br>
-              Время: {{ session.start_time|date:"d.m.Y H:i" }}
-            </p>
+  Зал {{ session.hall.number }} ({{ session.hall.get_hall_type_display }})<br>
+  Время: {{ session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }})
+</p>
             <p class="text-secondary mb-1">
               Базовая цена: <strong>{{ base_price }} ₽</strong>
             </p>

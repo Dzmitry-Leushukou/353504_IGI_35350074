@@ -33,6 +33,9 @@ from django.views.generic import TemplateView
 from django.db.models import Sum, Count, F
 from django.db.models.functions import TruncDate
 import requests
+import calendar
+from datetime import datetime
+
 
 def calculate_age(birth_date):
     today = timezone.now().date()
@@ -214,6 +217,7 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         buffer.close()
         return base64.b64encode(image_png).decode('utf-8')
     
+
 class TicketPurchaseView(UserPassesTestMixin, View):
     login_url = 'cinema:login'
 
@@ -223,58 +227,103 @@ class TicketPurchaseView(UserPassesTestMixin, View):
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            messages.error(self.request, 'Только обычные зарегистрированные пользователи могут покупать билеты.')
+            messages.error(
+                self.request,
+                'Только обычные зарегистрированные пользователи могут покупать билеты.'
+            )
             return redirect('cinema:home')
         return super().handle_no_permission()
+
+    def get_context_data(self, **kwargs):
+        """
+        Собирает все общие переменные для контекста:
+         - название часового пояса пользователя
+         - текущую дату/время в UTC и в локальном часовом поясе
+         - смещение UTC (например, 'UTC+03:00')
+         - текстовый календарь текущего месяца в часовом поясе пользователя
+        Принимает любые дополнительные ключи через kwargs и добавляет их в результат.
+        """
+        # 1. Получаем текущее время в UTC и локальный часовой пояс
+        now_utc = timezone.now()  # хранится в UTC, так как USE_TZ=True
+        user_tz = timezone.get_current_timezone()
+        now_local = timezone.localtime(now_utc, user_tz)
+
+        # 2. Форматируем смещение UTC типа 'UTC+03:00' или 'UTC-05:00'
+        offset = now_local.utcoffset() or timezone.timedelta(0)
+        total_minutes = offset.total_seconds() / 60
+        sign = '+' if total_minutes >= 0 else '-'
+        hours_offset = int(abs(total_minutes) // 60)
+        minutes_offset = int(abs(total_minutes) % 60)
+        utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
+
+        # 3. Собираем текстовый календарь для текущего месяца в локальном часовом поясе
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(
+            now_local.year,
+            now_local.month
+        )
+
+        # 4. Собираем базовый контекст
+        context = {
+            'user_timezone': str(user_tz),
+            'timezone_name': str(user_tz),
+            # формируем строки вида '03.06.2025 14:25'
+            'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
+            'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
+            'user_tz_offset': utc_offset_str,
+            'calendar_text': calendar_text,
+        }
+
+        # 5. Если в kwargs переданы дополнительные данные (form, session и т.п.), добавляем их
+        context.update(kwargs)
+        return context
 
     def get(self, request, session_id):
         session = get_object_or_404(Session, pk=session_id)
 
-        # Если сеанс уже в прошлом
+        # Нельзя покупать билет на сеанс в прошлом
         if session.start_time < timezone.now():
             messages.error(request, 'Нельзя купить билет на прошедший сеанс.')
             return redirect('cinema:home')
 
         form = TicketPurchaseForm(session=session)
+        # Если нет свободных мест, перенаправляем
         if not form.fields['seat_number'].choices:
             messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
             return redirect('cinema:home')
 
-    
-        context = {
-            'form': form,
-            'session': session,
-            'base_price': session.price,
-            'discounted_price': None,
-            'promo_used': None,
-        }
+        # Собираем контекст, передаём форму, сеанс и цены
+        context = self.get_context_data(
+            form=form,
+            session=session,
+            base_price=session.price,
+            discounted_price=None,
+            promo_used=None
+        )
         return render(request, 'cinema/buy_ticket.html', context)
 
     def post(self, request, session_id):
         session = get_object_or_404(Session, pk=session_id)
         form = TicketPurchaseForm(request.POST, session=session)
 
-        # Ещё раз проверяем, что есть свободные места
         if not form.fields['seat_number'].choices:
             messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
             return redirect('cinema:home')
 
-        context = {
-            'form': form,
-            'session': session,
-            'base_price': session.price,
-            'discounted_price': None,
-            'promo_used': None,
+        # ВНИМАНИЕ: здесь не передаём request первым аргументом
+        context = self.get_context_data(
+            form=form,
+            session=session,
+            base_price=session.price,
+            discounted_price=None,
+            promo_used=None
+        )
 
-        }
-
-    
         if form.is_valid():
             seat = form.cleaned_data['seat_number']
-            promo_obj = form.cleaned_data.get('promo_code')  # либо None, либо экземпляр PromoCode
-
+            promo_obj = form.cleaned_data.get('promo_code')
             base_price = session.price
             final_price = base_price
+
             if promo_obj:
                 discount_percent = promo_obj.discount
                 discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'))
@@ -299,7 +348,8 @@ class TicketPurchaseView(UserPassesTestMixin, View):
             except ValidationError as e:
                 form.add_error(None, e.messages)
 
-        # Если форма невалидна, снова рендерим с возможными ошибками и погодой
+        # Если форма не прошла валидацию, но при этом промокод был введён,
+        # рассчитываем цену снова, чтобы вывести в шаблоне
         if form.cleaned_data.get('promo_code'):
             promo_obj = form.cleaned_data.get('promo_code')
             if promo_obj and promo_obj.status == promo_obj.Status.ACTIVE:
@@ -312,7 +362,6 @@ class TicketPurchaseView(UserPassesTestMixin, View):
 
         return render(request, 'cinema/buy_ticket.html', context)
 
-
 class MyTicketsView(LoginRequiredMixin, ListView):
     template_name = 'cinema/my_tickets.html'
     context_object_name = 'tickets'
@@ -323,6 +372,32 @@ class MyTicketsView(LoginRequiredMixin, ListView):
         return Ticket.objects.filter(user=self.request.user) \
             .select_related('session__movie', 'session__hall') \
             .order_by('-purchase_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_tz = timezone.get_current_timezone()
+
+        now_utc = timezone.now()
+        now_local = timezone.localtime(now_utc, timezone=user_tz)
+
+        offset = now_local.utcoffset()
+        total_minutes = offset.total_seconds() / 60
+        sign = '+' if total_minutes >= 0 else '-'
+        hours_offset = int(abs(total_minutes) // 60)
+        minutes_offset = int(abs(total_minutes) % 60)
+        utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
+
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(now_local.year, now_local.month)
+
+        context.update({
+            'user_timezone': str(user_tz),
+            'timezone_name': str(user_tz),  
+            'user_tz_offset': utc_offset_str,
+            'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
+            'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
+            'calendar_text': calendar_text,
+        })
+        return context
 
 
 
@@ -584,7 +659,12 @@ class MovieDetailView(DetailView):
         context['sessions'] = self.object.sessions.filter(
             start_time__gte=current_time
         ).order_by('start_time')
+        now_utc = timezone.now()  # хранится в UTC, так как USE_TZ=True
+        user_tz = timezone.get_current_timezone()
+        now_local = timezone.localtime(now_utc, user_tz)
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(now_local.year, now_local.month)
         context['current_time'] = current_time
+        context['calendar_text'] = calendar_text
         
         return context
     

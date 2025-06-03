@@ -105,15 +105,24 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
+USE_TZ = True
 TIME_ZONE = 'UTC'
 
-USE_I18N = True
-
-USE_TZ = True
-
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        # Можно добавить другие, например JWT
+    ],
+}
 LOGIN_URL = 'cinema:login'
 LOGIN_REDIRECT_URL = 'cinema:home'
 LOGOUT_REDIRECT_URL = 'cinema:login'
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

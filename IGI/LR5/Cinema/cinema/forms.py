@@ -117,10 +117,13 @@ class UserRegistrationForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'placeholder': '+375 (29) XXX-XX-XX'})
     )
     birth_date = forms.DateField(
-        label='Дата рождения',
-        widget=forms.DateInput(attrs={'type': 'date'})
+    label='Дата рождения',
+    input_formats=['%d/%m/%Y'],  # формат ввода
+    widget=forms.DateInput(
+        format='%d/%m/%Y',  # формат отображения
+        attrs={'placeholder': 'ДД/ММ/ГГГГ', 'type': 'text'}
     )
-
+)
     class Meta:
         model = User
         fields = ['username', 'email']

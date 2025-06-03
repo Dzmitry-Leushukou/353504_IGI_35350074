@@ -1,10 +1,15 @@
 {% extends 'cinema/base.html' %}
 {% load static %}
+{% load tz %}
 
 {% block content %}
 <div class="container-xxl py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
+            <h3>Календарь на текущий месяц</h3>
+<pre style="font-family: monospace;  padding: 10px;">
+{{ calendar_text }}
+</pre>
             <h2 class="mb-4">Мои билеты</h2>
 
             {% if tickets %}
@@ -21,16 +26,16 @@
                         <div class="col-md-8">
                             <h5 class="mb-1">{{ ticket.session.movie.title }}</h5>
                             <small class="text-muted">
-                                {{ ticket.session.start_time|date:"d.m.Y H:i" }} —
-                                Зал {{ ticket.session.hall.number }} ({{ ticket.session.hall.get_hall_type_display }})
-                            </small>
+  {{ ticket.session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }}) —
+  Зал {{ ticket.session.hall.number }} ({{ ticket.session.hall.get_hall_type_display }})
+</small>
                             <p class="mb-1">Место: <strong>{{ ticket.seat_number }}</strong></p>
                             <p class="mb-0">Цена: {{ ticket.final_price }} ₽</p>
                         </div>
                         <div class="col-md-2 text-end d-flex flex-column justify-content-center">
-                            <small class="text-muted">
-                                Куплен: {{ ticket.purchase_date|date:"d.m.Y H:i" }}
-                            </small>
+                           <small class="text-muted">
+  Куплен: {{ ticket.purchase_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
+</small>
                         </div>
                     </div>
                 </div>
