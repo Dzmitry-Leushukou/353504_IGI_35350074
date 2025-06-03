@@ -4,8 +4,26 @@
 {% block content %}
 <section class="now-playing">
     <div class="container">
+
+        {# 1. Случайная цитата #}
+       {% if quote_text %}
+    <div style="margin-bottom: 20px; text-align: center; color: #ccc;">
+        <p style="font-size: 1.2rem; font-style: italic;">“{{ quote_text }}”</p>
+        {% if quote_author %}
+            <p style="margin-top: 5px; font-size: 1rem; color: #999;">— {{ quote_author }}</p>
+        {% endif %}
+    </div>
+{% endif %}
+        {# 4. Погода в Москве #}
+        {% if weather_info %}
+        <div class="alert alert-secondary mb-4" role="alert">
+            <i class="bi bi-cloud-sun-fill me-2"></i>
+            Погода в Минске: <strong>{{ weather_info }}</strong>
+        </div>
+        {% endif %}
+
+        {# 5. Сетка фильмов «Сейчас в прокате» #}
         <h2 class="section-title">Сейчас в прокате</h2>
-        
         <div class="movies-grid">
             {% for movie in active_movies %}
             <a href="{% url 'cinema:movie_detail' movie.pk %}" class="movie-card-link">
@@ -19,12 +37,13 @@
                             </span>
                         </div>
                     </div>
-                    
                     <div class="movie-info">
                         <h3 class="movie-title">{{ movie.title }}</h3>
                         <div class="movie-meta">
                             <span class="rating"><i class="fas fa-star"></i> {{ movie.rating }}/10</span>
-                            <span class="genre">{{ movie.genres.first.name }}</span>
+                            {% if movie.genres.all %}
+                            <span class="genre">{{ movie.genres.all.0.name }}</span>
+                            {% endif %}
                         </div>
                         <p class="movie-description">{{ movie.description|truncatewords:20 }}</p>
                     </div>
@@ -32,6 +51,7 @@
             </a>
             {% endfor %}
         </div>
+
     </div>
 </section>
 {% endblock %}
@@ -70,7 +90,7 @@
 
     .movie-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 10px 30px rgba(0, 173, 181, 0.2);
+        box-shadow: 0 10px 30px rgba(0,173,181,0.2);
     }
 
     .movie-poster {
@@ -169,7 +189,6 @@
         .movies-grid {
             grid-template-columns: 1fr;
         }
-        
         .section-title {
             font-size: 2rem;
         }

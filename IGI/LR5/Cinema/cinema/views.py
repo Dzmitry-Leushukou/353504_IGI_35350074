@@ -32,6 +32,7 @@ import matplotlib.pyplot as plt
 from django.views.generic import TemplateView
 from django.db.models import Sum, Count, F
 from django.db.models.functions import TruncDate
+import requests
 
 def calculate_age(birth_date):
     today = timezone.now().date()
@@ -212,11 +213,8 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         image_png = buffer.getvalue()
         buffer.close()
         return base64.b64encode(image_png).decode('utf-8')
+    
 class TicketPurchaseView(UserPassesTestMixin, View):
-    """
-    Позволяет пользователю (не staff и не superuser) купить билет на выбранный сеанс,
-    при этом можно ввести промокод для скидки.
-    """
     login_url = 'cinema:login'
 
     def test_func(self):
@@ -232,7 +230,7 @@ class TicketPurchaseView(UserPassesTestMixin, View):
     def get(self, request, session_id):
         session = get_object_or_404(Session, pk=session_id)
 
-        # Нельзя купить билет, если сеанс в прошлом
+        # Если сеанс уже в прошлом
         if session.start_time < timezone.now():
             messages.error(request, 'Нельзя купить билет на прошедший сеанс.')
             return redirect('cinema:home')
@@ -242,12 +240,11 @@ class TicketPurchaseView(UserPassesTestMixin, View):
             messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
             return redirect('cinema:home')
 
-        # При первом показе формы показываем базовую цену без скидки
-        base_price = session.price
+    
         context = {
             'form': form,
             'session': session,
-            'base_price': base_price,
+            'base_price': session.price,
             'discounted_price': None,
             'promo_used': None,
         }
@@ -257,7 +254,7 @@ class TicketPurchaseView(UserPassesTestMixin, View):
         session = get_object_or_404(Session, pk=session_id)
         form = TicketPurchaseForm(request.POST, session=session)
 
-        # Если нет свободных мест — редиректим (как в GET)
+        # Ещё раз проверяем, что есть свободные места
         if not form.fields['seat_number'].choices:
             messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
             return redirect('cinema:home')
@@ -268,24 +265,23 @@ class TicketPurchaseView(UserPassesTestMixin, View):
             'base_price': session.price,
             'discounted_price': None,
             'promo_used': None,
+
         }
 
+    
         if form.is_valid():
             seat = form.cleaned_data['seat_number']
             promo_obj = form.cleaned_data.get('promo_code')  # либо None, либо экземпляр PromoCode
 
-            # Рассчитываем итоговую цену
             base_price = session.price
             final_price = base_price
             if promo_obj:
-                # Скидка в процентах
                 discount_percent = promo_obj.discount
-                discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                final_price = (base_price - discounted_amount).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'))
+                final_price = (base_price - discounted_amount).quantize(Decimal('0.01'))
                 context['discounted_price'] = final_price
                 context['promo_used'] = promo_obj.code
 
-            # Создаём билет
             ticket = Ticket(
                 user=request.user,
                 session=session,
@@ -295,28 +291,22 @@ class TicketPurchaseView(UserPassesTestMixin, View):
             try:
                 ticket.full_clean()
                 ticket.save()
-
-                # Если был использован промокод — увеличиваем used_count и сохраняем PromoCode
                 if promo_obj:
                     promo_obj.used_count += 1
                     promo_obj.save()
-
                 messages.success(request, f'Билет успешно куплен! Место №{seat}.')
                 return redirect('cinema:my_tickets')
-
             except ValidationError as e:
-                # Если возникли ошибки (например, возраст, место занято и т.д.)
                 form.add_error(None, e.messages)
 
-        # Если форма невалидна или была ошибка, нужно перерисовать с учётом введённого промокода:
-        # чтобы показать пользователю итоговую цену со скидкой, если промокод валиден и форма прошла clean.
+        # Если форма невалидна, снова рендерим с возможными ошибками и погодой
         if form.cleaned_data.get('promo_code'):
             promo_obj = form.cleaned_data.get('promo_code')
             if promo_obj and promo_obj.status == promo_obj.Status.ACTIVE:
                 base_price = session.price
                 discount_percent = promo_obj.discount
-                discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
-                final_price = (base_price - discounted_amount).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'))
+                final_price = (base_price - discounted_amount).quantize(Decimal('0.01'))
                 context['discounted_price'] = final_price
                 context['promo_used'] = promo_obj.code
 
@@ -619,12 +609,41 @@ class MovieListView(ListView):
 
 class HomeView(View):
     def get(self, request):
-        latest_news = News.objects.filter(is_published=True).order_by('-publish_date')[:1]
-        latest_movie = Movie.objects.order_by('-release_date').first()
-        
+        quote_text, quote_author = "", ""
+        try:
+            response = requests.get("https://zenquotes.io/api/random", timeout=5)
+            data = response.json()
+            quote_text = data[0]["q"]
+            quote_author = data[0]["a"]
+        except Exception as e:
+            print("Ошибка при запросе цитаты:", e)
+            quote_text = "Не удалось загрузить цитату."
+            quote_author = ""
+
+        weather_info = ""
+        try:
+            response = requests.get(
+                "https://api.open-meteo.com/v1/forecast?latitude=53.9&longitude=27.5667&current_weather=true",
+                timeout=5
+            )
+            data = response.json()
+            temp = data["current_weather"]["temperature"]
+            wind = data["current_weather"]["windspeed"]
+            weather_info = f"Температура: {temp}°C, Ветер: {wind} км/ч"
+        except Exception as e:
+            print("Ошибка при запросе погоды:", e)
+            weather_info = "Погода временно недоступна."
+
+        active_movies = Movie.objects.filter(
+            sessions__start_time__gte=timezone.now()
+        ).distinct()
+
         context = {
-            'latest_news': latest_news[0] if latest_news else None,
-            'latest_movie': latest_movie
+
+            'quote_text': quote_text,
+            'quote_author': quote_author,
+            'weather_info': weather_info,
+            'active_movies': active_movies,
         }
         return render(request, 'cinema/home.html', context)
       
@@ -647,9 +666,3 @@ class NewsListView(ListView):
     def get_queryset(self):
         return News.objects.filter(is_published=True).order_by('-publish_date')
     
-class HomeView(View):
-    def get(self, request):
-        active_movies = Movie.objects.filter(
-            sessions__start_time__gte=timezone.now()
-        ).distinct()
-        return render(request, 'cinema/home.html', {'active_movies': active_movies})
