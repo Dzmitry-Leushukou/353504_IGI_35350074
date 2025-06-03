@@ -47,15 +47,23 @@
                 <a href="{% url 'cinema:news_list' %}">Новости</a>
                 <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
                 <a href="{% url 'cinema:promo_codes' %}">Промокоды</a>
-                {% if user.is_authenticated %}
-                    <a href="#">Мои билеты</a>
-                {% endif %}
+                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+
+        <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
+    
+    {% endif %}
                 <a href="{% url 'cinema:reviews' %}">Отзывы</a>
                 <a href="{% url 'cinema:faq' %}">FAQ</a>
                 <a href="{% url 'cinema:vacancy_list' %}">Вакансии</a>
                 <a href="{% url 'cinema:contacts' %}">Контакты</a>
                 <a href="{% url 'cinema:privacy_policy' %}">Политика конфиденциальности</a>
                 <a href="{% url 'cinema:about' %}">О нас</a>
+
+                {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser %}
+           
+              <a class="nav-link" href="{% url 'cinema:statistics' %}">Статистика</a>
+            
+          {% endif %}
             </div>
             
             <div class="nav-right">
@@ -95,5 +103,15 @@
     <footer>
         <p>© 2024 Кинотеатр</p>
     </footer>
+     {% if messages %}
+<div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 </body>
 </html>

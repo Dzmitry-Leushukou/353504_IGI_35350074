@@ -5,7 +5,76 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from datetime import date
 import re
-from .models import Review
+from .models import Review, Session, PromoCode
+
+
+class TicketPurchaseForm(forms.Form):
+    """
+    Форма для покупки билета:
+    - выбор свободного места;
+    - ввод промокода (необязательно).
+    """
+    seat_number = forms.ChoiceField(
+        label="Выберите место",
+        choices=[],
+        widget=forms.RadioSelect
+    )
+    promo_code = forms.CharField(
+        label="Промокод (если есть)",
+        max_length=50,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Введите промокод'})
+    )
+
+    def __init__(self, *args, session: Session, **kwargs):
+        """
+        При инициализации обязательно передавать session (экземпляр Session),
+        чтобы сформировать список свободных мест.
+        """
+        super().__init__(*args, **kwargs)
+        self.session = session
+
+        # Генерируем список доступных мест
+        capacity = session.hall.capacity
+        occupied = set(session.get_occupied_seats())
+        choices = []
+        for num in range(1, capacity + 1):
+            if num not in occupied:
+                choices.append((str(num), f"Место {num}"))
+        self.fields['seat_number'].choices = choices
+
+    def clean_seat_number(self):
+        seat = self.cleaned_data.get('seat_number')
+        if seat is None:
+            raise ValidationError("Выберите, пожалуйста, место.")
+        seat = int(seat)
+        if not self.session.is_seat_available(seat):
+            raise ValidationError("Данное место уже занято.")
+        return seat
+
+    def clean_promo_code(self):
+        code = self.cleaned_data.get('promo_code', '').strip()
+        if not code:
+            return None  # промокод не указан
+        try:
+            promo = PromoCode.objects.get(code__iexact=code)
+        except PromoCode.DoesNotExist:
+            raise ValidationError("Промокод не найден.")
+        # Проверяем статус промокода
+        if promo.status != PromoCode.Status.ACTIVE:
+            # Если статус не ACTIVE, отдаём разные сообщения
+            if promo.status == PromoCode.Status.INACTIVE:
+                raise ValidationError("Промокод неактивен.")
+            if promo.status == PromoCode.Status.USED:
+                raise ValidationError("Этот промокод уже использован максимально допустимое число раз.")
+            if promo.status == PromoCode.Status.EXPIRED:
+                raise ValidationError("Срок действия промокода истёк.")
+            if promo.status == PromoCode.Status.PENDING:
+                raise ValidationError("Промокод ещё не активен.")
+            # В остальных случаях общее сообщение
+            raise ValidationError("Невалидный промокод.")
+        # Всё хорошо — возвращаем сам объект промокода, чтобы использовать его в представлении
+        return promo
 
 class ReviewForm(forms.ModelForm):
     class Meta:

@@ -26,4 +26,7 @@ urlpatterns = [
     path('reviews/add/', views.ReviewView.as_view(), name='add_review'),
     path('reviews/edit/', views.ReviewView.as_view(), name='edit_review'),
     path('reviews/delete/', views.ReviewView.as_view(), name='delete_review'),
+    path('session/<int:session_id>/buy/', views.TicketPurchaseView.as_view(), name='buy_ticket'),
+    path('my-tickets/', views.MyTicketsView.as_view(), name='my_tickets'),
+    path('statistics/', views.StatisticsView.as_view(), name='statistics'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

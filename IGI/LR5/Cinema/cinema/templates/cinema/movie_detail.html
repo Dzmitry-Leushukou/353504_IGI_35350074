@@ -90,48 +90,45 @@
         
         <div class="row g-4">
             {% for session in sessions %}
-            <div class="col-12">
-                <div class="session-card card border-0 p-4 rounded-4 shadow-hover">
-                    <div class="row align-items-center">
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="text-primary fs-2 fw-bold">
-                                    {{ session.start_time|date:"H:i" }}
-                                </div>
-                                <div class="text-muted">
-                                    {{ session.start_time|date:"d M" }}
-                                </div>
-                            </div>
-                        </div>
+  <div class="session-card card border-0 p-4 rounded-4 shadow-hover mb-3">
+    <div class="row align-items-center">
+      <div class="col-md-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="text-primary fs-2 fw-bold">
+            {{ session.start_time|date:"H:i" }}
+          </div>
+          <div class="text-muted">
+            {{ session.start_time|date:"d M" }}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-door-open fs-4 text-primary"></i>
+          <div>
+            <div class="fw-bold">Зал {{ session.hall.number }}</div>
+            <small class="text-muted">{{ session.hall.get_hall_type_display }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="price fs-4 fw-bold text-success">
+            {{ session.price }} ₽
+          </div>
+          <a href="{% url 'cinema:buy_ticket' session.id %}" class="btn btn-sm btn-primary">
+            Купить билет
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <div class="alert alert-info rounded-4">
+    <i class="bi bi-info-circle me-2"></i>Нет доступных сеансов
+  </div>
+{% endfor %}
 
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <div class="d-flex align-items-center gap-3">
-                                <i class="bi bi-door-open fs-4 text-primary"></i>
-                                <div>
-                                    <div class="fw-bold">Зал {{ session.hall.number }}</div>
-                                    <small class="text-muted">{{ session.hall.get_hall_type_display }}</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="price fs-4 fw-bold text-success">
-                                    {{ session.price }} ₽
-                                </div>
-                                Выбрать
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="col-12">
-                <div class="alert alert-info rounded-4">
-                    <i class="bi bi-info-circle me-2"></i>Нет доступных сеансов
-                </div>
-            </div>
-            {% endfor %}
         </div>
     </section>
 <style>

@@ -13,6 +13,205 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 
+
+class Session(models.Model):
+    movie = models.ForeignKey(
+        'Movie',
+        on_delete=models.CASCADE,
+        related_name='sessions',
+        verbose_name="Фильм"
+    )
+    hall = models.ForeignKey(
+        'Hall',
+        on_delete=models.CASCADE,
+        related_name='sessions',
+        verbose_name="Зал"
+    )
+    start_time = models.DateTimeField(
+        verbose_name="Время начала",
+        db_index=True
+    )
+    end_time = models.DateTimeField(
+        verbose_name="Время окончания",
+        editable=False
+    )
+    price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name="Цена билета",
+        validators=[MinValueValidator(0.01)]
+    )
+    available_seats = models.PositiveIntegerField(
+        verbose_name="Свободные места",
+        default=0
+    )
+
+    class Meta:
+        verbose_name = "Сеанс"
+        verbose_name_plural = "Сеансы"
+        ordering = ['start_time']
+        indexes = [
+            models.Index(fields=['hall', 'start_time']),
+            models.Index(fields=['available_seats']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['hall', 'start_time'],
+                name='unique_session_time'
+            ),
+            models.CheckConstraint(
+                check=Q(price__gte=0),
+                name='price_positive'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.movie.title} ({self.start_time.strftime('%d.%m.%Y %H:%M')})"
+
+    def clean(self):
+        # 1) Сеанс не может начинаться в прошлом
+        if self.start_time < timezone.now():
+            raise ValidationError("Время начала сеанса не может быть в прошлом")
+
+        # 2) Считаем время окончания: длительность фильма + 30 минут на уборку
+        self.end_time = self.start_time + timezone.timedelta(
+            minutes=self.movie.duration + 30
+        )
+
+        # 3) Проверяем пересечения: если в том же зале есть перекрывающийся сеанс
+        overlapping = Session.objects.filter(
+            hall=self.hall,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time
+        ).exclude(pk=self.pk).exists()
+
+        if overlapping:
+            raise ValidationError("Зал занят в это время другим сеансом")
+
+        # 4) Проверка available_seats ≤ capacity
+        if self.available_seats > self.hall.capacity:
+            raise ValidationError("Свободных мест не может быть больше вместимости зала")
+
+    def save(self, *args, **kwargs):
+        # При сохранении сначала запускаем full_clean(), чтобы выполнить все проверки в clean()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def get_occupied_seats(self):
+        """Возвращает список занятых номеров мест (для этого сеанса)."""
+        return list(self.tickets.values_list('seat_number', flat=True))
+
+    def is_seat_available(self, seat_number):
+        """
+        Проверяет, доступно ли указанное место:
+        - номера от 1 до capacity
+        - и его нет в списке уже занятых.
+        """
+        return (
+            1 <= seat_number <= self.hall.capacity and
+            seat_number not in self.get_occupied_seats()
+        )
+
+    def update_availability(self):
+        """
+        Пересчитывает available_seats на основе вместимости зала и количества
+        уже проданных билетов для этого сеанса.
+        """
+        new_available = self.hall.capacity - self.tickets.count()
+        # Если новое значение отличается, обновляем поле
+        if self.available_seats != new_available:
+            self.available_seats = new_available
+            # Обновляем только поле available_seats, чтобы не пересохранять всё
+            self.save(update_fields=['available_seats'])
+
+
+class Ticket(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='tickets',
+        verbose_name="Пользователь"
+    )
+    session = models.ForeignKey(
+        Session,
+        on_delete=models.CASCADE,
+        related_name='tickets',
+        verbose_name="Сеанс"
+    )
+    seat_number = models.PositiveIntegerField(
+        verbose_name="Номер места"
+    )
+    purchase_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата покупки"
+    )
+    final_price = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        verbose_name="Итоговая цена",
+        validators=[MinValueValidator(0)]
+    )
+
+    class Meta:
+        verbose_name = "Билет"
+        verbose_name_plural = "Билеты"
+        ordering = ['-purchase_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session', 'seat_number'],
+                name='unique_seat_per_session'
+            )
+        ]
+
+    def __str__(self):
+        return f"Билет #{self.id} ({self.session})"
+
+    def clean(self):
+        # 1) Проверяем, чтобы номер места не превышал capacity зала
+        if self.seat_number > self.session.hall.capacity:
+            raise ValidationError(
+                f"В зале всего {self.session.hall.capacity} мест!"
+            )
+
+        # 2) Проверка: возрастное ограничение
+        # Если у пользователя есть профиль с датой рождения
+        if hasattr(self.user, 'profile') and self.user.profile.birth_date:
+            film_age_limit = self.session.movie.age_limit  # например, '16+'
+            if film_age_limit != '0+':
+                user_age = calculate_age(self.user.profile.birth_date)
+                required_age = int(film_age_limit[:-1])  # убираем '+'
+                if user_age < required_age:
+                    raise ValidationError("Возрастное ограничение не соблюдено!")
+        else:
+            # Если нет профиля или нет даты рождения, тоже запрещаем покупку
+            raise ValidationError("Профиль пользователя не заполнен")
+
+    def save(self, *args, **kwargs):
+        # Перед сохранением запускаем чистку
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+@receiver(post_save, sender=Session)
+def init_session_data(sender, instance, created, **kwargs):
+    if created:
+        # При создании нового сеанса сразу выставляем available_seats = capacity зала
+        instance.available_seats = instance.hall.capacity
+        instance.save(update_fields=['available_seats'])
+
+
+@receiver(post_save, sender=Ticket)
+def update_session_availability(sender, instance, created, **kwargs):
+    """
+    После создания нового билета пересчитываем свободные места в сеансе.
+    """
+    if created:
+        instance.session.update_availability()
+
+def calculate_age(birth_date):
+    today = timezone.now().date()
+    return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
 class Review(models.Model):
     RATING_CHOICES = [
         (1, '1 звезда'),
@@ -303,176 +502,6 @@ class Movie(models.Model):
     def __str__(self):
         return f"{self.title} ({self.release_date.year})"
     
-
-class Session(models.Model):
-    movie = models.ForeignKey(
-        Movie,
-        on_delete=models.CASCADE,
-        related_name='sessions',
-        verbose_name="Фильм"
-    )
-    hall = models.ForeignKey(
-        Hall,
-        on_delete=models.CASCADE,
-        related_name='sessions',
-        verbose_name="Зал"
-    )
-    start_time = models.DateTimeField(
-        verbose_name="Время начала",
-        db_index=True  # Добавляем индекс для быстрого поиска
-    )
-    end_time = models.DateTimeField(
-        verbose_name="Время окончания",
-        editable=False
-    )
-    price = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        verbose_name="Цена билета",
-        validators=[MinValueValidator(0.01)]
-    )
-    available_seats = models.PositiveIntegerField(
-        verbose_name="Свободные места",
-        default=0
-    )
-
-    class Meta:
-        verbose_name = "Сеанс"
-        verbose_name_plural = "Сеансы"
-        ordering = ['start_time']
-        indexes = [
-            models.Index(fields=['hall', 'start_time']),
-            models.Index(fields=['available_seats']),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['hall', 'start_time'],
-                name='unique_session_time'
-            ),
-            models.CheckConstraint(
-                check=Q(price__gte=0),
-                name='price_positive'
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.movie.title} ({self.start_time.strftime('%d.%m.%Y %H:%M')})"
-
-    def clean(self):
-        # Проверка времени начала
-        if self.start_time < timezone.now():
-            raise ValidationError("Время начала сеанса не может быть в прошлом")
-
-        # Расчет времени окончания
-        self.end_time = self.start_time + timezone.timedelta(
-            minutes=self.movie.duration + 30  # +30 минут на уборку
-        )
-
-        # Проверка пересечений сеансов
-        overlapping = Session.objects.filter(
-            hall=self.hall,
-            start_time__lt=self.end_time,
-            end_time__gt=self.start_time
-        ).exclude(pk=self.pk).exists()
-
-        if overlapping:
-            raise ValidationError("Зал занят в это время другим сеансом")
-
-        # Проверка доступности мест
-        if self.available_seats > self.hall.capacity:
-            raise ValidationError("Свободных мест не может быть больше вместимости зала")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    # Дополнительные методы
-    def get_occupied_seats(self):
-        """Возвращает список занятых мест"""
-        return list(self.tickets.values_list('seat_number', flat=True))
-
-    def is_seat_available(self, seat_number):
-        """Проверяет доступность конкретного места"""
-        return (
-            seat_number <= self.hall.capacity and
-            seat_number not in self.get_occupied_seats()
-        )
-
-    def update_availability(self):
-        """Обновляет количество свободных мест"""
-        self.available_seats = self.hall.capacity - self.tickets.count()
-        self.save(update_fields=['available_seats'])
-
-@receiver(post_save, sender=Session)
-def init_session_data(sender, instance, created, **kwargs):
-    if created:
-        print(f"Инициализация сеанса {instance.id}")  # Добавьте логгирование
-        instance.available_seats = instance.hall.capacity
-        instance.save(update_fields=['available_seats'])
-
-class Ticket(models.Model):
-    user = models.ForeignKey(
-        'auth.User',
-        on_delete=models.CASCADE,
-        related_name='tickets',
-        verbose_name="Пользователь"
-    )
-    session = models.ForeignKey(
-        'Session',
-        on_delete=models.CASCADE,
-        related_name='tickets',
-        verbose_name="Сеанс"
-    )
-    seat_number = models.PositiveIntegerField(
-        verbose_name="Номер места"
-    )
-    purchase_date = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата покупки"
-    )
-    final_price = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        verbose_name="Итоговая цена",
-        validators=[MinValueValidator(0)]  # Добавляем валидатор
-    )
-
-    class Meta:
-        verbose_name = "Билет"
-        verbose_name_plural = "Билеты"
-        ordering = ['-purchase_date']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['session', 'seat_number'],
-                name='unique_seat_per_session'
-            )
-        ]
-
-    def __str__(self):
-        return f"Билет #{self.id} ({self.session})"
-
-    def clean(self):
-        # Проверка номера места
-        if self.seat_number > self.session.hall.capacity:
-            raise ValidationError(
-                f"В зале всего {self.session.hall.capacity} мест!"
-            )
-
-        # Проверка возрастного ограничения
-        if hasattr(self.user, 'profile') and self.user.profile.birth_date:
-            if self.session.movie.age_limit != '0+':
-                user_age = calculate_age(self.user.profile.birth_date)
-                required_age = int(self.session.movie.age_limit[:-1])
-                if user_age < required_age:
-                    raise ValidationError("Возрастное ограничение не соблюдено!")
-        else:
-            raise ValidationError("Профиль пользователя не заполнен")
-
-    
-    def save(self, *args, **kwargs):    
-        self.full_clean()
-        super().save(*args, **kwargs)
-        
 
 class Employee(models.Model):
     POSITIONS = (

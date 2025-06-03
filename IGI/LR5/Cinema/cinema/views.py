@@ -21,9 +21,321 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib.auth.views import LogoutView
 from .models import Review
-from .forms import ReviewForm   
+from .forms import ReviewForm,TicketPurchaseForm   
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponseForbidden
+from decimal import Decimal, ROUND_DOWN
+import io
+import base64
+import statistics as stats_mod
+import matplotlib.pyplot as plt
+from django.views.generic import TemplateView
+from django.db.models import Sum, Count, F
+from django.db.models.functions import TruncDate
+
+def calculate_age(birth_date):
+    today = timezone.now().date()
+    return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+
+class StatisticsView(UserPassesTestMixin, TemplateView):
+    """
+    Страница «Статистика» для staff и superuser.
+    Все графики рисуем в виде круговых диаграмм.
+    """
+    template_name = 'cinema/statistics.html'
+    login_url = 'cinema:login'
+
+    def test_func(self):
+        user = self.request.user
+        return user.is_authenticated and (user.is_staff or user.is_superuser)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 1. Фильтр по фильму (GET?movie_id=...)
+        movie_id = self.request.GET.get('movie_id')
+        if movie_id:
+            try:
+                selected_movie = Movie.objects.get(pk=movie_id)
+            except Movie.DoesNotExist:
+                selected_movie = None
+        else:
+            selected_movie = None
+
+        # 2. Базовый queryset билетов (все или по выбранному фильму)
+        tickets_qs = Ticket.objects.select_related('session__movie').all()
+        if selected_movie:
+            tickets_qs = tickets_qs.filter(session__movie=selected_movie)
+
+        # 3. Продажи по дням: группируем по дате покупки, считаем сумму выручки
+        sales_by_date = (
+            tickets_qs
+            .annotate(day=TruncDate('purchase_date'))
+            .values('day')
+            .annotate(revenue=Sum('final_price'))
+            .order_by('day')
+        )
+        # Преобразуем в списки для диаграммы
+        dates = [item['day'].strftime('%d.%m.%Y') for item in sales_by_date]
+        revenue_list = [float(item['revenue']) for item in sales_by_date]
+
+        # 4. Продажи по фильмам: группируем по названию фильма, считаем сумму выручки
+        sales_by_movie = (
+            tickets_qs
+            .values('session__movie__title')
+            .annotate(revenue=Sum('final_price'))
+            .order_by('-revenue')
+        )
+        top10_movies = sales_by_movie[:10]
+        movie_titles = [item['session__movie__title'] for item in top10_movies]
+        movie_revenue = [float(item['revenue']) for item in top10_movies]
+
+        # 5. Популярные жанры: подсчитываем количество и сумму выручки по жанрам
+        from collections import defaultdict
+
+        genre_sales_count = defaultdict(int)
+        genre_revenue = defaultdict(Decimal)
+
+        tickets_to_iter = tickets_qs.select_related('session__movie').prefetch_related('session__movie__genres')
+        for ticket in tickets_to_iter:
+            movie = ticket.session.movie
+            price = ticket.final_price
+            for g in movie.genres.all():
+                genre_sales_count[g.name] += 1
+                genre_revenue[g.name] += price
+
+        genre_sales_list = sorted(
+            [{'genre': genre, 'tickets_sold': count} for genre, count in genre_sales_count.items()],
+            key=lambda x: x['tickets_sold'], reverse=True
+        )
+        genre_revenue_list = sorted(
+            [{'genre': genre, 'revenue': float(rev)} for genre, rev in genre_revenue.items()],
+            key=lambda x: x['revenue'], reverse=True
+        )
+
+        # 6. Клиенты: список username + возраст; вычисляем mean, median, mode
+        profiles = Profile.objects.filter(user__is_active=True).exclude(birth_date__isnull=True)
+        clients_data = []
+        ages = []
+        for p in profiles.select_related('user'):
+            today = timezone.now().date()
+            birth = p.birth_date
+            age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+            clients_data.append({'username': p.user.username, 'age': age})
+            ages.append(age)
+        clients_data_sorted = sorted(clients_data, key=lambda x: x['username'])
+        if ages:
+            age_mean = round(stats_mod.mean(ages), 2)
+            age_median = round(stats_mod.median(ages), 2)
+            try:
+                age_mode = stats_mod.mode(ages)
+            except stats_mod.StatisticsError:
+                age_mode = '—'
+        else:
+            age_mean = age_median = age_mode = None
+
+        # 7. Общая выручка
+        total_revenue = tickets_qs.aggregate(total=Sum('final_price'))['total'] or 0
+
+        # 8. Статистика по дням: среднее и медиана ежедневной выручки
+        if revenue_list:
+            daily_mean = round(stats_mod.mean(revenue_list), 2)
+            daily_median = round(stats_mod.median(revenue_list), 2)
+        else:
+            daily_mean = daily_median = None
+
+        # 9. Генерируем три круговые диаграммы:
+        #    a) выручка по датам,
+        #    b) выручка по топ-10 фильмам,
+        #    c) продажи по жанрам (топ-5 по количеству билетов).
+
+        chart_revenue_by_date = self._generate_pie_chart(
+            labels=dates, values=revenue_list,
+            title='Выручка по датам'
+        )
+
+        chart_revenue_by_movie = self._generate_pie_chart(
+            labels=movie_titles, values=movie_revenue,
+            title='ТОП-10 фильмов по выручке'
+        )
+
+        top5_genres = genre_sales_list[:5]
+        genres_labels = [item['genre'] for item in top5_genres]
+        genres_counts = [item['tickets_sold'] for item in top5_genres]
+        chart_genres_pie = self._generate_pie_chart(
+            labels=genres_labels, values=genres_counts,
+            title='Доля продаж по жанрам (топ-5)'
+        )
+
+        # 10. Добавляем всё в контекст
+        context.update({
+            'movies': Movie.objects.all().order_by('title'),
+            'selected_movie': selected_movie,
+            'sales_by_date': sales_by_date,
+            'sales_by_movie': sales_by_movie,
+            'clients_data': clients_data_sorted,
+            'age_mean': age_mean,
+            'age_median': age_median,
+            'age_mode': age_mode,
+            'genre_sales_list': genre_sales_list,
+            'genre_revenue_list': genre_revenue_list,
+            'total_revenue': total_revenue,
+            'daily_mean': daily_mean,
+            'daily_median': daily_median,
+            'chart_revenue_by_date': chart_revenue_by_date,
+            'chart_revenue_by_movie': chart_revenue_by_movie,
+            'chart_genres_pie': chart_genres_pie,
+        })
+        return context
+
+    def _generate_pie_chart(self, labels, values, title: str) -> str:
+        """
+        Рисует круговую диаграмму по спискам labels и values,
+        возвращает результат в base64-строке для вставки в <img>.
+        """
+        plt.switch_backend('AGG')
+        fig, ax = plt.subplots(figsize=(6, 6))
+
+        # Если суммы всех значений равны нулю (или values пуст), возвращаем пустую строку
+        if not any(values):
+            plt.close(fig)
+            return ''
+
+        ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=140)
+        ax.set_title(title)
+        plt.tight_layout()
+
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png')
+        plt.close(fig)
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        return base64.b64encode(image_png).decode('utf-8')
+class TicketPurchaseView(UserPassesTestMixin, View):
+    """
+    Позволяет пользователю (не staff и не superuser) купить билет на выбранный сеанс,
+    при этом можно ввести промокод для скидки.
+    """
+    login_url = 'cinema:login'
+
+    def test_func(self):
+        user = self.request.user
+        return user.is_authenticated and (not user.is_staff) and (not user.is_superuser)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            messages.error(self.request, 'Только обычные зарегистрированные пользователи могут покупать билеты.')
+            return redirect('cinema:home')
+        return super().handle_no_permission()
+
+    def get(self, request, session_id):
+        session = get_object_or_404(Session, pk=session_id)
+
+        # Нельзя купить билет, если сеанс в прошлом
+        if session.start_time < timezone.now():
+            messages.error(request, 'Нельзя купить билет на прошедший сеанс.')
+            return redirect('cinema:home')
+
+        form = TicketPurchaseForm(session=session)
+        if not form.fields['seat_number'].choices:
+            messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
+            return redirect('cinema:home')
+
+        # При первом показе формы показываем базовую цену без скидки
+        base_price = session.price
+        context = {
+            'form': form,
+            'session': session,
+            'base_price': base_price,
+            'discounted_price': None,
+            'promo_used': None,
+        }
+        return render(request, 'cinema/buy_ticket.html', context)
+
+    def post(self, request, session_id):
+        session = get_object_or_404(Session, pk=session_id)
+        form = TicketPurchaseForm(request.POST, session=session)
+
+        # Если нет свободных мест — редиректим (как в GET)
+        if not form.fields['seat_number'].choices:
+            messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
+            return redirect('cinema:home')
+
+        context = {
+            'form': form,
+            'session': session,
+            'base_price': session.price,
+            'discounted_price': None,
+            'promo_used': None,
+        }
+
+        if form.is_valid():
+            seat = form.cleaned_data['seat_number']
+            promo_obj = form.cleaned_data.get('promo_code')  # либо None, либо экземпляр PromoCode
+
+            # Рассчитываем итоговую цену
+            base_price = session.price
+            final_price = base_price
+            if promo_obj:
+                # Скидка в процентах
+                discount_percent = promo_obj.discount
+                discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                final_price = (base_price - discounted_amount).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                context['discounted_price'] = final_price
+                context['promo_used'] = promo_obj.code
+
+            # Создаём билет
+            ticket = Ticket(
+                user=request.user,
+                session=session,
+                seat_number=seat,
+                final_price=final_price
+            )
+            try:
+                ticket.full_clean()
+                ticket.save()
+
+                # Если был использован промокод — увеличиваем used_count и сохраняем PromoCode
+                if promo_obj:
+                    promo_obj.used_count += 1
+                    promo_obj.save()
+
+                messages.success(request, f'Билет успешно куплен! Место №{seat}.')
+                return redirect('cinema:my_tickets')
+
+            except ValidationError as e:
+                # Если возникли ошибки (например, возраст, место занято и т.д.)
+                form.add_error(None, e.messages)
+
+        # Если форма невалидна или была ошибка, нужно перерисовать с учётом введённого промокода:
+        # чтобы показать пользователю итоговую цену со скидкой, если промокод валиден и форма прошла clean.
+        if form.cleaned_data.get('promo_code'):
+            promo_obj = form.cleaned_data.get('promo_code')
+            if promo_obj and promo_obj.status == promo_obj.Status.ACTIVE:
+                base_price = session.price
+                discount_percent = promo_obj.discount
+                discounted_amount = (base_price * Decimal(discount_percent) / Decimal(100)).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                final_price = (base_price - discounted_amount).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+                context['discounted_price'] = final_price
+                context['promo_used'] = promo_obj.code
+
+        return render(request, 'cinema/buy_ticket.html', context)
+
+
+class MyTicketsView(LoginRequiredMixin, ListView):
+    template_name = 'cinema/my_tickets.html'
+    context_object_name = 'tickets'
+    login_url = 'cinema:login'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Ticket.objects.filter(user=self.request.user) \
+            .select_related('session__movie', 'session__hall') \
+            .order_by('-purchase_date')
+
+
+
 
 
 class ReviewView(UserPassesTestMixin, View):
