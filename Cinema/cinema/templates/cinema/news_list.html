@@ -1,0 +1,72 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block body_class %}news-page{% endblock %}
+
+{% block extra_css %}
+<style>
+    .news-container {
+        background: #111;
+        border: 1px solid #2a2a2a;
+        box-shadow: 0 0 30px rgba(0, 173, 181, 0.1);
+    }
+
+    .news-item {
+        background: #1a1a1a;
+        border: 1px solid #2d2d2d;
+        color: #d0d0d0;
+    }
+
+    .news-title {
+        color: #00adb5;
+    }
+
+    .read-more {
+        background: #00838f;
+        color: #fff !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="news-container">
+    <h1 class="section-title" style="text-align: center;">Последние новости</h1>
+    
+    {% for news in news_list %}
+    <div class="news-item">
+        <div class="news-meta">
+            <span class="news-date">{{ news.publish_date|date:"d.m.Y H:i" }}</span>
+            <h2 class="news-title">{{ news.title }}</h2>
+        </div>
+        
+        <div class="news-image">
+            <img src="{{ news.image.url }}" alt="{{ news.title }}" class="news-thumbnail">
+        </div>
+        
+        <div class="news-content">
+            <p class="news-summary">{{ news.summary }}</p>
+            <a href="{% url 'cinema:news_detail' news.pk %}" class="read-more">
+                Читать далее <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Пагинация -->
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="page-first">&laquo; Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="page-prev">Предыдущая</a>
+        {% endif %}
+
+        <span class="current-page">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="page-next">Следующая</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="page-last">Последняя &raquo;</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container-xxl py-5">
+    <header class="movie-header mb-5">
+        <div class="row align-items-center g-5">
+            
+            <figure class="col-md-4 col-lg-3">
+                <div class="poster-wrapper rounded-4 overflow-hidden shadow-lg">
+                    <img src="{{ movie.poster.url }}" 
+                         class="img-fluid" 
+                         alt="{{ movie.title }}"
+                         loading="lazy"
+                         width="100%"
+                         height="auto">
+                </div>
+                <figcaption>
+                    <a href="{{ movie.poster.url }}" download="постер-{{ movie.title|slugify }}.jpg" class="d-block mt-2 text-center">
+                        Скачать постер
+                    </a>
+                </figcaption>
+            </figure>
+
+            <section class="col-md-8 col-lg-9">
+                <div class="d-flex flex-column gap-3">
+                    <h1 class="display-3 fw-bold text-dark">{{ movie.title }}</h1>
+                    
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span class="age-badge bg-danger text-white px-3 py-2 rounded-pill">
+                            {{ movie.age_limit }}
+                        </span>
+                        <time class="text-muted fs-5" datetime="{{ movie.release_date|date:'Y-m-d' }}">
+                            {{ movie.release_date|date:"Y" }} • {{ movie.duration }} мин.
+                        </time>
+                        <span class="rating-badge bg-warning text-dark px-3 py-2 rounded-pill">
+                            ★ {{ movie.rating }}/10
+                        </span>
+                    </div>
+
+                    <ul class="genre-list d-flex gap-2 flex-wrap list-unstyled">
+                        {% for genre in movie.genres.all %}
+                        <li class="badge bg-primary bg-opacity-25 text-primary py-2 px-3">
+                            {{ genre.name }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </header>
+
+    <section class="movie-details mb-5">
+        <div class="row g-5">
+            <article class="col-lg-8">
+                <div class="card border-0 bg-light rounded-4 p-4">
+                    <h2 class="mb-4">Описание</h2>
+                    <p class="lead text-secondary lh-lg mb-0">{{ movie.description }}</p>
+                </div>
+            </article>
+
+            <aside class="col-lg-4">
+                <div class="card border-0 bg-light rounded-4 p-4">
+                    <h2 class="mb-4">Детали</h2>
+                    <dl class="row g-3">
+                        <dt class="col-5 text-muted">Страна</dt>
+                        <dd class="col-7 fw-bold">{{ movie.country }}</dd>
+
+                        <dt class="col-5 text-muted">Бюджет</dt>
+                        <dd class="col-7 fw-bold">
+                            {% if movie.budget %}
+                                ${{ movie.budget|floatformat:"0" }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-5 text-muted">Премьера</dt>
+                        <dd class="col-7 fw-bold">
+                            <time datetime="{{ movie.release_date|date:'Y-m-d' }}">
+                                {{ movie.release_date|date:"d.m.Y" }}
+                            </time>
+                        </dd>
+
+                        <dt class="col-5 text-muted">В кинотеатре</dt>
+                        <dd class="col-7 fw-bold text-success">Сейчас в прокате</dd>
+                    </dl>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <section class="calendar mb-5">
+        <h2>Календарь на текущий месяц</h2>
+        <pre style="font-family: monospace; padding: 10px;">
+{{ calendar_text }}
+        </pre>
+    </section>
+
+    <section class="sessions mb-5">
+        <h2>Расписание сеансов</h2>
+        
+        <div class="row g-4">
+            {% for session in sessions %}
+            <article class="session-card card border-0 p-4 rounded-4 shadow-hover mb-3">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <time class="text-primary fs-2 fw-bold" datetime="{{ session.start_time|date:'Y-m-d H:i' }}">
+                                {{ session.start_time|date:"H:i" }}
+                            </time>
+                            <time class="text-muted" datetime="{{ session.start_time|date:'Y-m-d' }}">
+                                {{ session.start_time|date:"d M" }}
+                            </time>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <span>Зал {{ session.hall.number }}</span>
+                            <small class="text-muted">{{ session.hall.get_hall_type_display }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="price fs-4 fw-bold text-success">
+                                {{ session.price }} ₽
+                            </span>
+                            <a href="{% url 'cinema:buy_ticket' session.id %}" class="btn btn-sm btn-primary">
+                                Купить билет
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="alert alert-info rounded-4">
+                Нет доступных сеансов
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

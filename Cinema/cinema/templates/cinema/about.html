@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+{% extends 'cinema/base.html' %}
+
+{% block content %}
+
+<article itemscope itemtype="https://schema.org/AboutPage">
+  <header>
+    <h1 itemprop="headline">О компании</h1>
+  </header>
+
+  {% if logo %}
+  <figure style="text-align: center;" itemprop="logo" itemscope itemtype="https://schema.org/ImageObject">
+    <img src="{{ logo.url }}" alt="Логотип компании" style="display: inline-block;" itemprop="contentUrl">
+    <meta itemprop="url" content="{{ logo.url }}">
+  </figure>
+  {% endif %}
+
+  <section itemprop="description">
+    <p>{{ company_info.content }}</p>
+  </section>
+
+  {% if company_info.video %}
+  <figure itemprop="video" itemscope itemtype="https://schema.org/VideoObject">
+    <video controls width="600">
+      <source src="{{ company_info.video.url }}" type="video/mp4">
+      Ваш браузер не поддерживает видео.
+    </video>
+    <meta itemprop="contentUrl" content="{{ company_info.video.url }}">
+    <meta itemprop="uploadDate" content="{{ company_info.updated_at|date:'c' }}">
+  </figure>
+  {% endif %}
+
+  <section>
+    <h2>История компании</h2>
+    <ul class="history-list">
+      {% for event in history_events %}
+      <li itemprop="temporalCoverage" content="{{ event.year }}">
+        <strong>{{ event.year }}:</strong> 
+        <span itemprop="description">{{ event.text }}</span>
+      </li>
+      {% empty %}
+      <li>История пока не добавлена.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="company-details" itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+    <h2>Реквизиты компании</h2>
+    <table>
+      <tr>
+        <th>Название компании</th>
+        <td itemprop="name">{{ company_info.company_name }}</td>
+      </tr>
+      <tr>
+        <th>ИНН</th>
+        <td itemprop="taxID">{{ company_info.inn }}</td>
+      </tr>
+      <tr>
+        <th>ОГРН</th>
+        <td>{{ company_info.ogrn }}</td>
+      </tr>
+      <tr>
+        <th>Адрес</th>
+        <td itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+          <span itemprop="streetAddress">{{ company_info.address }}</span>
+        </td>
+      </tr>
+      <tr>
+        <th>Банк</th>
+        <td itemprop="bank">{{ company_info.bank }}</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Сертификаты</h2>
+    {% if certificates %}
+      {% for certificate in certificates %}
+      <article itemprop="hasCertification" itemscope itemtype="https://schema.org/Certification">
+        <h3 itemprop="name">{{ certificate.name }}</h3>
+        <p itemprop="description">{{ certificate.description }}</p>
+        {% if certificate.issue_date %}
+          <meta itemprop="validFrom" content="{{ certificate.issue_date|date:'c' }}">
+          <p>Дата выдачи: {{ certificate.issue_date }}</p>
+        {% endif %}
+        {% if certificate.issuer %}
+          <p>Организация, выдавшая сертификат: <span itemprop="issuedBy">{{ certificate.issuer }}</span></p>
+        {% endif %}
+      </article>
+      {% endfor %}
+    {% else %}
+      <p>Сертификаты пока не добавлены.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h3>Мы на карте:</h3>
+    <iframe src="https://yandex.by/map-widget/v1/?ll=27.590532%2C53.913009&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg2NjY3ODgzMBI70JHQtdC70LDRgNGD0YHRjCwg0JzRltC90YHQuiwg0LLRg9C70ZbRhtCwINCT0ZbQutCw0LvRiywgMTIiCg1oudxBFeymV0I%2C&z=17.14" 
+            width="560" height="400" frameborder="1" allowfullscreen="true" style="position:relative;"
+            itemprop="hasMap" itemscope itemtype="https://schema.org/Map">
+    </iframe>
+  </section>
+</article>
+
+{% endblock %}
