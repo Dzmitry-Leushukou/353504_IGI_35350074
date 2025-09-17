@@ -61,31 +61,29 @@
 {% endblock %}
 
 {% block content %}
-<div class="delete-container">
-    <h2 class="delete-title">Удалить отзыв</h2>
-    
-    <p>Вы уверены, что хотите удалить свой отзыв?</p>
-    
-    <div class="review-preview">
-        <div class="review-text">{{ review.text }}</div>
-        <div class="review-rating" style="margin-top: 15px;">
-            Оценка: 
-            {% for i in "12345" %}
-                {% if forloop.counter <= review.rating %}
-                    <i class="fas fa-star" style="color: #ffd700;"></i>
-                {% else %}
-                    <i class="far fa-star" style="color: #ffd700;"></i>
-                {% endif %}
-            {% endfor %}
-        </div>
-    </div>
-    
-    <form method="post">
-        {% csrf_token %}
-        <div class="btn-group">
-            <button type="submit" class="btn-confirm">Да, удалить</button>
-            <a href="{% url 'cinema:reviews' %}" class="btn-cancel">Отмена</a>
-        </div>
-    </form>
-</div>
+<section class="delete-container"> <h2 class="delete-title">Удалить отзыв</h2>
+<p>Вы уверены, что хотите удалить свой отзыв?</p>
+
+<article class="review-preview">
+    <p class="review-text">{{ review.text }}</p>
+    <footer class="review-rating" style="margin-top: 15px;">
+        Оценка: 
+        {% for i in "12345" %}
+            {% if forloop.counter <= review.rating %}
+                <i class="fas fa-star" style="color: #ffd700;"></i>
+            {% else %}
+                <i class="far fa-star" style="color: #ffd700;"></i>
+            {% endif %}
+        {% endfor %}
+    </footer>
+</article>
+
+<form method="post">
+    {% csrf_token %}
+    <menu class="btn-group">
+        <button type="submit" class="btn-confirm">Да, удалить</button>
+        <a href="{% url 'cinema:reviews' %}" class="btn-cancel">Отмена</a>
+    </menu>
+</form>
+</section>
 {% endblock %}

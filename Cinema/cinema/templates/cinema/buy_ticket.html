@@ -2,24 +2,27 @@
 {% load static %}
 
 {% block content %}
-<div class="container-xxl py-5">
+<main class="container-xxl py-5" aria-labelledby="purchase-heading">
   <div class="row justify-content-center">
     <div class="col-lg-8">
         
-      <h2 class="mb-4">Покупка билета</h2>
-      <div class="card border-0 bg-light rounded-4 p-4 shadow-sm mb-5">
+      <header>
+        <h2 id="purchase-heading" class="mb-4">Покупка билета</h2>
+      </header>
+      
+      <section class="card border-0 bg-light rounded-4 p-4 shadow-sm mb-5" aria-labelledby="session-info-heading">
         <div class="row mb-4">
           <div class="col-md-4">
             <img src="{{ session.movie.poster.url }}"
                  class="img-fluid rounded-3"
-                 alt="{{ session.movie.title }}">
+                 alt="Постер фильма '{{ session.movie.title }}'">
           </div>
           <div class="col-md-8">
-            <h3 class="fw-bold">{{ session.movie.title }}</h3>
+            <h3 id="session-info-heading" class="fw-bold">{{ session.movie.title }}</h3>
             <p class="text-muted mb-1">
-  Зал {{ session.hall.number }} ({{ session.hall.get_hall_type_display }})<br>
-  Время: {{ session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }})
-</p>
+              <span class="sr-only">Зал</span> {{ session.hall.number }} ({{ session.hall.get_hall_type_display }})<br>
+              <span class="sr-only">Время сеанса</span> {{ session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }})
+            </p>
             <p class="text-secondary mb-1">
               Базовая цена: <strong>{{ base_price }} ₽</strong>
             </p>
@@ -35,19 +38,19 @@
         </div>
 
         {% if session.available_seats > 0 %}
-        <form method="post" novalidate>
+        <form method="post" novalidate role="form" aria-labelledby="purchase-form-heading">
           {% csrf_token %}
 
           {% if form.non_field_errors %}
-          <div class="alert alert-danger">
+          <div class="alert alert-danger" role="alert">
             {% for err in form.non_field_errors %}
             <div>{{ err }}</div>
             {% endfor %}
           </div>
           {% endif %}
 
-          <div class="mb-3">
-            <label class="form-label">Выберите место:</label>
+          <fieldset class="mb-3">
+            <legend id="purchase-form-heading" class="form-label">Выберите место:</legend>
             {% for radio in form.seat_number %}
             <div class="form-check mb-2">
               {{ radio.tag }}
@@ -57,19 +60,19 @@
             </div>
             {% endfor %}
             {% if form.seat_number.errors %}
-            <div class="text-danger">
+            <div class="text-danger" role="alert">
               {% for err in form.seat_number.errors %}
               <small>{{ err }}</small><br>
               {% endfor %}
             </div>
             {% endif %}
-          </div>
+          </fieldset>
 
           <div class="mb-3">
             <label for="{{ form.promo_code.id_for_label }}" class="form-label">Промокод (необязательно)</label>
             {{ form.promo_code }}
             {% if form.promo_code.errors %}
-            <div class="text-danger">
+            <div class="text-danger" role="alert">
               {% for err in form.promo_code.errors %}
               <small>{{ err }}</small><br>
               {% endfor %}
@@ -83,13 +86,13 @@
           <a href="{% url 'cinema:home' %}" class="btn btn-secondary ms-2">Отмена</a>
         </form>
         {% else %}
-        <div class="alert alert-info">
+        <div class="alert alert-info" role="alert">
           К сожалению, свободных мест нет.
         </div>
         <a href="{% url 'cinema:home' %}" class="btn btn-secondary">Вернуться на главную</a>
         {% endif %}
-      </div>
+      </section>
     </div>
   </div>
-</div>
+</main>
 {% endblock %}

@@ -81,42 +81,47 @@
 {% endblock %}
 
 {% block content %}
-<div class="review-form-container">
-    <h2 class="review-form-title">Добавить отзыв</h2>
-    
-    <form method="post" class="review-form">
-        {% csrf_token %}
+<main>
+    <article class="review-form-container" aria-labelledby="review-form-heading">
+        <header>
+            <h2 id="review-form-heading" class="review-form-title">Добавить отзыв</h2>
+        </header>
         
-        <div class="form-group">
-            <label for="id_text">Ваш отзыв:</label>
-            {{ form.text }}
-            {% if form.text.errors %}
-                <div class="error">{{ form.text.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label>Ваша оценка:</label>
-            <div class="rating-choices">
-                {% for choice in form.rating %}
-                    <div class="rating-choice">
-                        {{ choice.tag }}
-                        <label for="{{ choice.id_for_label }}">
-                            {% for i in "12345" %}
-                                {% if forloop.counter == choice.choice_value %}
-                                    <i class="fas fa-star" style="color: #ffd700; font-size: 24px;"></i>
-                                {% endif %}
-                            {% endfor %}
-                        </label>
-                    </div>
-                {% endfor %}
+        <form method="post" class="review-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_text">Ваш отзыв:</label>
+                {{ form.text }}
+                {% if form.text.errors %}
+                    <div class="error" role="alert">{{ form.text.errors.0 }}</div>
+                {% endif %}
             </div>
-            {% if form.rating.errors %}
-                <div class="error">{{ form.rating.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <button type="submit" class="btn-submit">Отправить отзыв</button>
-    </form>
-</div>
+            
+            <fieldset class="form-group">
+                <legend>Ваша оценка:</legend>
+                <div class="rating-choices" role="radiogroup" aria-labelledby="rating-label">
+                    {% for choice in form.rating %}
+                        <div class="rating-choice">
+                            {{ choice.tag }}
+                            <label for="{{ choice.id_for_label }}">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter == choice.choice_value %}
+                                        <i class="fas fa-star" style="color: #ffd700; font-size: 24px;" aria-hidden="true"></i>
+                                        <span class="sr-only">{{ choice.choice_label }} звезд</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if form.rating.errors %}
+                    <div class="error" role="alert">{{ form.rating.errors.0 }}</div>
+                {% endif %}
+            </fieldset>
+            
+            <button type="submit" class="btn-submit">Отправить отзыв</button>
+        </form>
+    </article>
+</main>
 {% endblock %}
