@@ -9,10 +9,18 @@
 
         <div style="text-align: center;">
             {% if logo %}
-                <img src="{{ logo.url }}" alt="Логотип" style="display: inline-block;">
-            {% else %}
-                <p style="text-align: center;">Логотип не найден</p>
-            {% endif %}
+    <img src="{{ logo.url }}" 
+         alt="Логотип" 
+         class="d-inline-block img-fluid"
+         srcset="{{ logo.url }} 400w,
+                 {{ logo.url }} 800w,
+                 {{ logo.url }} 1200w"
+         sizes="(max-width: 600px) 400px,
+                (max-width: 1000px) 800px,
+                1200px">
+{% else %}
+    <p class="text-center">Логотип не найден</p>
+{% endif %}
         </div>
 
         {% if quote_text %}
