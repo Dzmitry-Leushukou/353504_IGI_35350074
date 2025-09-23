@@ -150,6 +150,15 @@ class Ticket(models.Model):
         verbose_name="Итоговая цена",
         validators=[MinValueValidator(0)]
     )
+    is_paid = models.BooleanField(
+        default=False,
+        verbose_name="Оплачен"
+    )
+    payment_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Дата оплаты"
+    )
 
     class Meta:
         verbose_name = "Билет"
@@ -165,31 +174,34 @@ class Ticket(models.Model):
     def __str__(self):
         return f"Билет #{self.id} ({self.session})"
 
-    def clean(self):
-        # 1) Проверяем, чтобы номер места не превышал capacity зала
-        if self.seat_number > self.session.hall.capacity:
-            raise ValidationError(
-                f"В зале всего {self.session.hall.capacity} мест!"
-            )
+    @property
+    def is_expired(self):
+        """Проверяет, не истекло ли время для оплаты (30 минут)"""
+        if self.is_paid:
+            return False
+        time_since_purchase = timezone.now() - self.purchase_date
+        return time_since_purchase > timezone.timedelta(minutes=30)
 
-        # 2) Проверка: возрастное ограничение
-        # Если у пользователя есть профиль с датой рождения
+    @property
+    def can_be_paid(self):
+        """Можно ли оплатить билет"""
+        return not self.is_paid and not self.is_expired and self.session.start_time > timezone.now()
+
+    def clean(self):
+        # Существующие проверки...
+        if self.seat_number > self.session.hall.capacity:
+            raise ValidationError(f"В зале всего {self.session.hall.capacity} мест!")
+
         if hasattr(self.user, 'profile') and self.user.profile.birth_date:
-            film_age_limit = self.session.movie.age_limit  # например, '16+'
+            film_age_limit = self.session.movie.age_limit
             if film_age_limit != '0+':
                 user_age = calculate_age(self.user.profile.birth_date)
-                required_age = int(film_age_limit[:-1])  # убираем '+'
+                required_age = int(film_age_limit[:-1])
                 if user_age < required_age:
                     raise ValidationError("Возрастное ограничение не соблюдено!")
         else:
-            # Если нет профиля или нет даты рождения, тоже запрещаем покупку
             raise ValidationError("Профиль пользователя не заполнен")
-
-    def save(self, *args, **kwargs):
-        # Перед сохранением запускаем чистку
-        self.full_clean()
-        super().save(*args, **kwargs)
-
+        
 @receiver(post_save, sender=Session)
 def init_session_data(sender, instance, created, **kwargs):
     if created:

@@ -374,30 +374,41 @@ class MyTicketsView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Разделяем билеты на оплаченные и неоплаченные
+        tickets = context['tickets']
+        paid_tickets = [t for t in tickets if t.is_paid]
+        unpaid_tickets = [t for t in tickets if not t.is_paid]
+        
+        # Общий контекст с часовым поясом
         user_tz = timezone.get_current_timezone()
-
         now_utc = timezone.now()
-        now_local = timezone.localtime(now_utc, timezone=user_tz)
-
+        now_local = timezone.localtime(now_utc, user_tz)
+        
         offset = now_local.utcoffset()
         total_minutes = offset.total_seconds() / 60
         sign = '+' if total_minutes >= 0 else '-'
         hours_offset = int(abs(total_minutes) // 60)
         minutes_offset = int(abs(total_minutes) % 60)
         utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
-
-        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(now_local.year, now_local.month)
+        
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(
+            now_local.year, now_local.month
+        )
 
         context.update({
+            'paid_tickets': paid_tickets,
+            'unpaid_tickets': unpaid_tickets,
             'user_timezone': str(user_tz),
-            'timezone_name': str(user_tz),  
+            'timezone_name': str(user_tz),
             'user_tz_offset': utc_offset_str,
             'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
             'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
             'calendar_text': calendar_text,
+            'current_time': timezone.now(),  # Для проверки в шаблоне
         })
         return context
-
+    
 class ReviewView(UserPassesTestMixin, View):
     template_list = 'cinema/reviews.html'
     template_form = 'cinema/review_form.html'
@@ -756,3 +767,64 @@ class NewsListView(ListView):
     def get_queryset(self):
         return News.objects.filter(is_published=True).order_by('-publish_date')
     
+class PayTicketView(LoginRequiredMixin, View):
+    login_url = 'cinema:login'
+    
+    def get(self, request, ticket_id):
+        ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+        
+        # Проверяем, можно ли оплатить билет
+        if not ticket.can_be_paid:
+            if ticket.is_paid:
+                messages.error(request, 'Билет уже оплачен')
+            elif ticket.is_expired:
+                messages.error(request, 'Время оплаты билета истекло')
+            elif ticket.session.start_time <= timezone.now():
+                messages.error(request, 'Сеанс уже начался или завершился')
+            return redirect('cinema:my_tickets')
+        
+        context = self.get_context_data(ticket=ticket)
+        return render(request, 'cinema/pay_ticket.html', context)
+    
+    def post(self, request, ticket_id):
+        ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+        
+        if not ticket.can_be_paid:
+            messages.error(request, 'Невозможно оплатить билет')
+            return redirect('cinema:my_tickets')
+        
+        # Имитация оплаты
+        ticket.is_paid = True
+        ticket.payment_date = timezone.now()
+        ticket.save()
+        
+        messages.success(request, f'Билет успешно оплачен! Сумма: {ticket.final_price} ₽')
+        return redirect('cinema:my_tickets')
+    
+    def get_context_data(self, **kwargs):
+        """Общий контекст с часовым поясом"""
+        user_tz = timezone.get_current_timezone()
+        now_utc = timezone.now()
+        now_local = timezone.localtime(now_utc, user_tz)
+        
+        offset = now_local.utcoffset()
+        total_minutes = offset.total_seconds() / 60
+        sign = '+' if total_minutes >= 0 else '-'
+        hours_offset = int(abs(total_minutes) // 60)
+        minutes_offset = int(abs(total_minutes) % 60)
+        utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
+        
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(
+            now_local.year, now_local.month
+        )
+        
+        context = {
+            'user_timezone': str(user_tz),
+            'timezone_name': str(user_tz),
+            'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
+            'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
+            'user_tz_offset': utc_offset_str,
+            'calendar_text': calendar_text,
+        }
+        context.update(kwargs)
+        return context

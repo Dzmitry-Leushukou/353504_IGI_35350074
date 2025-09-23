@@ -29,4 +29,6 @@ urlpatterns = [
     path('session/<int:session_id>/buy/', views.TicketPurchaseView.as_view(), name='buy_ticket'),
     path('my-tickets/', views.MyTicketsView.as_view(), name='my_tickets'),
     path('statistics/', views.StatisticsView.as_view(), name='statistics'),
+    path('ticket/<int:ticket_id>/pay/', views.PayTicketView.as_view(), name='pay_ticket'),
+    path('my-tickets/', views.MyTicketsView.as_view(), name='my_tickets'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
