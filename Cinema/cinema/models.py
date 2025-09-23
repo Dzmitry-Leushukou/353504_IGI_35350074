@@ -160,6 +160,19 @@ class Ticket(models.Model):
         verbose_name="Дата оплаты"
     )
 
+    PAYMENT_METHODS = [
+        ('card', 'Банковская карта'),
+        ('cash', 'Наличные'),
+    ]
+    
+    payment_method = models.CharField(
+        max_length=10,
+        choices=PAYMENT_METHODS,
+        null=True,
+        blank=True,
+        verbose_name="Способ оплаты"
+    )
+    
     class Meta:
         verbose_name = "Билет"
         verbose_name_plural = "Билеты"

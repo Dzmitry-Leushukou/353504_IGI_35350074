@@ -773,7 +773,10 @@ class PayTicketView(LoginRequiredMixin, View):
     def get(self, request, ticket_id):
         ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
         
-        # Проверяем, можно ли оплатить билет
+        if not ticket:
+            messages.error(request, 'Билет не найден.')
+            return redirect('cinema:my_tickets')
+        
         if not ticket.can_be_paid:
             if ticket.is_paid:
                 messages.error(request, 'Билет уже оплачен')
@@ -788,18 +791,26 @@ class PayTicketView(LoginRequiredMixin, View):
     
     def post(self, request, ticket_id):
         ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+        payment_method = request.POST.get('payment_method')
         
         if not ticket.can_be_paid:
             messages.error(request, 'Невозможно оплатить билет')
             return redirect('cinema:my_tickets')
         
-        # Имитация оплаты
+        # Валидация выбора способа оплаты
+        if payment_method not in ['card', 'cash']:
+            messages.error(request, 'Выберите способ оплаты')
+            context = self.get_context_data(ticket=ticket)
+            return render(request, 'cinema/pay_ticket.html', context)
+        
+        # Обработка оплаты
         ticket.is_paid = True
         ticket.payment_date = timezone.now()
+        ticket.payment_method = payment_method  # Добавим это поле в модель
         ticket.save()
         
-        messages.success(request, f'Билет успешно оплачен! Сумма: {ticket.final_price} ₽')
-        return redirect('cinema:my_tickets')
+        # Перенаправляем на страницу успешной оплаты
+        return redirect('cinema:payment_success', ticket_id=ticket.id)
     
     def get_context_data(self, **kwargs):
         """Общий контекст с часовым поясом"""
@@ -823,6 +834,105 @@ class PayTicketView(LoginRequiredMixin, View):
             'timezone_name': str(user_tz),
             'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
             'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
+            'user_tz_offset': utc_offset_str,
+            'calendar_text': calendar_text,
+        }
+        context.update(kwargs)
+        return context
+      
+class DeleteTicketView(LoginRequiredMixin, View):
+    login_url = 'cinema:login'
+    
+    def post(self, request, ticket_id):
+        ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+        
+        # Можно удалять только неоплаченные билеты
+        if not ticket.is_paid:
+            ticket.delete()
+            messages.success(request, 'Билет успешно удален из корзины.')
+        else:
+            messages.error(request, 'Нельзя удалить оплаченный билет.')
+        
+        return redirect('cinema:my_tickets')
+    
+
+# cinema/views.py
+class ConfirmDeleteTicketView(LoginRequiredMixin, View):
+    login_url = 'cinema:login'
+    
+    def get(self, request, ticket_id):
+        ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+        
+        if ticket.is_paid:
+            messages.error(request, 'Нельзя удалить оплаченный билет.')
+            return redirect('cinema:my_tickets')
+        
+        context = self.get_context_data(ticket=ticket)
+        return render(request, 'cinema/confirm_delete_ticket.html', context)
+    
+    def get_context_data(self, **kwargs):
+        """Общий контекст с часовым поясом"""
+        user_tz = timezone.get_current_timezone()
+        now_utc = timezone.now()
+        now_local = timezone.localtime(now_utc, user_tz)
+        
+        offset = now_local.utcoffset()
+        total_minutes = offset.total_seconds() / 60
+        sign = '+' if total_minutes >= 0 else '-'
+        hours_offset = int(abs(total_minutes) // 60)
+        minutes_offset = int(abs(total_minutes) % 60)
+        utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
+        
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(
+            now_local.year, now_local.month
+        )
+        
+        context = {
+            'user_timezone': str(user_tz),
+            'timezone_name': str(user_tz),
+            'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
+            'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
+            'user_tz_offset': utc_offset_str,
+            'calendar_text': calendar_text,
+        }
+        context.update(kwargs)
+        return context
+    
+class PaymentSuccessView(LoginRequiredMixin, View):
+    login_url = 'cinema:login'
+    
+    def get(self, request, ticket_id):
+        ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+        
+        if not ticket.is_paid:
+            messages.error(request, 'Билет не оплачен')
+            return redirect('cinema:my_tickets')
+        
+        context = self.get_context_data(ticket=ticket)
+        return render(request, 'cinema/payment_success.html', context)
+    
+    def get_context_data(self, **kwargs):
+        """Общий контекст с часовым поясом"""
+        user_tz = timezone.get_current_timezone()
+        now_utc = timezone.now()
+        now_local = timezone.localtime(now_utc, user_tz)
+        
+        offset = now_local.utcoffset()
+        total_minutes = offset.total_seconds() / 60
+        sign = '+' if total_minutes >= 0 else '-'
+        hours_offset = int(abs(total_minutes) // 60)
+        minutes_offset = int(abs(total_minutes) % 60)
+        utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
+        
+        calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(
+            now_local.year, now_local.month
+        )
+        
+        context = {
+            'user_timezone': str(user_tz),
+            'timezone_name': str(user_tz),
+            'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
+            'now_utc': now_utc.strftime('%d.%m.%Y H:%M'),
             'user_tz_offset': utc_offset_str,
             'calendar_text': calendar_text,
         }

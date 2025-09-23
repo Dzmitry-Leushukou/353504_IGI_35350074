@@ -5,79 +5,126 @@
 {% block content %}
 <div class="container-xxl py-5">
     <div class="row justify-content-center">
-        <div class="col-lg-6">
+        <div class="col-lg-8">
             <div class="card border-0 bg-light rounded-4 p-4 shadow-sm">
                 <h2 class="mb-4">Оплата билета</h2>
                 
-                <div class="ticket-info mb-4 p-3 bg-white rounded-3">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
+                <!-- Информация о билете -->
+                <div class="ticket-info mb-4 p-4 bg-white rounded-4 border">
+                    <div class="row">
+                        <div class="col-md-3">
                             <img src="{{ ticket.session.movie.poster.url }}" 
                                  class="img-fluid rounded-3" 
                                  alt="{{ ticket.session.movie.title }}">
                         </div>
-                        <div class="col-md-8">
-                            <h4 class="fw-bold">{{ ticket.session.movie.title }}</h4>
-                            <p class="mb-1">
-                                <strong>Дата и время:</strong> 
-                                {{ ticket.session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }})
-                            </p>
-                            <p class="mb-1">
-                                <strong>Зал:</strong> {{ ticket.session.hall.number }} 
-                                ({{ ticket.session.hall.get_hall_type_display }})
-                            </p>
-                            <p class="mb-1">
-                                <strong>Место:</strong> {{ ticket.seat_number }}
-                            </p>
-                            <p class="mb-1">
-                                <strong>Цена:</strong> 
-                                <span class="text-success fs-5">{{ ticket.final_price }} ₽</span>
-                            </p>
-                            <p class="mb-0 text-muted small">
-                                Билет забронирован до: 
-                                {{ ticket.purchase_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
-                            </p>
+                        <div class="col-md-9">
+                            <h4 class="fw-bold text-primary">{{ ticket.session.movie.title }}</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <strong>📅 Дата:</strong> 
+                                        {{ ticket.session.start_time|date:"d.m.Y" }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>⏰ Время:</strong> 
+                                        {{ ticket.session.start_time|date:"H:i" }} ({{ timezone_name }})
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>🎬 Зал:</strong> 
+                                        {{ ticket.session.hall.number }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <strong>💺 Место:</strong> 
+                                        {{ ticket.seat_number }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>💰 Цена:</strong> 
+                                        <span class="text-success fw-bold fs-5">{{ ticket.final_price }} ₽</span>
+                                    </p>
+                                    <p class="mb-0 text-muted small">
+                                        <strong>⏱ Бронь до:</strong> 
+                                        {{ ticket.purchase_date|date:"d.m.Y H:i" }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <form method="post">
+                <!-- Форма оплаты -->
+                <form method="post" novalidate>
                     {% csrf_token %}
                     
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Выбор способа оплаты -->
                     <div class="payment-methods mb-4">
-                        <h5 class="mb-3">Способ оплаты</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="card" value="card" checked>
-                            <label class="form-check-label" for="card">
-                                💳 Банковская карта
-                            </label>
+                        <h5 class="mb-3">Выберите способ оплаты</h5>
+                        
+                        <!-- Карта -->
+                        <div class="card mb-3 border-2">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                           id="card" value="card" required>
+                                    <label class="form-check-label fw-bold" for="card">
+                                        💳 Оплата банковской картой
+                                    </label>
+                                </div>
+                                <p class="text-muted mb-0 small mt-2">
+                                    Безопасная оплата через платежный шлюз. Принимаем Visa, MasterCard, Мир.
+                                </p>
+                            </div>
                         </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="qiwi" value="qiwi">
-                            <label class="form-check-label" for="qiwi">
-                                🅠 QIWI Кошелек
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="yoomoney" value="yoomoney">
-                            <label class="form-check-label" for="yoomoney">
-                                🅨 ЮMoney
-                            </label>
+
+                        <!-- Наличные -->
+                        <div class="card mb-3 border-2">
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                           id="cash" value="cash" required>
+                                    <label class="form-check-label fw-bold" for="cash">
+                                        💵 Оплата наличными в кассе
+                                    </label>
+                                </div>
+                                <p class="text-muted mb-0 small mt-2">
+                                    Оплатите билет в кассе кинотеатра перед сеансом. 
+                                    При себе необходимо иметь QR-код билета.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            💳 Оплатить {{ ticket.final_price }} ₽
+                    <!-- Кнопки действия -->
+                    <div class="d-grid gap-3">
+                        <button type="submit" class="btn btn-primary btn-lg py-3">
+                            <strong>💳 Перейти к оплате {{ ticket.final_price }} ₽</strong>
                         </button>
-                        <a href="{% url 'cinema:my_tickets' %}" class="btn btn-secondary">
-                            Отмена
+                        <a href="{% url 'cinema:my_tickets' %}" class="btn btn-outline-secondary">
+                            ← Вернуться к моим билетам
                         </a>
                     </div>
                 </form>
+
+                <!-- Информация о безопасности -->
+                <div class="mt-4 p-3 bg-light rounded-3">
+                    <h6 class="mb-2">🔒 Безопасность платежей</h6>
+                    <p class="small text-muted mb-0">
+                        Все платежи защищены SSL-шифрованием. Мы не храним данные вашей карты. 
+                        В случае вопросов обращайтесь в службу поддержки.
+                    </p>
+                </div>
             </div>
         </div>
     </div>

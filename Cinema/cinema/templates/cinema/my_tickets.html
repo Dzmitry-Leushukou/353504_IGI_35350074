@@ -26,8 +26,13 @@
                                      style="max-height:100px;" 
                                      alt="{{ ticket.session.movie.title }}">
                             </div>
-                            <div class="col-md-6">
-                                <h5 class="mb-1">{{ ticket.session.movie.title }}</h5>
+                            <div class="col-md-5">
+                                <h5 class="mb-1">
+                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
+                                       class="text-decoration-none text-dark">
+                                        {{ ticket.session.movie.title }}
+                                    </a>
+                                </h5>
                                 <small class="text-muted">
                                     {{ ticket.session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }}) —
                                     Зал {{ ticket.session.hall.number }} ({{ ticket.session.hall.get_hall_type_display }})
@@ -45,13 +50,33 @@
                                 </small>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4 text-end">
-                                {% if ticket.can_be_paid %}
-                                <a href="{% url 'cinema:pay_ticket' ticket.id %}" 
-                                   class="btn btn-warning btn-sm mb-2">
-                                    💳 Оплатить
-                                </a>
-                                {% endif %}
+                            <div class="col-md-5 text-end">
+                                <div class="d-flex justify-content-end gap-2 align-items-center">
+                                    <!-- Плюсик - ссылка на страницу фильма -->
+                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
+                                       class="btn btn-success btn-sm" 
+                                       title="Подробнее о фильме">
+                                        <span style="font-size: 1.2em;">+</span>
+                                    </a>
+                                    
+                                    {% if ticket.can_be_paid %}
+                                    <a href="{% url 'cinema:pay_ticket' ticket.id %}" 
+                                       class="btn btn-warning btn-sm">
+                                        💳 Оплатить
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <!-- Минусик - форма для удаления билета -->
+                                    <form method="post" action="{% url 'cinema:delete_ticket' ticket.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" 
+                                                class="btn btn-danger btn-sm" 
+                                                title="Удалить билет"
+                                                onclick="return confirm('Вы уверены, что хотите удалить этот билет?')">
+                                            <span style="font-size: 1.2em;">-</span>
+                                        </button>
+                                    </form>
+                                </div>
                                 <br>
                                 <small class="text-muted">
                                     Забронирован: {{ ticket.purchase_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
@@ -79,7 +104,12 @@
                                      alt="{{ ticket.session.movie.title }}">
                             </div>
                             <div class="col-md-8">
-                                <h5 class="mb-1">{{ ticket.session.movie.title }}</h5>
+                                <h5 class="mb-1">
+                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
+                                       class="text-decoration-none text-dark">
+                                        {{ ticket.session.movie.title }}
+                                    </a>
+                                </h5>
                                 <small class="text-muted">
                                     {{ ticket.session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }}) —
                                     Зал {{ ticket.session.hall.number }} ({{ ticket.session.hall.get_hall_type_display }})
@@ -93,6 +123,13 @@
                                 {% endif %}
                             </div>
                             <div class="col-md-2 text-end">
+                                <!-- Плюсик для оплаченных билетов -->
+                                <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
+                                   class="btn btn-success btn-sm mb-2" 
+                                   title="Подробнее о фильме">
+                                    <span style="font-size: 1.2em;">+</span>
+                                </a>
+                                <br>
                                 <small class="text-muted">
                                     Оплачен: {{ ticket.payment_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
                                 </small>
@@ -107,6 +144,7 @@
             {% if not paid_tickets and not unpaid_tickets %}
             <div class="alert alert-info rounded-4">
                 У вас нет купленных билетов.
+                <a href="{% url 'cinema:home' %}" class="alert-link">Посмотреть фильмы</a>
             </div>
             {% endif %}
         </div>
