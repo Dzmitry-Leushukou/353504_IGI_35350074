@@ -94,28 +94,47 @@
                         </form>
                     </div>
                 {% else %}
-                    <div class="user-actions">
-                        <a href="{% url 'cinema:login' %}" class="btn btn-login">Войти</a>
-                        <a href="{% url 'cinema:register' %}" class="btn btn-register">Регистрация</a>
-                    </div>
+                    <!-- Блок перенесен в боковую панель -->
                 {% endif %}
             </div>
         </nav>
     </header>
     
-    <main role="main">
-        {% if messages %}
-            <section class="messages" aria-label="Системные сообщения">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </section>
-        {% endif %}
-        
-        {% block content %}{% endblock %}
-    </main>
+    <div style="display: flex;">
+        <!-- Боковая панель с вертикальной навигацией -->
+        <aside style="width: 200px; background: #111111; padding: 20px; min-height: calc(100vh - 100px);">
+            <nav style="display: flex; flex-direction: column; gap: 10px;">
+                {% if not user.is_authenticated %}
+                <div class="user-actions" style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="{% url 'cinema:login' %}" class="btn btn-login">Войти</a>
+                    <a href="{% url 'cinema:register' %}" class="btn btn-register">Регистрация</a>
+                </div>
+                {% endif %}
+                
+                <!-- Дополнительные ссылки для боковой панели -->
+                <a href="{% url 'cinema:home' %}">Главная</a>
+                <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
+                <a href="{% url 'cinema:news_list' %}">Новости</a>
+                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                    <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
+                {% endif %}
+            </nav>
+        </aside>
+
+        <main role="main" style="flex: 1;">
+            {% if messages %}
+                <section class="messages" aria-label="Системные сообщения">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
     <footer role="contentinfo">
         <section class="sponsors" aria-label="Наши спонсоры">
