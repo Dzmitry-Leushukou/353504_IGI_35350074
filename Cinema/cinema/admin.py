@@ -34,7 +34,6 @@ class CustomUserAdmin(UserAdmin):
     get_role.short_description = "Роль"
     
     def get_inline_instances(self, request, obj=None):
-        # Показываем EmployeeInline только для существующих сотрудников
         if obj and hasattr(obj, 'employee'):
             return [ProfileInline(self.model, self.admin_site), 
                     EmployeeInline(self.model, self.admin_site)]
@@ -57,7 +56,7 @@ class PromoCodeAdmin(admin.ModelAdmin):
     readonly_fields = (
         'used_count', 'created_at', 'updated_at',
         'status_display'
-    )  # <-- убрали start_date_only и end_date_only
+    )
 
     fieldsets = (
         (None, {
@@ -119,9 +118,8 @@ class VacancyAdmin(admin.ModelAdmin):
     list_display = ('title', 'salary', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('title', 'description')
-    actions = ['activate_vacancies', 'deactivate_vacancies']  # Регистрация действий
+    actions = ['activate_vacancies', 'deactivate_vacancies']
 
-    # Действие для активации
     def activate_vacancies(self, request, queryset):
         updated = queryset.update(is_active=True)
         self.message_user(
@@ -130,7 +128,6 @@ class VacancyAdmin(admin.ModelAdmin):
             messages.SUCCESS
         )
 
-    # Действие для деактивации
     def deactivate_vacancies(self, request, queryset):
         updated = queryset.update(is_active=False)
         self.message_user(
@@ -139,7 +136,6 @@ class VacancyAdmin(admin.ModelAdmin):
             messages.SUCCESS
         )
     
-    # Настройка отображения названий действий
     activate_vacancies.short_description = "Активировать выбранные вакансии"
     deactivate_vacancies.short_description = "Деактивировать выбранные вакансии"
 

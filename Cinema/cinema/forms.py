@@ -36,7 +36,6 @@ class TicketPurchaseForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.session = session
 
-        # Генерируем список доступных мест
         capacity = session.hall.capacity
         occupied = set(session.get_occupied_seats())
         choices = []
@@ -57,14 +56,12 @@ class TicketPurchaseForm(forms.Form):
     def clean_promo_code(self):
         code = self.cleaned_data.get('promo_code', '').strip()
         if not code:
-            return None  # промокод не указан
+            return None
         try:
             promo = PromoCode.objects.get(code__iexact=code)
         except PromoCode.DoesNotExist:
             raise ValidationError("Промокод не найден.")
-        # Проверяем статус промокода
         if promo.status != PromoCode.Status.ACTIVE:
-            # Если статус не ACTIVE, отдаём разные сообщения
             if promo.status == PromoCode.Status.INACTIVE:
                 raise ValidationError("Промокод неактивен.")
             if promo.status == PromoCode.Status.USED:
@@ -73,9 +70,7 @@ class TicketPurchaseForm(forms.Form):
                 raise ValidationError("Срок действия промокода истёк.")
             if promo.status == PromoCode.Status.PENDING:
                 raise ValidationError("Промокод ещё не активен.")
-            # В остальных случаях общее сообщение
             raise ValidationError("Невалидный промокод.")
-        # Всё хорошо — возвращаем сам объект промокода, чтобы использовать его в представлении
         return promo
 
 class ReviewForm(forms.ModelForm):
@@ -120,9 +115,9 @@ class UserRegistrationForm(forms.ModelForm):
     )
     birth_date = forms.DateField(
     label='Дата рождения',
-    input_formats=['%d/%m/%Y'],  # формат ввода
+    input_formats=['%d/%m/%Y'],
     widget=forms.DateInput(
-        format='%d/%m/%Y',  # формат отображения
+        format='%d/%m/%Y',
         attrs={'placeholder': 'ДД/ММ/ГГГГ', 'type': 'text'}
     )
 )
@@ -163,7 +158,6 @@ class UserRegistrationForm(forms.ModelForm):
         if commit:
             user.save()
             
-            # Создаем профиль
             Profile.objects.create(
                 user=user,
                 role='registered',
@@ -189,12 +183,10 @@ class PromoCodeForm(forms.ModelForm):
 
     def clean_start_date(self):
         date = self.cleaned_data['start_date']
-        # Преобразуем в datetime с полуночью
         return timezone.make_aware(datetime.combine(date, datetime.min.time()))
 
     def clean_end_date(self):
         date = self.cleaned_data['end_date']
-        # Преобразуем в datetime с 23:59:59
         return timezone.make_aware(datetime.combine(date, datetime.max.time()))
     
 class EmployeeForm(forms.ModelForm):

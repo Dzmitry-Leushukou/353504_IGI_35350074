@@ -69,16 +69,13 @@ class Session(models.Model):
         return f"{self.movie.title} ({self.start_time.strftime('%d.%m.%Y %H:%M')})"
 
     def clean(self):
-        # 1) Сеанс не может начинаться в прошлом
         if self.start_time < timezone.now():
             raise ValidationError("Время начала сеанса не может быть в прошлом")
 
-        # 2) Считаем время окончания: длительность фильма + 30 минут на уборку
         self.end_time = self.start_time + timezone.timedelta(
             minutes=self.movie.duration + 30
         )
 
-        # 3) Проверяем пересечения: если в том же зале есть перекрывающийся сеанс
         overlapping = Session.objects.filter(
             hall=self.hall,
             start_time__lt=self.end_time,
@@ -88,12 +85,10 @@ class Session(models.Model):
         if overlapping:
             raise ValidationError("Зал занят в это время другим сеансом")
 
-        # 4) Проверка available_seats ≤ capacity
         if self.available_seats > self.hall.capacity:
             raise ValidationError("Свободных мест не может быть больше вместимости зала")
 
     def save(self, *args, **kwargs):
-        # При сохранении сначала запускаем full_clean(), чтобы выполнить все проверки в clean()
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -118,10 +113,8 @@ class Session(models.Model):
         уже проданных билетов для этого сеанса.
         """
         new_available = self.hall.capacity - self.tickets.count()
-        # Если новое значение отличается, обновляем поле
         if self.available_seats != new_available:
             self.available_seats = new_available
-            # Обновляем только поле available_seats, чтобы не пересохранять всё
             self.save(update_fields=['available_seats'])
 
 class Ticket(models.Model):
@@ -201,7 +194,6 @@ class Ticket(models.Model):
         return not self.is_paid and not self.is_expired and self.session.start_time > timezone.now()
 
     def clean(self):
-        # Существующие проверки...
         if self.seat_number > self.session.hall.capacity:
             raise ValidationError(f"В зале всего {self.session.hall.capacity} мест!")
 
@@ -218,7 +210,6 @@ class Ticket(models.Model):
 @receiver(post_save, sender=Session)
 def init_session_data(sender, instance, created, **kwargs):
     if created:
-        # При создании нового сеанса сразу выставляем available_seats = capacity зала
         instance.available_seats = instance.hall.capacity
         instance.save(update_fields=['available_seats'])
 
@@ -619,7 +610,7 @@ class Employee(models.Model):
 
     def clean(self):
     
-        if not self.birth_date:  # Добавленная проверка
+        if not self.birth_date:
             raise ValidationError("Укажите дату рождения!")
 
         today = timezone.now().date()
@@ -704,7 +695,6 @@ class Vacancy(models.Model):
         return _("По договорённости")
     
 class FAQ(models.Model):
-    # Типы записей
     QUESTION = 'question'
     TERM = 'term'
     ENTRY_TYPE_CHOICES = [
@@ -712,7 +702,6 @@ class FAQ(models.Model):
         (TERM, 'Термин глоссария'),
     ]
     
-    # Поля модели
     entry_type = models.CharField(
         max_length=10,
         choices=ENTRY_TYPE_CHOICES,

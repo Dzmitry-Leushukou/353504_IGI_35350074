@@ -9,8 +9,7 @@
             <div class="card border-0 bg-light rounded-4 p-4 shadow-sm">
                 <h2 class="mb-4">Оплата билета</h2>
                 
-                <!-- Информация о билете -->
-                <div class="ticket-info mb-4 p-4 bg-white rounded-4 border">
+                <section class="ticket-info mb-4 p-4 bg-white rounded-4 border">
                     <div class="row">
                         <div class="col-md-3">
                             <img src="{{ ticket.session.movie.poster.url }}" 
@@ -51,28 +50,25 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Форма оплаты -->
                 <form method="post" novalidate>
                     {% csrf_token %}
                     
                     {% if messages %}
-                    <div class="mb-4">
+                    <aside class="mb-4">
                         {% for message in messages %}
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                             {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                         {% endfor %}
-                    </div>
+                    </aside>
                     {% endif %}
 
-                    <!-- Выбор способа оплаты -->
-                    <div class="payment-methods mb-4">
+                    <section class="payment-methods mb-4">
                         <h5 class="mb-3">Выберите способ оплаты</h5>
                         
-                        <!-- Карта -->
                         <div class="card mb-3 border-2">
                             <div class="card-body">
                                 <div class="form-check">
@@ -88,7 +84,6 @@
                             </div>
                         </div>
 
-                        <!-- Наличные -->
                         <div class="card mb-3 border-2">
                             <div class="card-body">
                                 <div class="form-check">
@@ -104,27 +99,25 @@
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <!-- Кнопки действия -->
-                    <div class="d-grid gap-3">
+                    <nav class="d-grid gap-3">
                         <button type="submit" class="btn btn-primary btn-lg py-3">
                             <strong>💳 Перейти к оплате {{ ticket.final_price }} ₽</strong>
                         </button>
                         <a href="{% url 'cinema:my_tickets' %}" class="btn btn-outline-secondary">
                             ← Вернуться к моим билетам
                         </a>
-                    </div>
+                    </nav>
                 </form>
 
-                <!-- Информация о безопасности -->
-                <div class="mt-4 p-3 bg-light rounded-3">
+                <aside class="mt-4 p-3 bg-light rounded-3">
                     <h6 class="mb-2">🔒 Безопасность платежей</h6>
                     <p class="small text-muted mb-0">
                         Все платежи защищены SSL-шифрованием. Мы не храним данные вашей карты. 
                         В случае вопросов обращайтесь в службу поддержки.
                     </p>
-                </div>
+                </aside>
             </div>
         </div>
     </div>

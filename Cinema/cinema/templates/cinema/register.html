@@ -86,74 +86,74 @@
 {% endblock %}
 
 {% block content %}
-<div class="register-container">
-    <h2 class="register-title">Регистрация</h2>
+<main class="register-container">
+    <header class="register-title">Регистрация</header>
     
     <form method="post" class="register-form">
         {% csrf_token %}
         
         {% if form.non_field_errors %}
-            <div class="error">
+            <aside class="error">
                 {% for error in form.non_field_errors %}
                     {{ error }}
                 {% endfor %}
-            </div>
+            </aside>
         {% endif %}
         
-        <div class="form-group">
+        <fieldset class="form-group">
             <label for="id_username">Имя пользователя</label>
             {{ form.username }}
             {% if form.username.errors %}
                 <div class="error">{{ form.username.errors.0 }}</div>
             {% endif %}
-        </div>
+        </fieldset>
         
-        <div class="form-group">
+        <fieldset class="form-group">
             <label for="id_email">Email</label>
             {{ form.email }}
             {% if form.email.errors %}
                 <div class="error">{{ form.email.errors.0 }}</div>
             {% endif %}
-        </div>
+        </fieldset>
         
-        <div class="form-group">
+        <fieldset class="form-group">
             <label for="id_password">Пароль</label>
             {{ form.password }}
             {% if form.password.errors %}
                 <div class="error">{{ form.password.errors.0 }}</div>
             {% endif %}
-        </div>
+        </fieldset>
         
-        <div class="form-group">
+        <fieldset class="form-group">
             <label for="id_password_confirm">Подтверждение пароля</label>
             {{ form.password_confirm }}
             {% if form.password_confirm.errors %}
                 <div class="error">{{ form.password_confirm.errors.0 }}</div>
             {% endif %}
-        </div>
+        </fieldset>
         
-        <div class="form-group">
+        <fieldset class="form-group">
             <label for="id_phone">Телефон</label>
             {{ form.phone }}
             <small style="color: #888; display: block; margin-top: 5px;">Формат: +375 (29) XXX-XX-XX</small>
             {% if form.phone.errors %}
                 <div class="error">{{ form.phone.errors.0 }}</div>
             {% endif %}
-        </div>
+        </fieldset>
         
-        <div class="form-group">
+        <fieldset class="form-group">
             <label for="id_birth_date">Дата рождения</label>
             {{ form.birth_date }}
             {% if form.birth_date.errors %}
                 <div class="error">{{ form.birth_date.errors.0 }}</div>
             {% endif %}
-        </div>
+        </fieldset>
         
         <button type="submit" class="btn-register">Зарегистрироваться</button>
     </form>
     
-    <div class="login-link">
+    <aside class="login-link">
         Уже есть аккаунт? <a href="{% url 'cinema:login' %}">Войти</a>
-    </div>
-</div>
+    </aside>
+</main>
 {% endblock %}

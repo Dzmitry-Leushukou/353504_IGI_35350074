@@ -7,7 +7,6 @@
     <div class="row justify-content-center">
         <div class="col-lg-6">
             <div class="card border-0 bg-light rounded-4 p-4 shadow-sm text-center">
-                <!-- Иконка успеха -->
                 <div class="mb-4">
                     <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center" 
                          style="width: 80px; height: 80px;">
@@ -16,8 +15,7 @@
                 </div>
                 <p class="lead mb-4">Ваш билет успешно активирован.</p>
 
-                <!-- Информация о билете -->
-                <div class="ticket-info mb-4 p-4 bg-white rounded-4 border text-start">
+                <section class="ticket-info mb-4 p-4 bg-white rounded-4 border text-start">
                     <h5 class="fw-bold">{{ ticket.session.movie.title }}</h5>
                     <div class="row">
                         <div class="col-md-6">
@@ -31,10 +29,9 @@
                             <p class="mb-0"><strong>💳 Способ:</strong> {{ ticket.get_payment_method_display }}</p>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- QR-код (заглушка) -->
-                <div class="mb-4 p-3 bg-white rounded-3 border">
+                <aside class="mb-4 p-3 bg-white rounded-3 border">
                     <h6 class="mb-2">QR-код для входа</h6>
                     <div class="bg-light border rounded p-3 d-inline-block">
                         <div style="width: 120px; height: 120px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
@@ -44,9 +41,8 @@
                     <p class="small text-muted mt-2">
                         Покажите этот код на входе в зал
                     </p>
-                </div>
+                </aside>
 
-                <!-- Инструкции -->
                 <div class="alert alert-info text-start">
                     <h6>📋 Что дальше?</h6>
                     <ul class="mb-0 small">
@@ -57,22 +53,20 @@
                     </ul>
                 </div>
 
-                <!-- Кнопки действий -->
-                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <nav class="d-grid gap-2 d-md-flex justify-content-md-center">
                     <a href="{% url 'cinema:my_tickets' %}" class="btn btn-primary me-md-2">
                         📋 Мои билеты
                     </a>
                     <a href="{% url 'cinema:home' %}" class="btn btn-outline-secondary">
                         🎬 На главную
                     </a>
-                </div>
+                </nav>
 
-                <!-- Контакты поддержки -->
-                <div class="mt-4 small text-muted">
+                <aside class="mt-4 small text-muted">
                     <p class="mb-0">
                         Вопросы? Обращайтесь в поддержку!
                     </p>
-                </div>
+                </aside>
             </div>
         </div>
     </div>

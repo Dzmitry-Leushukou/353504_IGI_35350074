@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 
-app_name = 'cinema'  # Пространство имён для URL
+app_name = 'cinema'
 
 urlpatterns = [
     path('', views.HomeView.as_view(), name='home'),

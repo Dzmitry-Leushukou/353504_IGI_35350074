@@ -42,11 +42,11 @@
           {% csrf_token %}
 
           {% if form.non_field_errors %}
-          <div class="alert alert-danger" role="alert">
+          <aside class="alert alert-danger" role="alert">
             {% for err in form.non_field_errors %}
             <div>{{ err }}</div>
             {% endfor %}
-          </div>
+          </aside>
           {% endif %}
 
           <fieldset class="mb-3">
@@ -60,11 +60,11 @@
             </div>
             {% endfor %}
             {% if form.seat_number.errors %}
-            <div class="text-danger" role="alert">
+            <aside class="text-danger" role="alert">
               {% for err in form.seat_number.errors %}
               <small>{{ err }}</small><br>
               {% endfor %}
-            </div>
+            </aside>
             {% endif %}
           </fieldset>
 
@@ -72,11 +72,11 @@
             <label for="{{ form.promo_code.id_for_label }}" class="form-label">Промокод (необязательно)</label>
             {{ form.promo_code }}
             {% if form.promo_code.errors %}
-            <div class="text-danger" role="alert">
+            <aside class="text-danger" role="alert">
               {% for err in form.promo_code.errors %}
               <small>{{ err }}</small><br>
               {% endfor %}
-            </div>
+            </aside>
             {% endif %}
           </div>
 
@@ -86,9 +86,9 @@
           <a href="{% url 'cinema:home' %}" class="btn btn-secondary ms-2">Отмена</a>
         </form>
         {% else %}
-        <div class="alert alert-info" role="alert">
+        <aside class="alert alert-info" role="alert">
           К сожалению, свободных мест нет.
-        </div>
+        </aside>
         <a href="{% url 'cinema:home' %}" class="btn btn-secondary">Вернуться на главную</a>
         {% endif %}
       </section>

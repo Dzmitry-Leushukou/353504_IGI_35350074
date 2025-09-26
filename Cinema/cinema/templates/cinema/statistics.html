@@ -2,8 +2,8 @@
 {% load static %}
 
 {% block content %}
-<div class="container-xxl py-5">
-  <h2 class="mb-4">Статистика продаж</h2>
+<main class="container-xxl py-5">
+  <header class="mb-4">Статистика продаж</header>
 
   {# Форма выбора фильма для фильтрации #}
   <form method="get" class="mb-4 row g-3">
@@ -24,8 +24,7 @@
     </div>
   </form>
 
-  {# Блок 1: Выручка по датам #}
-  <div class="card mb-5">
+  <section class="card mb-5">
     <div class="card-body">
       <h5 class="card-title">Выручка по датам</h5>
       {% if sales_by_date %}
@@ -70,11 +69,10 @@
       {% else %}
       <p class="text-muted">Нет данных о продажах.</p>
       {% endif %}
-    </div>
-  </div>
+    </section>
+  </section>
 
-  {# Блок 2: Выручка по фильмам #}
-  <div class="card mb-5">
+  <section class="card mb-5">
     <div class="card-body">
       <h5 class="card-title">ТОП-10 фильмов по выручке</h5>
       {% if sales_by_movie %}
@@ -100,11 +98,10 @@
       {% else %}
       <p class="text-muted">Нет данных о продажах по фильмам.</p>
       {% endif %}
-    </div>
-  </div>
+    </section>
+  </section>
 
-  {# Блок 3: Популярные жанры #}
-  <div class="card mb-5">
+  <section class="card mb-5">
     <div class="card-body">
       <h5 class="card-title">Доля продаж по жанрам (топ-5)</h5>
       {% if genre_sales_list %}
@@ -145,11 +142,10 @@
       {% else %}
       <p class="text-muted">Нет данных о жанрах.</p>
       {% endif %}
-    </div>
-  </div>
+    </section>
+  </section>
 
-  {# Блок 4: Клиенты и статистика по возрастам #}
-  <div class="card mb-5">
+  <section class="card mb-5">
     <div class="card-body">
       <h5 class="card-title">Список клиентов и статистика по возрасту</h5>
       {% if clients_data %}
@@ -177,7 +173,7 @@
       {% else %}
       <p class="text-muted">Нет данных о клиентах.</p>
       {% endif %}
-    </div>
-  </div>
-</div>
+    </section>
+  </section>
+</main>
 {% endblock %}

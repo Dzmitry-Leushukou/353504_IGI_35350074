@@ -56,7 +56,6 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 1. Фильтр по фильму (GET?movie_id=...)
         movie_id = self.request.GET.get('movie_id')
         if movie_id:
             try:
@@ -66,12 +65,10 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         else:
             selected_movie = None
 
-        # 2. Базовый queryset билетов (все или по выбранному фильму)
         tickets_qs = Ticket.objects.select_related('session__movie').all()
         if selected_movie:
             tickets_qs = tickets_qs.filter(session__movie=selected_movie)
 
-        # 3. Продажи по дням: группируем по дате покупки, считаем сумму выручки
         sales_by_date = (
             tickets_qs
             .annotate(day=TruncDate('purchase_date'))
@@ -79,11 +76,9 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
             .annotate(revenue=Sum('final_price'))
             .order_by('day')
         )
-        # Преобразуем в списки для диаграммы
         dates = [item['day'].strftime('%d.%m.%Y') for item in sales_by_date]
         revenue_list = [float(item['revenue']) for item in sales_by_date]
 
-        # 4. Продажи по фильмам: группируем по названию фильма, считаем сумму выручки
         sales_by_movie = (
             tickets_qs
             .values('session__movie__title')
@@ -94,7 +89,6 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         movie_titles = [item['session__movie__title'] for item in top10_movies]
         movie_revenue = [float(item['revenue']) for item in top10_movies]
 
-        # 5. Популярные жанры: подсчитываем количество и сумму выручки по жанрам
         from collections import defaultdict
 
         genre_sales_count = defaultdict(int)
@@ -117,7 +111,6 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
             key=lambda x: x['revenue'], reverse=True
         )
 
-        # 6. Клиенты: список username + возраст; вычисляем mean, median, mode
         profiles = Profile.objects.filter(user__is_active=True).exclude(birth_date__isnull=True)
         clients_data = []
         ages = []
@@ -138,20 +131,14 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         else:
             age_mean = age_median = age_mode = None
 
-        # 7. Общая выручка
         total_revenue = tickets_qs.aggregate(total=Sum('final_price'))['total'] or 0
 
-        # 8. Статистика по дням: среднее и медиана ежедневной выручки
         if revenue_list:
             daily_mean = round(stats_mod.mean(revenue_list), 2)
             daily_median = round(stats_mod.median(revenue_list), 2)
         else:
             daily_mean = daily_median = None
 
-        # 9. Генерируем три круговые диаграммы:
-        #    a) выручка по датам,
-        #    b) выручка по топ-10 фильмам,
-        #    c) продажи по жанрам (топ-5 по количеству билетов).
 
         chart_revenue_by_date = self._generate_pie_chart(
             labels=dates, values=revenue_list,
@@ -171,7 +158,6 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
             title='Доля продаж по жанрам (топ-5)'
         )
 
-        # 10. Добавляем всё в контекст
         context.update({
             'movies': Movie.objects.all().order_by('title'),
             'selected_movie': selected_movie,
@@ -200,7 +186,6 @@ class StatisticsView(UserPassesTestMixin, TemplateView):
         plt.switch_backend('AGG')
         fig, ax = plt.subplots(figsize=(6, 6))
 
-        # Если суммы всех значений равны нулю (или values пуст), возвращаем пустую строку
         if not any(values):
             plt.close(fig)
             return ''
@@ -242,12 +227,10 @@ class TicketPurchaseView(UserPassesTestMixin, View):
          - текстовый календарь текущего месяца в часовом поясе пользователя
         Принимает любые дополнительные ключи через kwargs и добавляет их в результат.
         """
-        # 1. Получаем текущее время в UTC и локальный часовой пояс
-        now_utc = timezone.now()  # хранится в UTC, так как USE_TZ=True
+        now_utc = timezone.now()
         user_tz = timezone.get_current_timezone()
         now_local = timezone.localtime(now_utc, user_tz)
 
-        # 2. Форматируем смещение UTC типа 'UTC+03:00' или 'UTC-05:00'
         offset = now_local.utcoffset() or timezone.timedelta(0)
         total_minutes = offset.total_seconds() / 60
         sign = '+' if total_minutes >= 0 else '-'
@@ -255,42 +238,35 @@ class TicketPurchaseView(UserPassesTestMixin, View):
         minutes_offset = int(abs(total_minutes) % 60)
         utc_offset_str = f"UTC{sign}{hours_offset:02}:{minutes_offset:02}"
 
-        # 3. Собираем текстовый календарь для текущего месяца в локальном часовом поясе
         calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(
             now_local.year,
             now_local.month
         )
 
-        # 4. Собираем базовый контекст
         context = {
             'user_timezone': str(user_tz),
             'timezone_name': str(user_tz),
-            # формируем строки вида '03.06.2025 14:25'
             'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
             'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
             'user_tz_offset': utc_offset_str,
             'calendar_text': calendar_text,
         }
 
-        # 5. Если в kwargs переданы дополнительные данные (form, session и т.п.), добавляем их
         context.update(kwargs)
         return context
 
     def get(self, request, session_id):
         session = get_object_or_404(Session, pk=session_id)
 
-        # Нельзя покупать билет на сеанс в прошлом
         if session.start_time < timezone.now():
             messages.error(request, 'Нельзя купить билет на прошедший сеанс.')
             return redirect('cinema:home')
 
         form = TicketPurchaseForm(session=session)
-        # Если нет свободных мест, перенаправляем
         if not form.fields['seat_number'].choices:
             messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
             return redirect('cinema:home')
 
-        # Собираем контекст, передаём форму, сеанс и цены
         context = self.get_context_data(
             form=form,
             session=session,
@@ -308,7 +284,6 @@ class TicketPurchaseView(UserPassesTestMixin, View):
             messages.info(request, 'Извините, свободных мест на этот сеанс больше нет.')
             return redirect('cinema:home')
 
-        # ВНИМАНИЕ: здесь не передаём request первым аргументом
         context = self.get_context_data(
             form=form,
             session=session,
@@ -347,8 +322,6 @@ class TicketPurchaseView(UserPassesTestMixin, View):
             except ValidationError as e:
                 form.add_error(None, e.messages)
 
-        # Если форма не прошла валидацию, но при этом промокод был введён,
-        # рассчитываем цену снова, чтобы вывести в шаблоне
         if form.cleaned_data.get('promo_code'):
             promo_obj = form.cleaned_data.get('promo_code')
             if promo_obj and promo_obj.status == promo_obj.Status.ACTIVE:
@@ -375,12 +348,10 @@ class MyTicketsView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Разделяем билеты на оплаченные и неоплаченные
         tickets = context['tickets']
         paid_tickets = [t for t in tickets if t.is_paid]
         unpaid_tickets = [t for t in tickets if not t.is_paid]
         
-        # Общий контекст с часовым поясом
         user_tz = timezone.get_current_timezone()
         now_utc = timezone.now()
         now_local = timezone.localtime(now_utc, user_tz)
@@ -405,7 +376,7 @@ class MyTicketsView(LoginRequiredMixin, ListView):
             'now_local': now_local.strftime('%d.%m.%Y %H:%M'),
             'now_utc': now_utc.strftime('%d.%m.%Y %H:%M'),
             'calendar_text': calendar_text,
-            'current_time': timezone.now(),  # Для проверки в шаблоне
+            'current_time': timezone.now(),
         })
         return context
     
@@ -417,15 +388,12 @@ class ReviewView(UserPassesTestMixin, View):
     
     def test_func(self):
         """Определяет доступ к действиям с отзывами"""
-        # Для просмотра списка всегда доступно
         if self.request.resolver_match.url_name == 'reviews':
             return True
         
-        # Для других действий требуется аутентификация
         if not self.request.user.is_authenticated:
             return False
         
-        # Проверка прав через профиль
         try:
             profile = self.request.user.profile
             return profile.can_write_reviews()
@@ -440,7 +408,6 @@ class ReviewView(UserPassesTestMixin, View):
         return super().handle_no_permission()
     
     def get(self, request, *args, **kwargs):
-        # Определяем действие по имени URL
         if request.resolver_match.url_name == 'add_review':
             return self.add_review(request)
         elif request.resolver_match.url_name == 'edit_review':
@@ -451,7 +418,6 @@ class ReviewView(UserPassesTestMixin, View):
             return self.list_reviews(request)
     
     def post(self, request, *args, **kwargs):
-        # Определяем действие по имени URL
         if request.resolver_match.url_name == 'add_review':
             return self.create_review(request)
         elif request.resolver_match.url_name == 'edit_review':
@@ -567,7 +533,6 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             
-            # Автоматический вход после регистрации
             user = authenticate(
                 username=form.cleaned_data['username'],
                 password=form.cleaned_data['password']
@@ -576,11 +541,10 @@ def register_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, 'Регистрация прошла успешно!')
-                return redirect('cinema:home')  # Редирект на главную страницу
+                return redirect('cinema:home')
             else:
                 messages.error(request, 'Ошибка автоматического входа после регистрации')
         else:
-            # Если форма невалидна, покажем ошибки
             messages.error(request, 'Пожалуйста, исправьте ошибки в форме')
     else:
         form = UserRegistrationForm()
@@ -593,7 +557,6 @@ class PromoCodeListView(ListView):
     context_object_name = 'promo_codes'
     
     def get_queryset(self):
-        # Сначала активные, затем неактивные
         return PromoCode.objects.all().order_by(
             '-is_active', 
             '-start_date'
@@ -661,7 +624,7 @@ class MovieDetailView(DetailView):
         context['sessions'] = self.object.sessions.filter(
             start_time__gte=current_time
         ).order_by('start_time')
-        now_utc = timezone.now()  # хранится в UTC, так как USE_TZ=True
+        now_utc = timezone.now()
         user_tz = timezone.get_current_timezone()
         now_local = timezone.localtime(now_utc, user_tz)
         calendar_text = calendar.TextCalendar(firstweekday=0).formatmonth(now_local.year, now_local.month)
@@ -797,19 +760,16 @@ class PayTicketView(LoginRequiredMixin, View):
             messages.error(request, 'Невозможно оплатить билет')
             return redirect('cinema:my_tickets')
         
-        # Валидация выбора способа оплаты
         if payment_method not in ['card', 'cash']:
             messages.error(request, 'Выберите способ оплаты')
             context = self.get_context_data(ticket=ticket)
             return render(request, 'cinema/pay_ticket.html', context)
         
-        # Обработка оплаты
         ticket.is_paid = True
         ticket.payment_date = timezone.now()
-        ticket.payment_method = payment_method  # Добавим это поле в модель
+        ticket.payment_method = payment_method
         ticket.save()
         
-        # Перенаправляем на страницу успешной оплаты
         return redirect('cinema:payment_success', ticket_id=ticket.id)
     
     def get_context_data(self, **kwargs):
@@ -846,7 +806,6 @@ class DeleteTicketView(LoginRequiredMixin, View):
     def post(self, request, ticket_id):
         ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
         
-        # Можно удалять только неоплаченные билеты
         if not ticket.is_paid:
             ticket.delete()
             messages.success(request, 'Билет успешно удален из корзины.')

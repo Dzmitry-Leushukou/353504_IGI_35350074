@@ -1,8 +1,6 @@
-<!-- cinema/my_tickets.html -->
 {% extends 'cinema/base.html' %}
 {% load static %}
 {% load tz %}
-
 {% block content %}
 <div class="container-xxl py-5">
     <div class="row justify-content-center">
@@ -10,75 +8,66 @@
             <h3>Календарь на текущий месяц</h3>
             <pre style="font-family: monospace; padding: 10px;">{{ calendar_text }}</pre>
             
-            <h2 class="mb-4">Мои билеты</h2>
+            <h2>Мои билеты</h2>
 
-            <!-- Неоплаченные билеты -->
             {% if unpaid_tickets %}
             <div class="mb-5">
-                <h4 class="text-warning mb-3">⏳ Ожидают оплаты ({{ unpaid_tickets|length }})</h4>
-                <div class="list-group">
+                <h4>Ожидают оплаты ({{ unpaid_tickets|length }})</h4>
+                <div>
                     {% for ticket in unpaid_tickets %}
-                    <div class="list-group-item mb-3 rounded-4 shadow-sm border-warning">
-                        <div class="row align-items-center">
-                            <div class="col-md-2 d-flex align-items-center justify-content-center">
+                    <div style="border: 1px solid #ffc107; margin-bottom: 15px; padding: 15px; border-radius: 10px;">
+                        <div style="display: flex; align-items: center;">
+                            <div style="flex: 0 0 100px; margin-right: 20px;">
                                 <img src="{{ ticket.session.movie.poster.url }}" 
-                                     class="img-fluid rounded-3" 
-                                     style="max-height:100px;" 
+                                     style="max-height:100px; width: auto;" 
                                      alt="{{ ticket.session.movie.title }}">
                             </div>
-                            <div class="col-md-5">
-                                <h5 class="mb-1">
-                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
-                                       class="text-decoration-none text-dark">
+                            <div style="flex: 1;">
+                                <h5>
+                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}">
                                         {{ ticket.session.movie.title }}
                                     </a>
                                 </h5>
-                                <small class="text-muted">
+                                <p>
                                     {{ ticket.session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }}) —
                                     Зал {{ ticket.session.hall.number }} ({{ ticket.session.hall.get_hall_type_display }})
-                                </small>
-                                <p class="mb-1">Место: <strong>{{ ticket.seat_number }}</strong></p>
-                                <p class="mb-0">Цена: <strong class="text-success">{{ ticket.final_price }} ₽</strong></p>
+                                </p>
+                                <p>Место: <strong>{{ ticket.seat_number }}</strong></p>
+                                <p>Цена: <strong>{{ ticket.final_price }} ₽</strong></p>
                                 
                                 {% if ticket.is_expired %}
-                                <span class="badge bg-danger mt-1">Время оплаты истекло</span>
+                                <span style="background-color: #dc3545; color: white; padding: 2px 5px; border-radius: 3px;">Время оплаты истекло</span>
                                 {% elif ticket.session.start_time <= current_time %}
-                                <span class="badge bg-secondary mt-1">Сеанс уже прошел</span>
+                                <span style="background-color: #6c757d; color: white; padding: 2px 5px; border-radius: 3px;">Сеанс уже прошел</span>
                                 {% else %}
-                                <small class="text-muted d-block mt-1">
+                                <small>
                                     Оплатите до: {{ ticket.purchase_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
                                 </small>
                                 {% endif %}
                             </div>
-                            <div class="col-md-5 text-end">
-                                <div class="d-flex justify-content-end gap-2 align-items-center">
-                                    <!-- Плюсик - ссылка на страницу фильма -->
-                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
-                                       class="btn btn-success btn-sm" 
-                                       title="Подробнее о фильме">
-                                        <span style="font-size: 1.2em;">+</span>
-                                    </a>
-                                    
-                                    {% if ticket.can_be_paid %}
-                                    <a href="{% url 'cinema:pay_ticket' ticket.id %}" 
-                                       class="btn btn-warning btn-sm">
-                                        💳 Оплатить
-                                    </a>
-                                    {% endif %}
-                                    
-                                    <!-- Минусик - форма для удаления билета -->
-                                    <form method="post" action="{% url 'cinema:delete_ticket' ticket.id %}" class="d-inline">
-                                        {% csrf_token %}
-                                        <button type="submit" 
-                                                class="btn btn-danger btn-sm" 
-                                                title="Удалить билет"
-                                                onclick="return confirm('Вы уверены, что хотите удалить этот билет?')">
-                                            <span style="font-size: 1.2em;">-</span>
-                                        </button>
-                                    </form>
-                                </div>
+                            <div style="text-align: right;">
+                                <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
+                                   style="display: inline-block; margin: 2px; padding: 5px 10px; background: #28a745; color: white; text-decoration: none;">
+                                    +
+                                </a>
+                                
+                                {% if ticket.can_be_paid %}
+                                <a href="{% url 'cinema:pay_ticket' ticket.id %}" 
+                                   style="display: inline-block; margin: 2px; padding: 5px 10px; background: #ffc107; color: black; text-decoration: none;">
+                                    Оплатить
+                                </a>
+                                {% endif %}
+                                
+                                <form method="post" action="{% url 'cinema:delete_ticket' ticket.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            style="margin: 2px; padding: 5px 10px; background: #dc3545; color: white; border: none; cursor: pointer;"
+                                            onclick="return confirm('Вы уверены, что хотите удалить этот билет?')">
+                                        -
+                                    </button>
+                                </form>
                                 <br>
-                                <small class="text-muted">
+                                <small>
                                     Забронирован: {{ ticket.purchase_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
                                 </small>
                             </div>
@@ -89,48 +78,43 @@
             </div>
             {% endif %}
 
-            <!-- Оплаченные билеты -->
             {% if paid_tickets %}
             <div class="mb-5">
-                <h4 class="text-success mb-3">✅ Оплаченные билеты ({{ paid_tickets|length }})</h4>
-                <div class="list-group">
+                <h4>Оплаченные билеты ({{ paid_tickets|length }})</h4>
+                <div>
                     {% for ticket in paid_tickets %}
-                    <div class="list-group-item mb-3 rounded-4 shadow-sm border-success">
-                        <div class="row align-items-center">
-                            <div class="col-md-2 d-flex align-items-center justify-content-center">
+                    <div style="border: 1px solid #28a745; margin-bottom: 15px; padding: 15px; border-radius: 10px;">
+                        <div style="display: flex; align-items: center;">
+                            <div style="flex: 0 0 100px; margin-right: 20px;">
                                 <img src="{{ ticket.session.movie.poster.url }}" 
-                                     class="img-fluid rounded-3" 
-                                     style="max-height:100px;" 
+                                     style="max-height:100px; width: auto;" 
                                      alt="{{ ticket.session.movie.title }}">
                             </div>
-                            <div class="col-md-8">
-                                <h5 class="mb-1">
-                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
-                                       class="text-decoration-none text-dark">
+                            <div style="flex: 1;">
+                                <h5>
+                                    <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}">
                                         {{ ticket.session.movie.title }}
                                     </a>
                                 </h5>
-                                <small class="text-muted">
+                                <p>
                                     {{ ticket.session.start_time|date:"d.m.Y H:i" }} ({{ timezone_name }}) —
                                     Зал {{ ticket.session.hall.number }} ({{ ticket.session.hall.get_hall_type_display }})
-                                </small>
-                                <p class="mb-1">Место: <strong>{{ ticket.seat_number }}</strong></p>
-                                <p class="mb-0">Цена: <strong class="text-success">{{ ticket.final_price }} ₽</strong></p>
+                                </p>
+                                <p>Место: <strong>{{ ticket.seat_number }}</strong></p>
+                                <p>Цена: <strong>{{ ticket.final_price }} ₽</strong></p>
                                 {% if ticket.session.start_time <= current_time %}
-                                <span class="badge bg-info mt-1">Сеанс завершен</span>
+                                <span style="background-color: #17a2b8; color: white; padding: 2px 5px; border-radius: 3px;">Сеанс завершен</span>
                                 {% else %}
-                                <span class="badge bg-success mt-1">Оплачен ✓</span>
+                                <span style="background-color: #28a745; color: white; padding: 2px 5px; border-radius: 3px;">Оплачен ✓</span>
                                 {% endif %}
                             </div>
-                            <div class="col-md-2 text-end">
-                                <!-- Плюсик для оплаченных билетов -->
+                            <div style="text-align: right;">
                                 <a href="{% url 'cinema:movie_detail' ticket.session.movie.id %}" 
-                                   class="btn btn-success btn-sm mb-2" 
-                                   title="Подробнее о фильме">
-                                    <span style="font-size: 1.2em;">+</span>
+                                   style="display: inline-block; margin: 2px; padding: 5px 10px; background: #28a745; color: white; text-decoration: none;">
+                                    +
                                 </a>
                                 <br>
-                                <small class="text-muted">
+                                <small>
                                     Оплачен: {{ ticket.payment_date|date:"d.m.Y H:i" }} ({{ timezone_name }})
                                 </small>
                             </div>
@@ -142,9 +126,9 @@
             {% endif %}
 
             {% if not paid_tickets and not unpaid_tickets %}
-            <div class="alert alert-info rounded-4">
+            <div style="background-color: #d1ecf1; padding: 15px; border-radius: 5px;">
                 У вас нет купленных билетов.
-                <a href="{% url 'cinema:home' %}" class="alert-link">Посмотреть фильмы</a>
+                <a href="{% url 'cinema:home' %}">Посмотреть фильмы</a>
             </div>
             {% endif %}
         </div>
