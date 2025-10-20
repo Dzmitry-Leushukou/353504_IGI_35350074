@@ -1,114 +1,164 @@
 <!DOCTYPE html>
-{%load static%}
+{% load static %}
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{% static 'images/favicon.png' %}" type="image/png">
-    <title>{% block title %}Кинотеатр{% endblock %}</title>
-    {% load static %}  
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    {% block extra_css %}{% endblock %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{% static 'images/favicon.png' %}" type="image/png">
+  <title>{% block title %}Кинотеатр{% endblock %}</title>
+
+  <style>
+    /* --- Фиксированная навигация сверху --- */
+    .site-nav{
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: #131d20;
+      border-bottom: 1px solid #263450;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 16px;
+    }
+    body{ margin:0; padding-top: 64px; background:#192630; color:#e4edf2; }
+
+    .site-nav a{ color:#e9f1f5; text-decoration:none; margin-right:12px; }
+    .site-nav a:hover{ color:#b6e7ff; }
+
+    /* Заголовки под тёмный фон */
+    h1{ color:#ffffff; }
+    h2{ color:#e9f1f5; }
+    h3{ color:#cfe7f2; }
+    h4{ color:#a9d8f0; }
+    h5{ color:#8bd3ff; }
+    h6{ color:#cbd5e1; }
+    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a{ color:inherit; text-decoration:underline; }
+    h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover{ opacity:.9; }
+
+    /* --- Футер и спонсоры --- */
+    .site-footer{
+      border-top: 4px solid #263450;   /* явная разделяющая линия футера */
+      margin-top: 32px;
+      padding-top: 16px;
+    }
+
+    /* Контейнер логотипов спонсоров */
+    .sponsors{
+      display:flex;
+      flex-wrap:wrap;
+      gap:16px;
+      align-items:center;
+      justify-content:center;
+      padding:12px 0;
+    }
+
+    /* КРУГЛЫЕ БЛОКИ-ПЛЕЙСХОЛДЕРЫ ДЛЯ ПАРТНЁРОВ (ширина, цвет, тип, тень настраиваются) */
+    .sponsors a{
+      /* === Настраиваемые переменные === */
+      --size:        96px;                 /* ширина/высота круга */
+      --border-w:    3px;                  /* толщина рамки */
+      --border-type: solid;                /* solid | dashed | dotted | double */
+      --border-color:#8bd3ff;              /* цвет рамки */
+      --bg:          #0f1a22;              /* фон внутри круга */
+      --shadow:      0 6px 16px rgba(0,0,0,.28); /* тень */
+
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      border: var(--border-w) var(--border-type) var(--border-color);
+      background: var(--bg);
+      box-shadow: var(--shadow);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      text-decoration: none;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+
+    /* Логотип внутри круга */
+    .sponsors a img{
+      max-width: 70%;
+      max-height: 70%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Ховер-эффект (минимальный) */
+    .sponsors a:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(0,0,0,.35);
+      border-color: #b6e7ff;
+    }
+
+    /* На очень узких экранах круги чуть меньше */
+    @media (max-width: 480px){
+      .sponsors a{ --size:72px; }
+    }
+  </style>
 </head>
-<body class="{% block body_class %}{% endblock %}">
-    <header role="banner">
-        <nav role="navigation" aria-label="Основное меню">
-            <div class="nav-left">
-                <a href="{% url 'cinema:home' %}">Главная</a>
-                <a href="{% url 'cinema:news_list' %}">Новости</a>
-                <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
-                <a href="{% url 'cinema:promo_codes' %}">Промокоды</a>
-                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
-                    <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
-                {% endif %}
-                <a href="{% url 'cinema:reviews' %}">Отзывы</a>
-                <a href="{% url 'cinema:faq' %}">FAQ</a>
-                <a href="{% url 'cinema:vacancy_list' %}">Вакансии</a>
-                <a href="{% url 'cinema:contacts' %}">Контакты</a>
-                <a href="{% url 'cinema:privacy_policy' %}">Политика конфиденциальности</a>
-                <a href="{% url 'cinema:about' %}">О нас</a>
+<body>
+  <header role="banner">
+    <nav class="site-nav" role="navigation" aria-label="Основное меню">
+      <div class="nav-left">
+        <a href="{% url 'cinema:home' %}">Главная</a>
+        <a href="{% url 'cinema:news_list' %}">Новости</a>
+        <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
+        <a href="{% url 'cinema:promo_codes' %}">Промокоды</a>
+        {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+          <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
+        {% endif %}
+        <a href="{% url 'cinema:reviews' %}">Отзывы</a>
+        <a href="{% url 'cinema:faq' %}">FAQ</a>
+        <a href="{% url 'cinema:vacancy_list' %}">Вакансии</a>
+        <a href="{% url 'cinema:contacts' %}">Контакты</a>
+        <a href="{% url 'cinema:privacy_policy' %}">Политика конфиденциальности</a>
+        <a href="{% url 'cinema:about' %}">О нас</a>
+        {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser %}
+          <a class="nav-link" href="{% url 'cinema:statistics' %}">Статистика</a>
+        {% endif %}
+      </div>
 
-                {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser %}
-                    <a class="nav-link" href="{% url 'cinema:statistics' %}">Статистика</a>
-                {% endif %}
-            </div>
-            
-            <div class="nav-right">
-                {% if user.is_authenticated %}
-                    <div class="user-greeting">
-                        <i class="bi bi-person-circle" aria-hidden="true"></i>
-                        <span>Привет, {{ user.username }}!</span>
-                        <form action="{% url 'logout' %}" method="post">
-                            {% csrf_token %}
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </div>
-                {% else %}
-                {% endif %}
-            </div>
-        </nav>
-    </header>
-    
-    <div>
-        <aside>
-            <nav>
-                {% if not user.is_authenticated %}
-                <div class="user-actions">
-                    <a href="{% url 'cinema:login' %}" class="btn btn-login">Войти</a>
-                    <a href="{% url 'cinema:register' %}" class="btn btn-register">Регистрация</a>
-                </div>
-                {% endif %}
-                
-                
-                <a href="{% url 'cinema:home' %}">Главная</a>
-                <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
-                <a href="{% url 'cinema:news_list' %}">Новости</a>
-                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
-                    <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
-                {% endif %}
-            </nav>
-        </aside>
+      <div class="nav-right">
+        {% if user.is_authenticated %}
+          <div class="user-greeting" style="display:flex;align-items:center;gap:8px;">
+            <i class="bi bi-person-circle" aria-hidden="true"></i>
+            <span>👤{{ user.username }}</span>
+            <form action="{% url 'logout' %}" method="post">
+              {% csrf_token %}
+              <button type="submit" class="logout-btn">Выйти</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
 
-        <main role="main">
-            {% if messages %}
-                <section class="messages" aria-label="Системные сообщения">
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }}" role="alert">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </section>
-            {% endif %}
-            
-            {% block content %}{% endblock %}
-        </main>
-    </div>
+  <main role="main">
+    {% if messages %}
+      <section class="messages" aria-label="Системные сообщения">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </section>
+    {% endif %}
 
-    <footer role="contentinfo">
-        <section class="sponsors" aria-label="Наши спонсоры">
-            {% for sponsor in sponsors %}
-                <a href="{{ sponsor.src }}" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ sponsor.img.url }}" alt="Логотип спонсора {{ sponsor.name }}" border="0">
-                </a>
-            {% endfor %}
-        </section>
-        <p>© 2025 Кинотеатр</p>
-    </footer>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <section class="sponsors" aria-label="Наши спонсоры">
+      {% for sponsor in sponsors %}
+        <a href="{{ sponsor.src }}" target="_blank" rel="noopener noreferrer"
+           title="{{ sponsor.name }}">
+          <img src="{{ sponsor.img.url }}" alt="Логотип спонсора {{ sponsor.name }}" border="0">
+        </a>
+      {% endfor %}
+    </section>
+    <p style="color:#cbd5e1; text-align:center;">© 2025 Кинотеатр</p>
+  </footer>
 </body>
 </html>
-
-
-<style>
-  body{ margin:0; background:#192630; }
-
-  h1{ color:#ffffff; }   
-  h2{ color:#e9f1f5; }   
-  h3{ color:#cfe7f2; }  
-  h4{ color:#a9d8f0; }  
-  h5{ color:#8bd3ff; }   
-  h6{ color:#cbd5e1; }   
-  
-  h1 a, h2 a, h3 a, h4 a, h5 a, h6 a{ color:inherit; text-decoration:underline; }
-  h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover{ opacity:.9; }
-</style>
-

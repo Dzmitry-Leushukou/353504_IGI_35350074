@@ -3,6 +3,18 @@
 
 {% block content %}
 
+<style>
+  figure[itemprop="logo"] img{
+    display:block;
+    margin:12px auto;
+    transform: rotate(-2deg) scale(1);
+    transition: transform .2s ease;
+  }
+  figure[itemprop="logo"] img:hover{
+    transform: rotate(0deg) scale(1.05);
+  }
+</style>
+
 <article itemscope itemtype="https://schema.org/AboutPage">
   <header>
     <h1 itemprop="headline">О компании</h1>
@@ -24,7 +36,6 @@
     <video controls width="600">
       <source src="{{ company_info.video.url }}" type="video/mp4">
       Ваш браузер не поддерживает видео.
-      
     </video>
     <meta itemprop="contentUrl" content="{{ company_info.video.url }}">
     <meta itemprop="uploadDate" content="{{ company_info.updated_at|date:'c' }}">
@@ -107,9 +118,7 @@
     {% if sponsors %}
       <ul>
         {% for sponsor in sponsors %}
-          <li>
-            {{ sponsor.name }}
-          </li>
+          <li>{{ sponsor.name }}</li>
         {% endfor %}
       </ul>
     {% else %}

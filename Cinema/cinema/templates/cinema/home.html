@@ -4,112 +4,166 @@
 {% load static %}
 
 {% block content %}
+
+<style>
+  /* Лого по центру */
+  .logo{
+    display:flex; justify-content:center; align-items:center;
+    padding:12px 0; text-align:center;
+  }
+  .logo img{ max-width:100%; height:auto; display:inline-block; }
+
+  /* Цитата и погода по центру и в столбик */
+  .quote-block{
+    display:flex; flex-direction:column; align-items:center;
+    gap:6px; text-align:center; margin:12px auto; max-width:800px;
+  }
+  .weather-center{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:fit-content; margin:12px auto; text-align:center;
+  }
+
+  /* Разделяющая линия между «верхом» и прокатом */
+  .section-divider{
+    border:0; height:1px; width:min(100%,1200px);
+    margin:16px auto 12px;
+    background: linear-gradient(90deg, #0000, #263450, #0000);
+  }
+
+  /* Заголовок раздела по центру */
+  .section-title{ text-align:center; margin:8px 0 16px; }
+
+  /* Две колонки: контент + реклама справа */
+  .content-grid{
+    display:grid; grid-template-columns: 1fr 300px;
+    gap:24px; align-items:start;
+  }
+  .adv-column{ position:sticky; top:16px; }
+  .adv-banner{ display:block; width:100%; height:auto; }
+  @media (max-width:900px){
+    .content-grid{ grid-template-columns:1fr; }
+    .adv-column{ position:static; top:auto; }
+  }
+
+  /* Блок «Последняя новость» с позиционированием */
+  .last-article{ position:relative; border-radius:12px; overflow:hidden; }
+  .last-article__img{ width:100%; height:340px; object-fit:cover; display:block; }
+  .last-article__date{
+    position:absolute; top:10px; right:10px;
+    padding:4px 8px; font-size:.9rem; background:rgba(0,0,0,.6); color:#fff;
+  }
+  .last-article__meta{
+    position:absolute; left:0; right:0; bottom:0;
+    padding:12px; color:#fff; background:rgba(0,0,0,.55);
+  }
+  .last-article__title{ margin:0 0 6px 0; }
+  .last-article__summary{ margin:0; }
+  .last-article__link{ display:block; color:inherit; text-decoration:none; }
+</style>
+
 <section class="now-playing">
-    <div class="container">
+  <div class="container">
 
-        <div>
-            {% if logo %}
-    <img src="{{ logo.url }}" 
-         alt="Логотип" 
-         class="d-inline-block img-fluid"
-         srcset="{{ logo.url }} 400w,
-                 {{ logo.url }} 800w,
-                 {{ logo.url }} 1200w"
-         sizes="(max-width: 600px) 400px,
-                (max-width: 1000px) 800px,
-                1200px">
-{% else %}
-    <p class="text-center">Логотип не найден</p>
-{% endif %}
-        </div>
-
-        {% if quote_text %}
-        <div>
-            <p>“{{ quote_text }}”</p>
-            {% if quote_author %}
-                <p>— {{ quote_author }}</p>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% if weather_info %}
-        <div class="alert alert-secondary mb-4" role="alert">
-            <i class="bi bi-cloud-sun-fill me-2"></i>
-            Погода в Минске: <strong>{{ weather_info }}</strong>
-        </div>
-        {% endif %}
-
-        <div class="content-grid">
-            <div class="movies-column">
-                <h2 class="section-title">Сейчас в прокате</h2>
-                <div class="movies-grid">
-                    {% for movie in active_movies %}
-                    <a href="{% url 'cinema:movie_detail' movie.pk %}" class="movie-card-link">
-                        <div class="movie-card">
-                            <div class="movie-poster">
-                                <img src="{{ movie.poster.url }}" alt="{{ movie.title }}" class="poster-image">
-                                <div class="movie-overlay">
-                                    <span class="btn-buy">
-                                        Купить билеты
-                                        <i class="fas fa-ticket-alt"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="movie-info">
-                                <h3 class="movie-title">{{ movie.title }}</h3>
-                                <div class="movie-meta">
-                                    <span class="rating"><i class="fas fa-star"></i> {{ movie.rating }}/10</span>
-                                    {% if movie.genres.all %}
-                                    <span class="genre">{{ movie.genres.all.0.name }}</span>
-                                    {% endif %}
-                                </div>
-                                <p class="movie-description">{{ movie.description|truncatewords:20 }}</p>
-                            </div>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-    
-    <aside class="adv-column">
-            {% if adv_img and adv_src %}
-        <a href="{{ adv_src }}" target="_blank">
-            <img src="{{ adv_img.url }}" alt="Реклама" class="adv-banner">
-        </a>
-    {% else %}
-        <p>Реклама скоро появится</p>
-    {% endif %}
-</aside>
-
-        </div>
-
+    <div class="logo">
+      {% if logo %}
+      <img src="{{ logo.url }}"
+           alt="Логотип"
+           class="d-inline-block img-fluid"
+           srcset="{{ logo.url }} 400w, {{ logo.url }} 800w, {{ logo.url }} 1200w"
+           sizes="(max-width: 600px) 400px, (max-width: 1000px) 800px, 1200px">
+      {% else %}
+      <p class="text-center">Логотип не найден</p>
+      {% endif %}
     </div>
+
+    {% if quote_text %}
+      <div class="quote-block">
+        <p>“{{ quote_text }}”</p>
+        {% if quote_author %}
+          <p>— {{ quote_author }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if weather_info %}
+      <div class="alert alert-secondary mb-4 weather-center" role="alert">
+        <i class="bi bi-cloud-sun-fill me-2"></i>
+        Погода в Минске: <strong>{{ weather_info }}</strong>
+      </div>
+    {% endif %}
+
+    <!-- разделитель между верхом и сеткой проката -->
+    <hr class="section-divider">
+
+    <!-- общий заголовок раздела по центру, сразу под погодой -->
+    <h1 class="section-title">Сейчас в прокате</h1>
+
+    <div class="content-grid">
+      <div class="movies-column">
+        <div class="movies-grid">
+          {% for movie in active_movies %}
+          <a href="{% url 'cinema:movie_detail' movie.pk %}" class="movie-card-link">
+            <div class="movie-card">
+              <div class="movie-poster">
+                <img src="{{ movie.poster.url }}" alt="{{ movie.title }}" class="poster-image">
+                <div class="movie-overlay">
+                  <span class="btn-buy">
+                    Купить билеты
+                    <i class="fas fa-ticket-alt"></i>
+                  </span>
+                </div>
+              </div>
+              <div class="movie-info">
+                <h3 class="movie-title">{{ movie.title }}</h3>
+                <div class="movie-meta">
+                  <span class="rating"><i class="fas fa-star"></i> {{ movie.rating }}/10</span>
+                  {% if movie.genres.all %}
+                    <span class="genre">{{ movie.genres.all.0.name }}</span>
+                  {% endif %}
+                </div>
+                <p class="movie-description">{{ movie.description|truncatewords:20 }}</p>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <aside class="adv-column">
+        {% if adv_img and adv_src %}
+          <a href="{{ adv_src }}" target="_blank" rel="noopener">
+            <img src="{{ adv_img.url }}" alt="Реклама" class="adv-banner">
+          </a>
+        {% else %}
+          <p>Реклама скоро появится</p>
+        {% endif %}
+      </aside>
+    </div>
+
+  </div>
 </section>
 
 <section class="last-news">
-<div class="news-column">
-        <h2 class="section-title">Последняя новость</h2>
-        {% if last_news %}
-        <a href="{% url 'cinema:news_detail' last_news.pk %}" class="movie-card-link">
-            <div class="movie-card">
-                <div class="movie-poster">
-                    <img src="{{ last_news.image.url }}" alt="{{ last_news.title }}" class="poster-image">
-                </div>
-                <div class="movie-info">
-                    <h3 class="movie-title">{{ last_news.title }}</h3>
-                    <div class="movie-meta">
-                        <span class="rating"><i class="fas fa-calendar"></i> {{ last_news.publish_date|date:"d.m.Y" }}</span>
-                    </div>
-                    <p class="movie-description">{{ last_news.summary|truncatewords:20 }}</p>
-                </div>
-            </div>
-        </a>
-        {% else %}
-        <p
-        >Новостей пока нет</p>
-        {% endif %}
-</div>
+  <div class="news-column">
+    <h2 class="section-title">Последняя новость</h2>
+
+    {% if last_news %}
+      <a href="{% url 'cinema:news_detail' last_news.pk %}" class="last-article__link">
+        <div class="last-article">
+          <img src="{{ last_news.image.url }}" alt="{{ last_news.title }}" class="last-article__img">
+          <div class="last-article__date">
+            {{ last_news.publish_date|date:"d.m.Y" }}
+          </div>
+          <div class="last-article__meta">
+            <h3 class="last-article__title">{{ last_news.title }}</h3>
+            <p class="last-article__summary">{{ last_news.summary|truncatewords:20 }}</p>
+          </div>
+        </div>
+      </a>
+    {% else %}
+      <p>Новостей пока нет</p>
+    {% endif %}
+  </div>
 </section>
 
 {% endblock %}

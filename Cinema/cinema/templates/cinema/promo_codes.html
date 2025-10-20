@@ -6,11 +6,13 @@
   .promo-container{ color:#e4edf2; }
   .promo-container h1{ margin:12px 0; color:#ffffff; }
 
-  .active-promos{
+  .promo-list{ list-style:none; padding:0; margin:0; }
+
+  .active-promos .promo-list{
     display:grid;
     gap:12px;
   }
-  .inactive-promos{
+  .inactive-promos .promo-list{
     display:grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap:12px;
@@ -20,20 +22,13 @@
     border:1px solid #263450;
     border-radius:8px;
     padding:10px;
-    color:#e9f1f5;              
+    color:#e9f1f5;
   }
-  .promo-card .promo-header{
-    display:flex; justify-content:space-between; gap:8px;
-  }
-  .promo-card .promo-code{
-    margin:0; font-weight:700; color:#ffffff; 
-  }
+  .promo-card .promo-header{ display:flex; justify-content:space-between; gap:8px; }
+  .promo-card .promo-code{ margin:0; font-weight:700; color:#ffffff; }
   .promo-card .promo-discount{
-    font-weight:700;
-    background:#8bd3ff;         
-    color:#00131a;
-    padding:2px 8px;
-    border-radius:999px;
+    font-weight:700; background:#8bd3ff; color:#00131a;
+    padding:2px 8px; border-radius:999px;
   }
   .promo-card .promo-details strong{ color:#ffffff; }
 
@@ -47,54 +42,62 @@
   <h1>Активные промокоды</h1>
 
   <section class="active-promos">
-    {% for promo in promo_codes %}
-      {% if promo.status == 'active' %}
-      <article class="promo-card active">
-        <header class="promo-header">
-          <h2 class="promo-code">{{ promo.code }}</h2>
-          <span class="promo-discount">-{{ promo.discount }}%</span>
-        </header>
-        <section class="promo-details">
-          <p>Срок действия:
-            <br><strong>{{ promo.start_date|date:"d.m.Y H:i" }} — {{ promo.end_date|date:"d.m.Y H:i" }}</strong>
-          </p>
-          <p>Использований:
-            <strong>{{ promo.used_count }} из {{ promo.max_uses }}</strong>
-            (осталось: {{ promo.remaining_uses }})
-          </p>
-        </section>
-      </article>
-      {% endif %}
-    {% empty %}
-      <aside class="no-promos"><p>Сейчас нет активных промокодов</p></aside>
-    {% endfor %}
+    <ul class="promo-list">
+      {% for promo in promo_codes %}
+        {% if promo.status == 'active' %}
+        <li>
+          <article class="promo-card active">
+            <header class="promo-header">
+              <h2 class="promo-code">{{ promo.code }}</h2>
+              <span class="promo-discount">-{{ promo.discount }}%</span>
+            </header>
+            <section class="promo-details">
+              <p>Срок действия:
+                <br><strong>{{ promo.start_date|date:"d.m.Y H:i" }} — {{ promo.end_date|date:"d.m.Y H:i" }}</strong>
+              </p>
+              <p>Использований:
+                <strong>{{ promo.used_count }} из {{ promo.max_uses }}</strong>
+                (осталось: {{ promo.remaining_uses }})
+              </p>
+            </section>
+          </article>
+        </li>
+        {% endif %}
+      {% empty %}
+        <li><aside class="no-promos"><p>Сейчас нет активных промокодов</p></aside></li>
+      {% endfor %}
+    </ul>
   </section>
 
   <h1>Неактивные промокоды</h1>
 
   <section class="inactive-promos">
-    {% for promo in promo_codes %}
-      {% if promo.status != 'active' %}
-      <article class="promo-card inactive">
-        <header class="promo-header">
-          <h2 class="promo-code">{{ promo.code }}</h2>
-          <span class="promo-discount">-{{ promo.discount }}%</span>
-        </header>
-        <section class="promo-details">
-          <p>Срок действия:
-            <br><strong>{{ promo.start_date|date:"d.m.Y H:i" }} — {{ promo.end_date|date:"d.m.Y H:i" }}</strong>
-          </p>
-          <p>Использований:
-            <strong>{{ promo.used_count }} из {{ promo.max_uses }}</strong>
-            (осталось: {{ promo.remaining_uses }})
-          </p>
-          <p>Статус: <strong>{{ promo.status_display }}</strong></p>
-        </section>
-      </article>
-      {% endif %}
-    {% empty %}
-      <aside class="no-promos"><p>Нет неактивных промокодов</p></aside>
-    {% endfor %}
+    <ul class="promo-list">
+      {% for promo in promo_codes %}
+        {% if promo.status != 'active' %}
+        <li>
+          <article class="promo-card inactive">
+            <header class="promo-header">
+              <h2 class="promo-code">{{ promo.code }}</h2>
+              <span class="promo-discount">-{{ promo.discount }}%</span>
+            </header>
+            <section class="promo-details">
+              <p>Срок действия:
+                <br><strong>{{ promo.start_date|date:"d.m.Y H:i" }} — {{ promo.end_date|date:"d.m.Y H:i" }}</strong>
+              </p>
+              <p>Использований:
+                <strong>{{ promo.used_count }} из {{ promo.max_uses }}</strong>
+                (осталось: {{ promo.remaining_uses }})
+              </p>
+              <p>Статус: <strong>{{ promo.status_display }}</strong></p>
+            </section>
+          </article>
+        </li>
+        {% endif %}
+      {% empty %}
+        <li><aside class="no-promos"><p>Нет неактивных промокодов</p></aside></li>
+      {% endfor %}
+    </ul>
   </section>
 </main>
 
