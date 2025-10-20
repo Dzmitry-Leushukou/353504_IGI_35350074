@@ -240,7 +240,7 @@ class AdvModelAdmin(admin.ModelAdmin):
 
 @admin.register(SponsorModel)
 class SponsorModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "src")
+    list_display = ("id", "src","name")
 
 @admin.register(HistoryEvent)
 class HistoryEventAdmin(admin.ModelAdmin):

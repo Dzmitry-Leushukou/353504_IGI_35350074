@@ -9,38 +9,7 @@
     {% load static %}  
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_css %}{% endblock %}
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
-<style>
-    body {
-        background: #0a0a0a;
-        color: #e0e0e0;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        font-family: 'Arial', sans-serif;
-    }
-
-    main {
-        padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-        background: transparent;
-    }
-
-    header, footer {
-        background: #111111;
-        border-color: #2a2a2a;
-    }
-
-    footer {
-        padding: 30px;
-        text-align: center;
-        margin-top: 50px;
-        border-top: 1px solid #333;
-    }
-</style>
 <body class="{% block body_class %}{% endblock %}">
     <header role="banner">
         <nav role="navigation" aria-label="Основное меню">
@@ -69,7 +38,7 @@
                     <div class="user-greeting">
                         <i class="bi bi-person-circle" aria-hidden="true"></i>
                         <span>Привет, {{ user.username }}!</span>
-                        <form action="{% url 'logout' %}" method="post" style="margin:0;">
+                        <form action="{% url 'logout' %}" method="post">
                             {% csrf_token %}
                             <button type="submit" class="logout-btn">Выйти</button>
                         </form>
@@ -80,11 +49,11 @@
         </nav>
     </header>
     
-    <div style="display: flex;">
-        <aside style="width: 200px; background: #111111; padding: 20px; min-height: calc(100vh - 100px);">
-            <nav style="display: flex; flex-direction: column; gap: 10px;">
+    <div>
+        <aside>
+            <nav>
                 {% if not user.is_authenticated %}
-                <div class="user-actions" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="user-actions">
                     <a href="{% url 'cinema:login' %}" class="btn btn-login">Войти</a>
                     <a href="{% url 'cinema:register' %}" class="btn btn-register">Регистрация</a>
                 </div>
@@ -100,7 +69,7 @@
             </nav>
         </aside>
 
-        <main role="main" style="flex: 1;">
+        <main role="main">
             {% if messages %}
                 <section class="messages" aria-label="Системные сообщения">
                     {% for message in messages %}
@@ -119,7 +88,7 @@
         <section class="sponsors" aria-label="Наши спонсоры">
             {% for sponsor in sponsors %}
                 <a href="{{ sponsor.src }}" target="_blank" rel="noopener noreferrer">
-                    <img src="{{ sponsor.img.url }}" alt="Логотип спонсора {{ forloop.counter }}" border="0">
+                    <img src="{{ sponsor.img.url }}" alt="Логотип спонсора {{ sponsor.name }}" border="0">
                 </a>
             {% endfor %}
         </section>
@@ -127,3 +96,19 @@
     </footer>
 </body>
 </html>
+
+
+<style>
+  body{ margin:0; background:#192630; }
+
+  h1{ color:#ffffff; }   
+  h2{ color:#e9f1f5; }   
+  h3{ color:#cfe7f2; }  
+  h4{ color:#a9d8f0; }  
+  h5{ color:#8bd3ff; }   
+  h6{ color:#cbd5e1; }   
+  
+  h1 a, h2 a, h3 a, h4 a, h5 a, h6 a{ color:inherit; text-decoration:underline; }
+  h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover{ opacity:.9; }
+</style>
+

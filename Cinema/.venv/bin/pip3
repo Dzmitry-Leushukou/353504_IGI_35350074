@@ -1,4 +1,4 @@
-#!/home/dzmitry_leushukou/Programming/BSUIR/353504_IGI_35350074/Cinema/.venv/bin/python3
+#!/home/dzmitry-leushukou/Prog/353504_IGI_35350074/Cinema/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

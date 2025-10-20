@@ -804,3 +804,4 @@ class SponsorModel(models.Model):
     src = models.TextField(
         verbose_name="Ссылка"
     )
+    name = models.CharField("Название", max_length=255, null=True)

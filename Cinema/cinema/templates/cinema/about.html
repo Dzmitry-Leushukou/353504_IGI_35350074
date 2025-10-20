@@ -9,8 +9,8 @@
   </header>
 
   {% if logo %}
-  <figure style="text-align: center;" itemprop="logo" itemscope itemtype="https://schema.org/ImageObject">
-    <img src="{{ logo.url }}" alt="Логотип компании" style="display: inline-block;" itemprop="contentUrl">
+  <figure itemprop="logo" itemscope itemtype="https://schema.org/ImageObject">
+    <img src="{{ logo.url }}" alt="Логотип компании" itemprop="contentUrl">
     <meta itemprop="url" content="{{ logo.url }}">
   </figure>
   {% endif %}
@@ -100,6 +100,21 @@
             width="560" height="400" frameborder="1" allowfullscreen="true" style="position:relative;"
             itemprop="hasMap" itemscope itemtype="https://schema.org/Map">
     </iframe>
+  </section>
+  
+  <section>
+    <h2>Наши спонсоры</h2>
+    {% if sponsors %}
+      <ul>
+        {% for sponsor in sponsors %}
+          <li>
+            {{ sponsor.name }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Спонсоры пока не добавлены.</p>
+    {% endif %}
   </section>
 </article>
 

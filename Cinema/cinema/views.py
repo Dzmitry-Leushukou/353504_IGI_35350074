@@ -713,12 +713,16 @@ class AboutView(View):
 
         lm = LogoModel.objects.first()
         logo = lm.logo if lm else None
+        
+        from .models import SponsorModel
+        sponsors = SponsorModel.objects.all()
 
         return render(request, 'cinema/about.html', {
             'company_info': company_info,
             'history_events': history_events,
             'certificates': certificates,
-            'logo' : logo
+            'logo' : logo,
+            'sponsors': sponsors
         })
     
 class NewsListView(ListView):
