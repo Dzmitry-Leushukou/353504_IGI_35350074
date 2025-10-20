@@ -1,0 +1,49 @@
+{% extends "cinema/base.html" %}
+
+{% block content %}
+<main class="container">
+    
+    <section class="company-info mb-5" aria-labelledby="company-heading">
+        <h2 id="company-heading">Контактная информация</h2>
+        <article class="card h-100 employee-card">
+            <section class="card-body">
+                <h3 class="card-title">{{ company.company_name }}</h3>
+                <address class="card-text">
+                    <strong>Адрес:</strong> {{ company.address }}<br>
+                    <strong>Телефон:</strong> <a href="tel:{{ company.phone }}">{{ company.phone }}</a><br>
+                    <strong>Email:</strong> <a href="mailto:{{ company.email }}">{{ company.email }}</a><br>
+                    <strong>Реквизиты:</strong> {{ company.requisites }}
+                </address>
+            </section>
+        </article>
+    </section>
+
+    <section class="employees" aria-labelledby="employees-heading">
+        <h2 id="employees-heading">Наши сотрудники</h2>
+        <ul class="row" role="list">
+            {% for employee in employees %}
+            <li class="col-md-4 mb-4" role="listitem">
+                <article class="card h-100">
+                    <figure>
+                        <img src="{{ employee.photo.url }}" 
+                             alt="Фотография сотрудника {{ employee.full_name }}" 
+                             class="card-img-top">
+                    </figure>
+                    
+                    <section class="card-body">
+                        <h3 class="card-title">{{ employee.full_name }}</h3>
+                        <section class="card-text">
+                            <p><strong>Должность:</strong> {{ employee.get_position_display }}</p>
+                            <p><strong>Телефон:</strong> <a href="tel:{{ employee.phone }}">{{ employee.phone }}</a></p>
+                            <p><strong>Email:</strong> <a href="mailto:{{ employee.user.email }}">{{ employee.user.email }}</a></p>
+                            <p><strong>Дата рождения:</strong> <time datetime="{{ employee.birth_date|date:'Y-m-d' }}">{{ employee.birth_date|date:"d.m.Y" }}</time></p>
+                            <p><strong>Работает с:</strong> <time datetime="{{ employee.hire_date|date:'Y-m-d' }}">{{ employee.hire_date|date:"d.m.Y" }}</time></p>
+                        </section>
+                    </section>
+                </article>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+</main>
+{% endblock %}

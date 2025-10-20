@@ -1,0 +1,15 @@
+{% extends 'cinema/base.html' %}
+
+{% block content %}
+<h1>Ваши билеты</h1>
+{% for ticket in request.user.tickets.all %}
+<div class="ticket">
+    <h3>{{ ticket.session.movie.title }}</h3>
+    <p>Дата: {{ ticket.session.start_time|date:"d.m.Y H:i" }}</p>
+    <p>Место: {{ ticket.seat_number }}</p>
+    <p>Код бронирования: {{ ticket.id }}</p>
+</div>
+{% empty %}
+<p>У вас пока нет купленных билетов</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+{%load static%}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'images/favicon.png' %}" type="image/png">
+    <title>{% block title %}Кинотеатр{% endblock %}</title>
+    {% load static %}  
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<style>
+    body {
+        background: #0a0a0a;
+        color: #e0e0e0;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: 'Arial', sans-serif;
+    }
+
+    main {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        background: transparent;
+    }
+
+    header, footer {
+        background: #111111;
+        border-color: #2a2a2a;
+    }
+
+    footer {
+        padding: 30px;
+        text-align: center;
+        margin-top: 50px;
+        border-top: 1px solid #333;
+    }
+</style>
+<body class="{% block body_class %}{% endblock %}">
+    <header role="banner">
+        <nav role="navigation" aria-label="Основное меню">
+            <div class="nav-left">
+                <a href="{% url 'cinema:home' %}">Главная</a>
+                <a href="{% url 'cinema:news_list' %}">Новости</a>
+                <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
+                <a href="{% url 'cinema:promo_codes' %}">Промокоды</a>
+                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                    <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
+                {% endif %}
+                <a href="{% url 'cinema:reviews' %}">Отзывы</a>
+                <a href="{% url 'cinema:faq' %}">FAQ</a>
+                <a href="{% url 'cinema:vacancy_list' %}">Вакансии</a>
+                <a href="{% url 'cinema:contacts' %}">Контакты</a>
+                <a href="{% url 'cinema:privacy_policy' %}">Политика конфиденциальности</a>
+                <a href="{% url 'cinema:about' %}">О нас</a>
+
+                {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser %}
+                    <a class="nav-link" href="{% url 'cinema:statistics' %}">Статистика</a>
+                {% endif %}
+            </div>
+            
+            <div class="nav-right">
+                {% if user.is_authenticated %}
+                    <div class="user-greeting">
+                        <i class="bi bi-person-circle" aria-hidden="true"></i>
+                        <span>Привет, {{ user.username }}!</span>
+                        <form action="{% url 'logout' %}" method="post" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Выйти</button>
+                        </form>
+                    </div>
+                {% else %}
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+    
+    <div style="display: flex;">
+        <aside style="width: 200px; background: #111111; padding: 20px; min-height: calc(100vh - 100px);">
+            <nav style="display: flex; flex-direction: column; gap: 10px;">
+                {% if not user.is_authenticated %}
+                <div class="user-actions" style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="{% url 'cinema:login' %}" class="btn btn-login">Войти</a>
+                    <a href="{% url 'cinema:register' %}" class="btn btn-register">Регистрация</a>
+                </div>
+                {% endif %}
+                
+                
+                <a href="{% url 'cinema:home' %}">Главная</a>
+                <a href="{% url 'cinema:movie_list' %}">Фильмы</a>
+                <a href="{% url 'cinema:news_list' %}">Новости</a>
+                {% if user.is_authenticated and not user.is_staff and not user.is_superuser %}
+                    <a class="nav-link" href="{% url 'cinema:my_tickets' %}">Мои билеты</a>
+                {% endif %}
+            </nav>
+        </aside>
+
+        <main role="main" style="flex: 1;">
+            {% if messages %}
+                <section class="messages" aria-label="Системные сообщения">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <footer role="contentinfo">
+        <section class="sponsors" aria-label="Наши спонсоры">
+            {% for sponsor in sponsors %}
+                <a href="{{ sponsor.src }}" target="_blank" rel="noopener noreferrer">
+                    <img src="{{ sponsor.img.url }}" alt="Логотип спонсора {{ forloop.counter }}" border="0">
+                </a>
+            {% endfor %}
+        </section>
+        <p>© 2025 Кинотеатр</p>
+    </footer>
+</body>
+</html>

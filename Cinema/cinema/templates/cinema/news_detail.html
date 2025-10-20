@@ -1,0 +1,116 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .news-detail {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #1a1a1a;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 173, 181, 0.1);
+        border: 1px solid #2d2d2d;
+    }
+
+    .news-detail h1 {
+        color: #00adb5;
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .news-date {
+        color: #888;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 0.9rem;
+    }
+
+    .news-image {
+        margin-bottom: 30px;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+        max-width: 100%;
+    }
+
+    .news-image img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+    }
+
+    .news-image:hover img {
+        transform: scale(1.02);
+    }
+
+    .news-content {
+        color: #d0d0d0;
+        line-height: 1.7;
+        font-size: 1.1rem;
+        padding: 20px 0;
+    }
+
+    .news-content p {
+        margin-bottom: 1.5em;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #00adb5 !important;
+        text-decoration: none;
+        padding: 12px 25px;
+        border: 1px solid #00adb5;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        margin-top: 30px;
+    }
+
+    .back-link:hover {
+        background: rgba(0, 173, 181, 0.1);
+        transform: translateX(-5px);
+    }
+
+    @media (max-width: 768px) {
+        .news-detail {
+            margin: 20px;
+            padding: 20px;
+        }
+        
+        .news-detail h1 {
+            font-size: 1.8rem;
+        }
+        
+        .news-content {
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="news-detail">
+    <h1>{{ news.title }}</h1>
+    <p class="news-date">{{ news.publish_date|date:"d.m.Y H:i" }}</p>
+    
+    <div class="news-image">
+        <img src="{{ news.image.url }}" alt="{{ news.title }}">
+    </div>
+    
+    <div class="news-content">
+        {{ news.full_text|linebreaks }}
+    </div>
+    
+    <a href="{% url 'cinema:news_list' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+        Все новости
+    </a>
+</div>
+{% endblock %}
