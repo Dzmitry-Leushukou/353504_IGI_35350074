@@ -1,9 +1,37 @@
 <!DOCTYPE html>
 {% extends 'cinema/base.html' %}
 
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Stalinist+One&display=swap&subset=cyrillic" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 
 <style>
+  :root{
+    --font-base: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+    --font-accent: "Stalinist One", "Nunito", Georgia, "Times New Roman", serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+  }
+
+  html, body, input, button, select, textarea {
+    font-family: var(--font-base) !important;
+    font-size: 16.5px;
+  }
+
+  h1, h2, h3, .title-accent {
+    font-family: var(--font-accent) !important;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  code, pre, kbd, samp{ font-family: var(--font-mono) !important; }
+
   figure[itemprop="logo"] img{
     display:block;
     margin:12px auto;
@@ -17,7 +45,7 @@
 
 <article itemscope itemtype="https://schema.org/AboutPage">
   <header>
-    <h1 itemprop="headline">О компании</h1>
+    <h1 itemprop="headline" class="title-accent">О компании</h1>
   </header>
 
   {% if logo %}
@@ -43,11 +71,11 @@
   {% endif %}
 
   <section>
-    <h2>История компании</h2>
+    <h2 class="title-accent">История компании</h2>
     <ul class="history-list">
       {% for event in history_events %}
       <li itemprop="temporalCoverage" content="{{ event.year }}">
-        <strong>{{ event.year }}:</strong> 
+        <strong>{{ event.year }}:</strong>
         <span itemprop="description">{{ event.text }}</span>
       </li>
       {% empty %}
@@ -57,7 +85,7 @@
   </section>
 
   <section class="company-details" itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
-    <h2>Реквизиты компании</h2>
+    <h2 class="title-accent">Реквизиты компании</h2>
     <table>
       <tr>
         <th>Название компании</th>
@@ -85,11 +113,11 @@
   </section>
 
   <section>
-    <h2>Сертификаты</h2>
+    <h2 class="title-accent">Сертификаты</h2>
     {% if certificates %}
       {% for certificate in certificates %}
       <article itemprop="hasCertification" itemscope itemtype="https://schema.org/Certification">
-        <h3 itemprop="name">{{ certificate.name }}</h3>
+        <h3 class="title-accent" itemprop="name">{{ certificate.name }}</h3>
         <p itemprop="description">{{ certificate.description }}</p>
         {% if certificate.issue_date %}
           <meta itemprop="validFrom" content="{{ certificate.issue_date|date:'c' }}">
@@ -106,15 +134,12 @@
   </section>
 
   <section>
-    <h3>Мы на карте:</h3>
-    <iframe src="https://yandex.by/map-widget/v1/?ll=27.590532%2C53.913009&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg2NjY3ODgzMBI70JHQtdC70LDRgNGD0YHRjCwg0JzRltC90YHQuiwg0LLRg9C70ZbRhtCwINCT0ZbQutCw0LvRiywgMTIiCg1oudxBFeymV0I%2C&z=17.14" 
-            width="560" height="400" frameborder="1" allowfullscreen="true" style="position:relative;"
-            itemprop="hasMap" itemscope itemtype="https://schema.org/Map">
-    </iframe>
+    <h3 class="title-accent">Мы на карте:</h3>
+    <iframe src="https://yandex.by/map-widget/v1/?ll=27.590532%2C53.913009&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg2NjY3ODgzMBI70JHQtdC70LDRgNGD0YHRjCwg0JzRltC90YHQuiwg0LLRg9C70ZbRhtCwINCT0ZbQutCw0LvRiywgMTIiCg1oudxBFeymV0I%2C&z=17.14" width="560" height="400" frameborder="1" allowfullscreen="true" style="position:relative;" itemprop="hasMap" itemscope itemtype="https://schema.org/Map"></iframe>
   </section>
   
   <section>
-    <h2>Наши спонсоры</h2>
+    <h2 class="title-accent">Наши спонсоры</h2>
     {% if sponsors %}
       <ul>
         {% for sponsor in sponsors %}
