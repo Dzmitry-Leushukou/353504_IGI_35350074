@@ -4,6 +4,9 @@
 {% block content %}
 
 <style>
+  /* Font for the brand title */
+  @import url('https://fonts.googleapis.com/css2?family=Stalinist+One&display=swap');
+
   :root{
     --bg:#0b1216;
     --ink:#e9f1f5;
@@ -14,17 +17,162 @@
     --yellow:#fbbf24;
     --seat:#1d2a34;
     --screen:#0f1a20;
+    --card:#0f1921;
+    --cardStroke:#263450;
   }
 
   body{ background:#192630; color:var(--ink); }
 
-  .preloader{
-    position:fixed; inset:0; z-index:9999;
-    display:grid; place-items:center;
-    background: radial-gradient(1200px 600px at 50% 100%, #132029 0%, #0b1216 60%, #0b1216 100%);
-    user-select:none; -webkit-user-select:none;
+  /* ---------- HERO / CINEMA ---------- */
+  .hero{
+    position:relative; overflow:hidden;
+    max-width:1100px; margin:24px auto; padding:24px 16px;
   }
-  .preloader__wrap{ display:grid; gap:12px; }
+  .cinema{
+    position:relative; aspect-ratio: 16/9; border-radius:16px; overflow:hidden;
+    background: radial-gradient(100% 120% at 50% 0%, #0f1a20 0%, #0b1216 60%, #0a1115 100%);
+    border:1px solid var(--cardStroke);
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  .screen{
+    position:absolute; inset:0 0 55% 0; background:linear-gradient(#0e1820, #0b141a);
+    border-bottom:1px solid #1c2a34;
+  }
+  .projector{
+    position:absolute; right:6%; top:8%;
+    width:34px; height:20px; background:#223240; border-radius:4px;
+    transform-origin:right center; opacity:.9;
+    animation: pj-flicker 2s ease-in-out infinite .6s; /* автостарт без JS */
+  }
+  .projector::after{
+    content:""; position:absolute; right:-10px; top:4px; width:8px; height:12px; background:#1a2732; border-radius:2px;
+  }
+  .beam{
+    position:absolute; right:8%; top:10%;
+    width:0; height:0;
+    border-left: 0 solid transparent;
+    border-top: 120px solid rgba(139,211,255,.08);
+    border-bottom: 240px solid rgba(139,211,255,.08);
+    border-right: 520px solid rgba(139,211,255,.08);
+    filter: blur(1px);
+    opacity:0;
+    animation: beam-on 2.2s ease forwards .3s; /* автостарт */
+  }
+  .seats{ position:absolute; left:0; right:0; bottom:22%; display:grid; gap:10px; }
+  .row{ display:flex; gap:10px; justify-content:center; }
+  .seat{
+    width:42px; height:28px; border-radius:6px; background:var(--seat);
+    box-shadow: inset 0 6px 10px rgba(255,255,255,.03), 0 2px 0 rgba(0,0,0,.35);
+  }
+
+  .viewer{
+    position:absolute; left:50%; bottom:8%; transform: translateX(-50%);
+    width:140px; height:120px;
+  }
+  .viewer .body{
+    position:absolute; left:35px; bottom:16px; width:70px; height:60px; border-radius:12px;
+    background:#1d2a34;
+  }
+  .viewer .head{
+    position:absolute; left:58px; bottom:78px; width:28px; height:28px; border-radius:50%;
+    background:#f5cf9f; box-shadow:0 0 0 2px rgba(0,0,0,.2) inset;
+  }
+  .viewer .smile{
+    position:absolute; left:66px; bottom:86px; width:12px; height:6px; border-bottom:3px solid #7a3; border-radius:0 0 10px 10px;
+    transform-origin:center; transform: scaleX(0);
+    animation: smile-in .9s ease forwards 2.4s; /* после глотка */
+  }
+
+  .viewer .arm{
+    position:absolute; left:26px; bottom:54px; width:44px; height:10px; border-radius:6px; background:#1d2a34;
+    transform-origin: right center;
+    animation: sip 3.2s ease-in-out 2 1.1s; /* два глотка */
+  }
+  .viewer .cola{
+    position:absolute; left:8px; bottom:46px; width:16px; height:28px; background:#b00; border-radius:3px 3px 0 0;
+    box-shadow: inset 0 -6px 0 #700;
+  }
+  .viewer .cola::after{
+    content:""; position:absolute; left:6px; top:-8px; width:4px; height:10px; background:#ddd; border-radius:2px;
+  }
+
+  .brand-title{
+    position:absolute; left:50%; top:12%;
+    transform: translateX(-50%);
+    font-family: "Stalinist One", system-ui, sans-serif;
+    font-size: clamp(28px, 5vw, 56px);
+    letter-spacing:.12em; text-transform:uppercase;
+    color:#ffffff; text-shadow:0 8px 28px rgba(139,211,255,.35);
+    opacity:0; filter: blur(6px);
+    animation: brand-in 1.2s ease forwards 2.6s; /* появляется и остаётся */
+  }
+
+  @keyframes beam-on{
+    0%  { opacity:0; transform: translateY(-6px); }
+    30% { opacity:.6; }
+    60% { opacity:.85; }
+    100%{ opacity:1; }
+  }
+  @keyframes pj-flicker{
+    0%,100%{ filter: brightness(1); }
+    50%    { filter: brightness(1.15); }
+  }
+  @keyframes sip{
+    0%,100%{ transform: rotate(0deg); }
+    20%    { transform: rotate(-22deg); }
+    35%    { transform: rotate(-28deg); }
+    55%    { transform: rotate(-5deg); }
+  }
+  @keyframes smile-in{
+    0%  { transform: scaleX(0); }
+    60% { transform: scaleX(1.2); }
+    100%{ transform: scaleX(1); }
+  }
+  @keyframes brand-in{ to{ opacity:1; filter: blur(0); } }
+
+  /* ---------- SECTION DIVIDER ---------- */
+  .section-divider{
+    border:0; height:1px; width:min(100%,1100px);
+    margin:20px auto 12px; background: linear-gradient(90deg, #0000, #263450, #0000);
+  }
+  .section-title{ text-align:center; margin:6px 0 12px; color:var(--ink); }
+
+  /* ---------- MOVIES GRID ---------- */
+  .container{ max-width:1100px; margin:0 auto 80px; padding:0 16px; }
+  .movies-grid{
+    display:grid; gap:16px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .movie-card-link{ text-decoration:none; color:inherit; }
+  .movie-card{
+    background:var(--card);
+    border:1px solid var(--cardStroke);
+    border-radius:14px; overflow:hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .movie-card:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgba(0,0,0,.35);
+    border-color:#33507a;
+  }
+  .poster-image{ width:100%; height:320px; object-fit:cover; display:block; }
+  .movie-info{ padding:12px 12px 14px; }
+  .movie-title{ margin:0 0 6px; font-size:18px; line-height:1.2; color:#eaf3f7; }
+  .movie-description{ margin:0; color:var(--muted); font-size:14px; }
+
+  /* ---------- PRELOADER (ВНИЗУ СТРАНИЦЫ, БЕЗ JS) ---------- */
+  .preloader{
+    position:fixed; left:50%; bottom:16px; transform:translateX(-50%);
+    z-index:50; pointer-events:none;
+    background: rgba(15,26,32,.88);
+    border:1px solid var(--cardStroke);
+    border-radius:12px; padding:10px 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+    user-select:none; -webkit-user-select:none;
+    width: max-content;
+  }
+  .preloader__wrap{ display:grid; gap:8px; }
   .preloader__row{
     display:flex; gap:10px; justify-content:center;
     filter: drop-shadow(0 2px 10px rgba(0,0,0,.35));
@@ -57,141 +205,19 @@
   .row3 .dot:nth-child(5){ background:#b48bff; animation-delay:1.04s; }
 
   .preloader__label{
-    margin-top:6px; text-align:center; color:var(--muted); font-size:14px;
+    margin-top:2px; text-align:center; color:var(--muted); font-size:12px;
     letter-spacing:.08em; text-transform:uppercase; opacity:.85;
   }
 
-  .hero{
-    position:relative; overflow:hidden;
-    max-width:1100px; margin:24px auto; padding:24px 16px;
+  /* Уважение системной настройке */
+  @media (prefers-reduced-motion: reduce){
+    .beam, .projector, .viewer .arm, .viewer .smile, .brand-title,
+    .dot{ animation: none !important; opacity:1 !important; transform:none !important; }
   }
-  .cinema{
-    position:relative; aspect-ratio: 16/9; border-radius:16px; overflow:hidden;
-    background: radial-gradient(100% 120% at 50% 0%, #0f1a20 0%, #0b1216 60%, #0a1115 100%);
-    border:1px solid #263450; box-shadow:0 20px 60px rgba(0,0,0,.35);
-  }
-  .screen{
-    position:absolute; inset:0 0 55% 0; background:linear-gradient(#0e1820, #0b141a);
-    border-bottom:1px solid #1c2a34;
-  }
-  .projector{
-    position:absolute; right:6%; top:8%;
-    width:34px; height:20px; background:#223240; border-radius:4px;
-    transform-origin:right center; opacity:.9;
-  }
-  .projector::after{
-    content:""; position:absolute; right:-10px; top:4px; width:8px; height:12px; background:#1a2732; border-radius:2px;
-  }
-  .beam{
-    position:absolute; right:8%; top:10%;
-    width:0; height:0;
-    border-left: 0 solid transparent;
-    border-top: 120px solid rgba(139,211,255,.08);
-    border-bottom: 240px solid rgba(139,211,255,.08);
-    border-right: 520px solid rgba(139,211,255,.08);
-    filter: blur(1px);
-    opacity:0;
-  }
-  .seats{ position:absolute; left:0; right:0; bottom:22%; display:grid; gap:10px; }
-  .row{ display:flex; gap:10px; justify-content:center; }
-  .seat{
-    width:42px; height:28px; border-radius:6px; background:var(--seat);
-    box-shadow: inset 0 6px 10px rgba(255,255,255,.03), 0 2px 0 rgba(0,0,0,.35);
-  }
-
-  .viewer{
-    position:absolute; left:50%; bottom:8%; transform: translateX(-50%);
-    width:140px; height:120px;
-  }
-  .viewer .body{
-    position:absolute; left:35px; bottom:16px; width:70px; height:60px; border-radius:12px;
-    background:#1d2a34;
-  }
-  .viewer .head{
-    position:absolute; left:58px; bottom:78px; width:28px; height:28px; border-radius:50%;
-    background:#f5cf9f; box-shadow:0 0 0 2px rgba(0,0,0,.2) inset;
-  }
-  .viewer .smile{
-    position:absolute; left:66px; bottom:86px; width:12px; height:6px; border-bottom:3px solid #7a3; border-radius:0 0 10px 10px;
-    transform-origin:center; transform: scaleX(0);
-  }
-
-  .viewer .arm{
-    position:absolute; left:26px; bottom:54px; width:44px; height:10px; border-radius:6px; background:#1d2a34;
-    transform-origin: right center;
-  }
-  .viewer .cola{
-    position:absolute; left:8px; bottom:46px; width:16px; height:28px; background:#b00; border-radius:3px 3px 0 0;
-    box-shadow: inset 0 -6px 0 #700;
-  }
-  .viewer .cola::after{
-    content:""; position:absolute; left:6px; top:-8px; width:4px; height:10px; background:#ddd; border-radius:2px; 
-  }
-
-  .brand-title{
-    position:absolute; left:50%; top:12%;
-    transform: translateX(-50%);
-    font-family: "Stalinist One", system-ui, sans-serif;
-    font-size: clamp(28px, 5vw, 56px);
-    letter-spacing:.12em; text-transform:uppercase;
-    color:#ffffff; text-shadow:0 8px 28px rgba(139,211,255,.35);
-    opacity:0; filter: blur(6px);
-  }
-
-  .cinema.play .beam{ animation: beam-on 2.2s ease forwards .3s; }
-  @keyframes beam-on{
-    0%  { opacity:0; transform: translateY(-6px); }
-    30% { opacity:.6; }
-    60% { opacity:.85; }
-    100%{ opacity:1; }
-  }
-  .cinema.play .projector{ animation: pj-flicker 2s ease-in-out infinite .6s; }
-  @keyframes pj-flicker{
-    0%,100%{ filter: brightness(1); }
-    50%    { filter: brightness(1.15); }
-  }
-  .cinema.play .arm{ animation: sip 3.2s ease-in-out 2 1.1s; }
-  @keyframes sip{
-    0%,100%{ transform: rotate(0deg); }
-    20%    { transform: rotate(-22deg); }
-    35%    { transform: rotate(-28deg); }
-    55%    { transform: rotate(-5deg); }
-  }
-  .cinema.play .smile{ animation: smile-in .9s ease forwards 2.4s; }
-  @keyframes smile-in{
-    0%  { transform: scaleX(0); }
-    60% { transform: scaleX(1.2); }
-    100%{ transform: scaleX(1); }
-  }
-  .cinema.play .brand-title{ animation: brand-in 1.2s ease forwards 2.6s; }
-  @keyframes brand-in{
-    to{ opacity:1; filter: blur(0); }
-  }
-
-  .section-divider{
-    border:0; height:1px; width:min(100%,1100px);
-    margin:20px auto 12px; background: linear-gradient(90deg, #0000, #263450, #0000);
-  }
-  .section-title{ text-align:center; margin:6px 0 12px; }
 </style>
 
-<div class="preloader" id="preloader" aria-live="polite" aria-label="Загрузка">
-  <div class="preloader__wrap">
-    <div class="preloader__row row1">
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    </div>
-    <div class="preloader__row row2">
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    </div>
-    <div class="preloader__row row3">
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    </div>
-    <div class="preloader__label">загрузка…</div>
-  </div>
-</div>
-
 <section class="hero" aria-label="Заставка кинотеатра">
-  <div class="cinema" id="cinema">
+  <div class="cinema">
     <div class="screen"></div>
     <div class="projector"></div>
     <div class="beam"></div>
@@ -202,15 +228,15 @@
       <div class="row">{% for _ in "123456789" %}<div class="seat"></div>{% endfor %}</div>
     </div>
 
-    <div class="viewer">
+    <div class="viewer" aria-label="Зритель с колой">
       <div class="head"></div>
-      <div class="smile"></div>
+      <div class="smile" aria-hidden="true"></div>
       <div class="body"></div>
       <div class="arm"></div>
-      <div class="cola"></div>
+      <div class="cola" aria-hidden="true"></div>
     </div>
 
-    <div class="brand-title">Cinema</div>
+    <div class="brand-title" aria-label="Название компании">Cinema</div>
   </div>
 </section>
 
@@ -233,23 +259,20 @@
   </div>
 </div>
 
-<script>
-  document.documentElement.style.overflow = 'hidden';
-
-  window.addEventListener('load', function(){
-    const pre = document.getElementById('preloader');
-    const cinema = document.getElementById('cinema');
-
-    setTimeout(() => {
-      pre.style.transition = 'opacity .4s ease';
-      pre.style.opacity = '0';
-      setTimeout(() => {
-        pre.style.display = 'none';
-        document.documentElement.style.overflow = '';
-        cinema.classList.add('play');
-      }, 400);
-    }, 1500);
-  });
-</script>
+<!-- Прелоадер (внизу страницы, без JS). Он просто анимируется по кругу и не блокирует контент. -->
+<div class="preloader" aria-live="polite" aria-label="Загрузка">
+  <div class="preloader__wrap">
+    <div class="preloader__row row1">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div class="preloader__row row2">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div class="preloader__row row3">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+    <div class="preloader__label">загрузка…</div>
+  </div>
+</div>
 
 {% endblock %}
