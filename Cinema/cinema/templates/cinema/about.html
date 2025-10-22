@@ -56,6 +56,96 @@
   figure[itemprop="logo"] img:hover{
     transform: rotate(0deg) scale(1.05);
   }
+
+  /* ===================== СЕРТИФИКАТ (только этот блок добавлен/изменён) ===================== */
+  /* сетка для нескольких сертификатов */
+  .certificates-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 22px;
+  }
+
+  /* карточка сертификата — рамка из картинки, фон + градиент, слои через z-index */
+  .certificate-card{
+    position: relative;
+    min-height: 520px;
+    padding: clamp(18px, 3vw, 28px);
+    text-align: center;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    border: 26px solid transparent;                 /* толщина рамки */
+    /* рамка из изображения (с вендорными префиксами) */
+    -webkit-border-image: url('/static/images/certificate.jpeg') 34 round;
+       -o-border-image: url('/static/images/certificate.jpeg') 34 round;
+          border-image: url('/static/images/certificate.jpeg') 34 round;
+
+    /* фон: фото + мягкий градиент */
+    background:
+      -webkit-linear-gradient(135deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.88) 55%, rgba(255,255,255,.94) 100%),
+      url('/static/images/bg.jpg') center/cover no-repeat;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.88) 55%, rgba(255,255,255,.94) 100%),
+      url('/static/images/bg.jpg') center/cover no-repeat;
+
+    box-shadow: 0 10px 28px rgba(0,0,0,.12);
+    border-radius: 6px;
+    overflow: hidden;
+    isolation: isolate; /* чтобы слои не «протекали» наружу */
+  }
+
+  /* декоративный слой под текстом (узоры/винигрет), управляем слоями z-index */
+  .certificate-card::before{
+    content:"";
+    position:absolute; inset: 16px;
+    background:
+      radial-gradient(40% 40% at 18% 80%, rgba(0,110,220,.08) 0%, rgba(0,110,220,0) 70%),
+      radial-gradient(50% 50% at 82% 14%, rgba(194,31,58,.08) 0%, rgba(194,31,58,0) 70%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .certificate-inner{
+    position: relative;
+    z-index: 1; /* текст поверх декоративного слоя */
+    width: min(920px, 100%);
+    padding: clamp(8px, 1.5vw, 14px);
+  }
+
+  .certificate__kicker{
+    font-weight: 700;
+    font-size: clamp(12px, 1.2vw, 14px);
+    letter-spacing: .16em;
+    color: #6b7280;
+    margin-bottom: 8px;
+  }
+  .certificate__title{
+    font-family: var(--font-accent);
+    font-weight: 400;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-size: clamp(30px, 5.6vw, 64px);
+    color: #c21f3a;
+    margin: 0 0 12px;
+    text-shadow: 0 1px 0 rgba(255,255,255,.85);
+  }
+  .certificate__desc{
+    font-size: clamp(16px, 1.6vw, 20px);
+    line-height: 1.35;
+    color: #111827;
+    margin: 0 auto 16px;
+    max-width: 80ch;
+  }
+  .certificate__meta{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px 20px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: #4b5563;
+  }
+  .certificate__meta b{ color:#111827; }
+  /* =========================================================================================== */
 </style>
 
 <article itemscope itemtype="https://schema.org/AboutPage">
@@ -131,26 +221,56 @@
     </table>
   </section>
 
+  <!-- ==================== СЕРТИФИКАТЫ (исправлено только это место) ==================== -->
   <section>
     <h2 class="title-accent">Сертификаты</h2>
+
     {% if certificates %}
-      {% for certificate in certificates %}
-      <article itemprop="hasCertification" itemscope itemtype="https://schema.org/Certification">
-        <h3 class="title-accent" itemprop="name">{{ certificate.name }}</h3>
-        <p itemprop="description">{{ certificate.description }}</p>
-        {% if certificate.issue_date %}
-          <meta itemprop="validFrom" content="{{ certificate.issue_date|date:'c' }}">
-          <p>Дата выдачи: {{ certificate.issue_date }}</p>
-        {% endif %}
-        {% if certificate.issuer %}
-          <p>Организация, выдавшая сертификат: <span itemprop="issuedBy">{{ certificate.issuer }}</span></p>
-        {% endif %}
-      </article>
-      {% endfor %}
+      <div class="certificates-grid">
+        {% for certificate in certificates %}
+          <article class="certificate-card"
+                   itemprop="hasCertification"
+                   itemscope
+                   itemtype="https://schema.org/Certification">
+            <div class="certificate-inner">
+              <div class="certificate__kicker">Подтверждающий документ</div>
+              <h3 class="certificate__title" itemprop="name">{{ certificate.name }}</h3>
+
+              {% if certificate.description %}
+                <p class="certificate__desc" itemprop="description">
+                  {{ certificate.description }}
+                </p>
+              {% endif %}
+
+              <div class="certificate__meta">
+                {% if certificate.issue_date %}
+                  <div>
+                    <b>Дата выдачи:</b>
+                    <span itemprop="validFrom">{{ certificate.issue_date|date:"d.m.Y" }}</span>
+                    <meta itemprop="validFrom" content="{{ certificate.issue_date|date:'c' }}">
+                  </div>
+                {% endif %}
+                {% if certificate.issuer %}
+                  <div>
+                    <b>Выдан:</b>
+                    <span itemprop="issuedBy">{{ certificate.issuer }}</span>
+                  </div>
+                {% endif %}
+                {% if certificate.code %}
+                  <div>
+                    <b>Номер:</b> {{ certificate.code }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
     {% else %}
       <p>Сертификаты пока не добавлены.</p>
     {% endif %}
   </section>
+  <!-- =================================================================================== -->
 
   <section>
     <h3 class="title-accent">Мы на карте:</h3>
