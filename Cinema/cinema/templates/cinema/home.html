@@ -5,239 +5,111 @@
 {% block content %}
 
 <style>
-  /* ===== базовые переменные ===== */
-  :root{ --line:#263450; }
+  :root{ --line:#263450; --pre-cycle:2.8s; --col-step:.08s; --row-step:.38s; }
 
-  /* ===== верх страницы (твои стили — оставляю) ===== */
-  .logo{
-    display:flex; justify-content:center; align-items:center;
-    padding:12px 0; text-align:center;
-  }
+  .logo{ display:flex; justify-content:center; align-items:center; padding:12px 0; text-align:center; }
   .logo img{ max-width:100%; height:auto; display:inline-block; }
 
-  .quote-block{
-    display:flex; flex-direction:column; align-items:center;
-    gap:6px; text-align:center; margin:12px auto; max-width:800px;
-  }
-  .weather-center{
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:fit-content; margin:12px auto; text-align:center;
-  }
+  .quote-block{ display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; margin:12px auto; max-width:800px; }
+  .weather-center{ display:flex; align-items:center; justify-content:center; gap:8px; width:fit-content; margin:12px auto; text-align:center; }
 
-  .section-divider{
-    border:0; height:1px; width:min(100%,1200px);
-    margin:16px auto 12px;
-    background: linear-gradient(90deg, #0000, var(--line), #0000);
-  }
+  .section-divider{ border:0; height:1px; width:min(100%,1200px); margin:16px auto 12px; background:linear-gradient(90deg,#0000,var(--line),#0000); }
   .section-title{ text-align:center; margin:8px 0 16px; }
 
-  .content-grid{
-    display:grid; grid-template-columns: 1fr 300px;
-    gap:24px; align-items:start;
-  }
+  .content-grid{ display:grid; grid-template-columns:1fr 300px; gap:24px; align-items:start; }
   .adv-column{ position:sticky; top:16px; }
   .adv-banner{ display:block; width:100%; height:auto; }
-  @media (max-width:900px){
-    .content-grid{ grid-template-columns:1fr; }
-    .adv-column{ position:static; top:auto; }
-  }
+  @media (max-width:900px){ .content-grid{ grid-template-columns:1fr; } .adv-column{ position:static; top:auto; } }
 
   .last-article{ position:relative; border-radius:12px; overflow:hidden; }
   .last-article__img{ width:100%; height:340px; object-fit:cover; display:block; }
-  .last-article__date{
-    position:absolute; top:10px; right:10px;
-    padding:4px 8px; font-size:.9rem; background:rgba(0,0,0,.6); color:#fff;
-  }
-  .last-article__meta{
-    position:absolute; left:0; right:0; bottom:0;
-    padding:12px; color:#fff; background:rgba(0,0,0,.55);
-  }
+  .last-article__date{ position:absolute; top:10px; right:10px; padding:4px 8px; font-size:.9rem; background:rgba(0,0,0,.6); color:#fff; }
+  .last-article__meta{ position:absolute; left:0; right:0; bottom:0; padding:12px; color:#fff; background:rgba(0,0,0,.55); }
   .last-article__title{ margin:0 0 6px 0; }
   .last-article__summary{ margin:0; }
   .last-article__link{ display:block; color:inherit; text-decoration:none; }
 
-  /* ===== аккуратный стиль карточек фильмов ===== */
-  .movies-grid{
-    display:grid; gap:16px;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  }
+  .movies-grid{ display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
   .movie-card-link{ text-decoration:none; color:inherit; }
-  .movie-card{
-    border:1px solid var(--line); border-radius:14px; overflow:hidden;
-    background:#0f1921; box-shadow:0 8px 24px rgba(0,0,0,.28);
-    transition:.25s transform, .25s box-shadow, .25s border-color;
-  }
-  .movie-card:hover{
-    transform: translateY(-4px);
-    box-shadow:0 16px 36px rgba(0,0,0,.35);
-    border-color:#35527d;
-  }
+  .movie-card{ border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#0f1921; box-shadow:0 8px 24px rgba(0,0,0,.28); transition:.25s transform,.25s box-shadow,.25s border-color; }
+  .movie-card:hover{ transform:translateY(-4px); box-shadow:0 16px 36px rgba(0,0,0,.35); border-color:#35527d; }
   .movie-poster{ position:relative; }
-  .poster-image{
-    width:100%; height:320px; object-fit:cover; display:block;
-    filter: saturate(1.02);
-  }
-  .movie-overlay{
-    position:absolute; inset:0;
-    display:flex; align-items:end; justify-content:center;
-    padding:12px;
-    background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,.45) 100%);
-    opacity:0; transition:.25s opacity;
-  }
+  .poster-image{ width:100%; height:320px; object-fit:cover; display:block; filter:saturate(1.02); }
+  .movie-overlay{ position:absolute; inset:0; display:flex; align-items:end; justify-content:center; padding:12px; background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45) 100%); opacity:0; transition:.25s opacity; }
   .movie-card:hover .movie-overlay{ opacity:1; }
-  .btn-buy{
-    display:inline-block; padding:8px 12px; border-radius:10px;
-    background:#8bd3ff; color:#00131a; font-weight:700;
-    border:1px solid #5bbde9; box-shadow:0 4px 18px rgba(139,211,255,.25);
-  }
+  .btn-buy{ display:inline-block; padding:8px 12px; border-radius:10px; background:#8bd3ff; color:#00131a; font-weight:700; border:1px solid #5bbde9; box-shadow:0 4px 18px rgba(139,211,255,.25); }
   .movie-info{ padding:12px 12px 14px; }
   .movie-title{ margin:0 0 6px; font-size:18px; color:#eaf3f7; }
   .movie-meta{ display:flex; gap:10px; align-items:center; color:#a9bdd0; font-size:14px; }
   .rating i{ margin-right:4px; color:#fbbf24; }
-  .genre{
-    padding:2px 8px; border:1px solid #2b3f5c; border-radius:999px;
-    background:#0f1921; color:#a9bdd0; font-size:12px;
-  }
+  .genre{ padding:2px 8px; border:1px solid #2b3f5c; border-radius:999px; background:#0f1921; color:#a9bdd0; font-size:12px; }
   .movie-description{ margin:6px 0 0; color:#a9bdd0; font-size:14px; }
 
-  /* ===== Анимация «кинозал» ===== */
   @import url('https://fonts.googleapis.com/css2?family=Stalinist+One&display=swap');
   .hero{ position:relative; max-width:1100px; margin:24px auto; padding:0 16px; }
-  .cinema{
-    position:relative; aspect-ratio:16/9; border-radius:16px; overflow:hidden;
-    background: radial-gradient(100% 120% at 50% 0%, #0f1a20 0%, #0b1216 60%, #0a1115 100%);
-    border:1px solid var(--line); box-shadow:0 20px 60px rgba(0,0,0,.35);
-  }
-  .screen{ position:absolute; inset:0 0 55% 0; background:linear-gradient(#0e1820, #0b141a); border-bottom:1px solid #1c2a34; }
+  .cinema{ position:relative; aspect-ratio:16/9; border-radius:16px; overflow:hidden; background:radial-gradient(100% 120% at 50% 0%,#0f1a20 0%,#0b1216 60%,#0a1115 100%); border:1px solid var(--line); box-shadow:0 20px 60px rgba(0,0,0,.35); }
+  .screen{ position:absolute; inset:0 0 55% 0; background:linear-gradient(#0e1820,#0b141a); border-bottom:1px solid #1c2a34; }
 
-  .projector{
-    position:absolute; right:6%; top:8%;
-    width:36px; height:20px; background:#223240; border-radius:4px; opacity:.95;
-    animation: pj 2s ease-in-out infinite .6s;
-  }
-  .projector::after{ content:""; position:absolute; right:-10px; top:4px; width:8px; height:12px; background:#1a2732; border-radius:2px; }
+  .projector{ position:absolute; left:50%; bottom:12%; transform:translateX(-50%); width:46px; height:26px; background:#223240; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.35); animation:pj 2s ease-in-out infinite .6s; z-index:1; }
+  .projector::before{ content:""; position:absolute; left:50%; transform:translateX(-50%); top:-6px; width:12px; height:12px; background:#1a2732; border-radius:3px; }
+  .projector::after{ content:""; position:absolute; left:50%; transform:translateX(-50%); top:-2px; width:8px; height:8px; background:#9cc8ff; border-radius:50%; box-shadow:0 0 10px #9cc8ff; }
 
-  /* Луч на зрителя (2-й ряд, 5-е место) */
-  .beam{
-    position:absolute; inset:0; filter:blur(1px);
-    background: linear-gradient(225deg, rgba(139,211,255,.18), rgba(139,211,255,0) 70%);
-    clip-path: polygon(94% 12%, 54% 68%, 94% 42%);
-    opacity:0; transform: translateY(-4px);
-    animation: beam-in 2.2s ease forwards .3s, beam-pulse 3.4s ease-in-out infinite 2.6s;
-  }
+  .beam{ position:absolute; inset:0; filter:blur(1px); background:linear-gradient(180deg,rgba(139,211,255,0) 0%,rgba(139,211,255,.18) 60%,rgba(139,211,255,.22) 100%); clip-path:polygon(50% 88%, 55% 67%, 45% 67%); opacity:0; animation:beam-in 1.8s ease forwards .2s, beam-pulse 3.4s ease-in-out infinite 2.2s; }
 
-  /* Сетка мест 3×9 */
-  .seating{
-    position:absolute; left:50%; bottom:19%; transform:translateX(-50%);
-    display:grid; grid-template-columns: repeat(9, 56px);
-    grid-auto-rows: 34px; gap:14px;
-  }
-  .seat{
-    width:56px; height:34px; border-radius:8px; background:#1d2a34;
-    box-shadow: inset 0 7px 12px rgba(255,255,255,.03), 0 2px 0 rgba(0,0,0,.35);
-  }
+  .seating{ position:absolute; left:50%; bottom:19%; transform:translateX(-50%); display:grid; grid-template-columns:repeat(9,56px); grid-auto-rows:34px; gap:14px; }
+  .seat{ width:56px; height:34px; border-radius:8px; background:#1d2a34; box-shadow:inset 0 7px 12px rgba(255,255,255,.03),0 2px 0 rgba(0,0,0,.35); }
 
-  /* Зритель — 2-й ряд, 5-е место */
-  .viewer{
-    grid-row:2; grid-column:5; align-self:end; justify-self:center;
-    position:relative; width:120px; height:105px; z-index:2; pointer-events:none;
-  }
-  .chair{ position:absolute; left:28px; bottom:8px; width:64px; height:30px; border-radius:10px; background:#1d2a34; box-shadow: inset 0 7px 12px rgba(255,255,255,.03), 0 2px 0 rgba(0,0,0,.35); }
-  .body{ position:absolute; left:38px; bottom:18px; width:72px; height:50px; border-radius:14px; background:#1d2a34; }
-  .head{ position:absolute; left:70px; bottom:72px; width:26px; height:26px; border-radius:50%; background:#f5cf9f; box-shadow:0 0 0 2px rgba(0,0,0,.2) inset; }
-  .smile{ position:absolute; left:77px; bottom:80px; width:12px; height:6px; border-bottom:3px solid #7a3; border-radius:0 0 10px 10px; transform:scaleX(0); animation: smile .9s ease forwards 2.6s; }
-  .arm{ position:absolute; left:44px; bottom:44px; width:66px; height:12px; border-radius:6px; background:#1d2a34; transform-origin:10px 6px; animation: sip 3.2s ease-in-out 2 1.1s; }
+  .viewer{ grid-row:2; grid-column:5; align-self:end; justify-self:center; position:relative; width:56px; height:120px; z-index:2; }
+  .chair{ position:absolute; left:0; bottom:0; width:56px; height:34px; border-radius:8px; background:#1d2a34; box-shadow:inset 0 7px 12px rgba(255,255,255,.03),0 2px 0 rgba(0,0,0,.35); }
+  .body{ position:absolute; left:2px; bottom:34px; width:52px; height:48px; border-radius:14px; background:#1d2a34; }
+  .head{ position:absolute; left:16px; bottom:86px; width:24px; height:24px; border-radius:50%; background:#f5cf9f; box-shadow:0 0 0 2px rgba(0,0,0,.2) inset; }
+  .smile{ position:absolute; left:22px; bottom:94px; width:12px; height:6px; border-bottom:3px solid #7a3; border-radius:0 0 10px 10px; transform:scaleX(0); animation:smile .9s ease forwards 2.6s; }
+
+  .arm{ position:absolute; left:8px; bottom:74px; width:46px; height:12px; border-radius:6px; background:#1d2a34; transform-origin:10px 6px; animation:sip 3.2s ease-in-out 2 1.1s; }
   .hand{ position:absolute; right:0; top:0; width:12px; height:12px; border-radius:6px; background:#1a2630; }
-  .cola{ position:absolute; right:-2px; bottom:-14px; width:16px; height:28px; background:#b00; border-radius:3px 3px 0 0; box-shadow: inset 0 -6px 0 #700; }
+  .cola{ position:absolute; right:-2px; bottom:-14px; width:16px; height:28px; background:#b00; border-radius:3px 3px 0 0; box-shadow:inset 0 -6px 0 #700; }
   .cola::after{ content:""; position:absolute; left:6px; top:-10px; width:4px; height:12px; background:#ddd; border-radius:2px; }
 
-  .brand{
-    position:absolute; left:50%; top:12%; transform:translateX(-50%);
-    font-family:"Stalinist One", system-ui, sans-serif;
-    font-size: clamp(28px, 5vw, 56px); letter-spacing:.12em; text-transform:uppercase;
-    color:#ffffff; text-shadow:0 8px 28px rgba(139,211,255,.35);
-    opacity:0; filter: blur(6px); animation: brand-in 1.2s ease forwards 2.6s;
-  }
+  .brand{ position:absolute; left:50%; top:12%; transform:translateX(-50%); font-family:"Stalinist One",system-ui,sans-serif; font-size:clamp(28px,5vw,56px); letter-spacing:.12em; text-transform:uppercase; color:#ffffff; text-shadow:0 8px 28px rgba(139,211,255,.35); opacity:0; filter:blur(6px); animation:brand-in 1.2s ease forwards 2.6s; }
 
-  /* keyframes */
-  @keyframes pj{ 0%,100%{ filter: brightness(1);} 50%{ filter: brightness(1.18);} }
-  @keyframes beam-in{ 0%{opacity:0; transform: translateY(-4px);} 35%{opacity:.75;} 100%{opacity:1; transform:none;} }
-  @keyframes beam-pulse{ 0%,100%{ filter: blur(1px) brightness(1);} 50%{ filter: blur(1.2px) brightness(1.08);} }
-  @keyframes sip{ 0%,100%{ transform: rotate(0deg);} 22%{ transform: rotate(-34deg);} 38%{ transform: rotate(-30deg);} 65%{ transform: rotate(-6deg);} }
-  @keyframes smile{ 0%{ transform: scaleX(0);} 60%{ transform: scaleX(1.2);} 100%{ transform: scaleX(1);} }
-  @keyframes brand-in{ to{ opacity:1; filter: blur(0);} }
+  @keyframes pj{ 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(1.18);} }
+  @keyframes beam-in{ 0%{ opacity:0;} 100%{ opacity:1;} }
+  @keyframes beam-pulse{ 0%,100%{ filter:blur(1px) brightness(1);} 50%{ filter:blur(1.2px) brightness(1.08);} }
+  @keyframes sip{ 0%,100%{ transform:rotate(0deg);} 22%{ transform:rotate(-34deg);} 38%{ transform:rotate(-30deg);} 65%{ transform:rotate(-6deg);} }
+  @keyframes smile{ 0%{ transform:scaleX(0);} 60%{ transform:scaleX(1.2);} 100%{ transform:scaleX(1);} }
+  @keyframes brand-in{ to{ opacity:1; filter:blur(0);} }
 
-  /* ===== преЛоадер: плавные «волны» рядов, бесконечно ===== */
-  :root{
-    --pre-cycle: 2.8s;   /* длительность одного цикла волны */
-    --col-step: .08s;    /* задержка между соседними точками */
-    --row-step: .38s;    /* задержка между рядами */
-  }
-  .preloader{
-    position:fixed; left:50%; bottom:16px; transform:translateX(-50%);
-    z-index:50; pointer-events:none; background: rgba(15,26,32,.88);
-    border:1px solid var(--line); border-radius:12px; padding:10px 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-    user-select:none; width:max-content;
-  }
+  .preloader{ position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:50; pointer-events:none; background:rgba(15,26,32,.88); border:1px solid var(--line); border-radius:12px; padding:10px 16px; box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04); user-select:none; width:max-content; }
   .preloader__wrap{ display:grid; gap:8px; }
-  .preloader__row{ display:flex; gap:10px; justify-content:center; filter: drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
-
-  /* волновая анимация с постоянной фазой (delay считается каждый цикл) */
-  .dot{
-    width:12px; height:12px; border-radius:50%;
-    opacity:.18; transform: translateY(6px) scale(.75);
-    animation: dot-wave var(--pre-cycle) ease-in-out infinite both;
-    animation-delay: calc(var(--rowDelay, 0s) + var(--colDelay, 0s));
-  }
-  @keyframes dot-wave{
-    0%   { opacity:.18; transform: translateY(6px) scale(.75); }
-    8%   { opacity:.55; transform: translateY(2px) scale(.9); }
-    14%  { opacity:1;   transform: translateY(0)   scale(1.12); }
-    22%  { opacity:.95; transform: translateY(0)   scale(1.0);  }
-    30%  { opacity:.85; transform: translateY(0)   scale(.95);  }
-    70%  { opacity:.22; transform: translateY(4px) scale(.8);   }
-    100% { opacity:.18; transform: translateY(6px) scale(.75); }
-  }
-
-  /* сдвиг по рядам (каждый цикл) */
-  .row1{ --rowDelay: calc(0 * var(--row-step)); }
-  .row2{ --rowDelay: calc(1 * var(--row-step)); }
-  .row3{ --rowDelay: calc(2 * var(--row-step)); }
-
-  /* сдвиг по колонкам */
-  .preloader__row .dot:nth-child(1){ --colDelay: calc(0 * var(--col-step)); }
-  .preloader__row .dot:nth-child(2){ --colDelay: calc(1 * var(--col-step)); }
-  .preloader__row .dot:nth-child(3){ --colDelay: calc(2 * var(--col-step)); }
-  .preloader__row .dot:nth-child(4){ --colDelay: calc(3 * var(--col-step)); }
-  .preloader__row .dot:nth-child(5){ --colDelay: calc(4 * var(--col-step)); }
-
-  /* цвета — как просил */
+  .preloader__row{ display:flex; gap:10px; justify-content:center; filter:drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
+  .dot{ width:12px; height:12px; border-radius:50%; opacity:.18; transform:translateY(6px) scale(.75); animation:dot-wave var(--pre-cycle) ease-in-out infinite both; animation-delay:calc(var(--rowDelay,0s) + var(--colDelay,0s)); }
+  @keyframes dot-wave{ 0%{ opacity:.18; transform:translateY(6px) scale(.75);} 8%{ opacity:.55; transform:translateY(2px) scale(.9);} 14%{ opacity:1; transform:translateY(0) scale(1.12);} 22%{ opacity:.95; transform:translateY(0) scale(1);} 30%{ opacity:.85; transform:translateY(0) scale(.95);} 70%{ opacity:.22; transform:translateY(4px) scale(.8);} 100%{ opacity:.18; transform:translateY(6px) scale(.75);} }
+  .row1{ --rowDelay:calc(0 * var(--row-step)); }
+  .row2{ --rowDelay:calc(1 * var(--row-step)); }
+  .row3{ --rowDelay:calc(2 * var(--row-step)); }
+  .preloader__row .dot:nth-child(1){ --colDelay:calc(0 * var(--col-step)); }
+  .preloader__row .dot:nth-child(2){ --colDelay:calc(1 * var(--col-step)); }
+  .preloader__row .dot:nth-child(3){ --colDelay:calc(2 * var(--col-step)); }
+  .preloader__row .dot:nth-child(4){ --colDelay:calc(3 * var(--col-step)); }
+  .preloader__row .dot:nth-child(5){ --colDelay:calc(4 * var(--col-step)); }
   .row1 .dot:nth-child(1){ background:#8bd3ff; }
   .row1 .dot:nth-child(2){ background:#b48bff; }
   .row1 .dot:nth-child(3){ background:#34d399; }
   .row1 .dot:nth-child(4){ background:#fbbf24; }
   .row1 .dot:nth-child(5){ background:#ef4444; }
-
   .row2 .dot:nth-child(1){ background:#b48bff; }
   .row2 .dot:nth-child(2){ background:#34d399; }
   .row2 .dot:nth-child(3){ background:#fbbf24; }
   .row2 .dot:nth-child(4){ background:#ef4444; }
   .row2 .dot:nth-child(5){ background:#8bd3ff; }
-
   .row3 .dot:nth-child(1){ background:#34d399; }
   .row3 .dot:nth-child(2){ background:#fbbf24; }
   .row3 .dot:nth-child(3){ background:#ef4444; }
   .row3 .dot:nth-child(4){ background:#8bd3ff; }
   .row3 .dot:nth-child(5){ background:#b48bff; }
-
-  .preloader__label{
-    margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px;
-    letter-spacing:.08em; text-transform:uppercase; opacity:.85;
-  }
+  .preloader__label{ margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
 </style>
 
-<!-- ===== анимация главной: кинозал ===== -->
 <section class="hero" aria-label="Зрительный зал (анимация)">
   <div class="cinema">
     <div class="screen"></div>
@@ -251,7 +123,6 @@
         {% endfor %}
       {% endfor %}
 
-      <!-- зритель: 2-й ряд, 5-е место -->
       <div class="viewer" aria-label="Зритель с колой">
         <div class="chair"></div>
         <div class="head"></div>
@@ -268,17 +139,12 @@
   </div>
 </section>
 
-<!-- ===== основной контент ===== -->
 <section class="now-playing">
   <div class="container">
 
     <div class="logo">
       {% if logo %}
-      <img src="{{ logo.url }}"
-           alt="Логотип"
-           class="d-inline-block img-fluid"
-           srcset="{{ logo.url }} 400w, {{ logo.url }} 800w, {{ logo.url }} 1200w"
-           sizes="(max-width: 600px) 400px, (max-width: 1000px) 800px, 1200px">
+      <img src="{{ logo.url }}" alt="Логотип" class="d-inline-block img-fluid" srcset="{{ logo.url }} 400w, {{ logo.url }} 800w, {{ logo.url }} 1200w" sizes="(max-width: 600px) 400px, (max-width: 1000px) 800px, 1200px">
       {% else %}
       <p class="text-center">Логотип не найден</p>
       {% endif %}
@@ -312,10 +178,7 @@
               <div class="movie-poster">
                 <img src="{{ movie.poster.url }}" alt="{{ movie.title }}" class="poster-image">
                 <div class="movie-overlay">
-                  <span class="btn-buy">
-                    Купить билеты
-                    <i class="fas fa-ticket-alt"></i>
-                  </span>
+                  <span class="btn-buy">Купить билеты <i class="fas fa-ticket-alt"></i></span>
                 </div>
               </div>
               <div class="movie-info">
@@ -356,9 +219,7 @@
       <a href="{% url 'cinema:news_detail' last_news.pk %}" class="last-article__link">
         <div class="last-article">
           <img src="{{ last_news.image.url }}" alt="{{ last_news.title }}" class="last-article__img">
-          <div class="last-article__date">
-            {{ last_news.publish_date|date:"d.m.Y" }}
-          </div>
+          <div class="last-article__date">{{ last_news.publish_date|date:"d.m.Y" }}</div>
           <div class="last-article__meta">
             <h3 class="last-article__title">{{ last_news.title }}</h3>
             <p class="last-article__summary">{{ last_news.summary|truncatewords:20 }}</p>
@@ -371,7 +232,6 @@
   </div>
 </section>
 
-<!-- ===== прелоадер снизу (появляющиеся ряды точек, плавно и бесконечно) ===== -->
 <div class="preloader" id="preloader" aria-live="polite" aria-label="Загрузка">
   <div class="preloader__wrap">
     <div class="preloader__row row1">
