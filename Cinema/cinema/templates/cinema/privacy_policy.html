@@ -8,13 +8,111 @@
 {% endblock %}
 
 {% block content %}
-<article class="privacy-policy" itemscope itemtype="https://schema.org/PrivacyPolicy">
+<style>
+#pp-root{--bg:#0b0d12;--card:#121620;--ink:#e7ecf3;--muted:#9fb1c7;--accent:#7cc6ff;--accent-2:#9bffd1;--danger:#ff6b6b;--ok:#42d392;--warn:#ffd166;--table-line:#223047;--table-head:#182131;--table-row:#0f1320;--table-row-alt:#121a2a;--empty:#1d2535;--focus:#c4f1ff}
+#pp-root{color:var(--ink)}
+#pp-root a{color:var(--accent);text-decoration:underline;text-underline-offset:.18em;transition:.2s}
+#pp-root a:link{color:var(--accent)}
+#pp-root a:visited{color:#b68cff}
+#pp-root a:hover{color:#fff}
+#pp-root a:active{color:var(--accent-2)}
+#pp-root a:focus{outline:2px solid var(--focus);outline-offset:2px}
+#pp-root .privacy-policy{max-width:1180px;margin:24px auto;padding:24px;display:grid;grid-template-columns:300px 1fr;gap:24px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));border-radius:20px}
+#pp-root .privacy-policy header{grid-column:1/-1;background:var(--card);padding:20px 24px;border-radius:16px}
+#pp-root .privacy-policy header h1{margin:0 0 8px 0;font-weight:800;letter-spacing:.3px;text-transform:uppercase}
+#pp-root .privacy-policy header p{margin:0;color:var(--muted)}
+#pp-root .privacy-policy header h1::before{content:"⚙️ ";opacity:.9}
+#pp-root .privacy-policy header h1::after{content:" · КиноМир"}
+#pp-root nav[aria-label="Содержание"]{position:sticky;top:12px;align-self:start;background:var(--card);padding:16px 18px;border-radius:16px}
+#pp-root nav[aria-label="Содержание"] h2{font-size:1.05rem;margin:4px 0 12px 0;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+#pp-root nav[aria-label="Содержание"] ol{margin:0;padding-left:18px}
+#pp-root nav[aria-label="Содержание"] li{margin:.3rem 0}
+#pp-root nav[aria-label="Содержание"] li:first-child>a{font-weight:700}
+#pp-root nav[aria-label="Содержание"] li:last-child>a{font-style:italic}
+#pp-root nav[aria-label="Содержание"] li:nth-child(3)>a{color:var(--accent-2)}
+#pp-root nav[aria-label="Содержание"] a{display:inline-block;padding:.15rem .25rem;border-radius:8px}
+#pp-root nav[aria-label="Содержание"] a:hover{background:#1a2333}
+#pp-root article.privacy-policy section{background:var(--card);padding:20px 24px;border-radius:16px}
+#pp-root article.privacy-policy section h2{text-transform:uppercase;letter-spacing:.08em}
+#pp-root article.privacy-policy p,#pp-root article.privacy-policy li,#pp-root article.privacy-policy dd,#pp-root article.privacy-policy dt{hyphens:auto;overflow-wrap:break-word;letter-spacing:.15px;word-spacing:.08em;text-align:justify}
+#pp-root article.privacy-policy p{margin:.9rem 0 1rem 0;text-indent:1.25em;line-height:1.75}
+#pp-root article.privacy-policy p:first-of-type::first-letter{font-size:220%;line-height:1;padding:.1rem .35rem .1rem .15rem;margin-right:.1rem;background:linear-gradient(145deg,#243043,#1a2232);border-radius:6px;float:left}
+#pp-root .lead{font-variant-caps:small-caps}
+#pp-root .context-add::before{content:"Важно: ";color:var(--warn)}
+#pp-root .context-add::after{content:" · Благодарим за доверие";color:var(--muted)}
+#pp-root *::selection{background:#345;color:#fff}
+#pp-root blockquote{margin:1rem 0;padding:1rem 1.25rem;border-left:4px solid var(--accent);background:#121a2a;border-radius:8px}
+#pp-root blockquote footer{margin-top:.5rem;color:var(--muted);font-style:italic}
+#pp-root :lang(ru){quotes:"«" "»" "„" "“"}
+#pp-root :lang(en){quotes:"“" "”" "‘" "’"}
+#pp-root blockquote p q::before{content:open-quote}
+#pp-root blockquote p q::after{content:close-quote}
+#pp-root figure{margin:1rem auto 0 auto;display:block}
+#pp-root .table-wrap{display:flex;justify-content:center}
+#pp-root table.stats-table{border-collapse:collapse!important;border:none!important;min-width:720px;background:linear-gradient(180deg,var(--table-row),var(--table-row-alt))}
+#pp-root table.stats-table caption{caption-side:top;text-align:left;padding:.6rem .8rem;background:#0f1624;color:#d6e6ff;border-top-left-radius:12px;border-top-right-radius:12px;font-weight:700}
+#pp-root table.stats-table thead th{background:var(--table-head);text-align:center;vertical-align:middle}
+#pp-root table.stats-table tbody th{background:#101827;text-align:left;vertical-align:middle}
+#pp-root table.stats-table tfoot th,#pp-root table.stats-table tfoot td{background:#0e1522}
+#pp-root table.stats-table th,#pp-root table.stats-table td{border:1px solid var(--table-line);padding:.6rem .7rem;vertical-align:middle;text-align:center}
+#pp-root table.stats-table td:empty,#pp-root table.stats-table th:empty{background:var(--empty)!important}
+#pp-root table.stats-table tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
+#pp-root table.stats-table tbody tr:nth-child(even){background:rgba(255,255,255,.06)}
+#pp-root table.stats-table tbody tr:hover{background:#1a2740}
+#pp-root col.data-columns{background:linear-gradient(180deg,rgba(124,198,255,.06),rgba(124,198,255,.02))}
+#pp-root col.security-column{background:linear-gradient(180deg,rgba(255,107,107,.08),rgba(255,107,107,.02))}
+#pp-root #data-usage table.stats-table{margin:1rem auto;border-radius:12px;overflow:hidden;display:table}
+#pp-root #data-usage table.stats-table th:first-child{position:sticky;left:0}
+#pp-root #data-usage table.stats-table td:nth-child(2),#pp-root #data-usage table.stats-table th:nth-child(2){text-align:right}
+#pp-root #data-usage table.stats-table td:nth-child(3),#pp-root #data-usage table.stats-table th:nth-child(3){text-align:right}
+#pp-root #data-usage table.stats-table td:last-child,#pp-root #data-usage table.stats-table th:last-child{font-weight:600}
+#pp-root ul.unicodelist{list-style-type:"◆ "}
+#pp-root ul.unicodelist li::marker{font-size:.9em}
+#pp-root #cookies pre{background:#0f1624;color:#cfe3ff;padding:.75rem 1rem;border-radius:10px;overflow:auto}
+#pp-root code{display:block;background:#0f1624;color:#b5f3ff;padding:.6rem .75rem;border-radius:10px;overflow:auto}
+#pp-root abbr[title]{text-decoration:underline dotted}
+#pp-root a[href^="http"]{white-space:nowrap}
+#pp-root a[href$=".pdf"]{padding:.1rem .35rem;border-radius:6px;background:#182131}
+#pp-root form{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:16px;background:#101726;padding:16px;border-radius:14px}
+#pp-root form fieldset{grid-column:1/-1;background:#0f1522;border:1px solid #1e2a3f;border-radius:12px;padding:16px 18px}
+#pp-root form legend{padding:0 .5rem;color:#cbd8ee}
+#pp-root label{display:block;font-size:.95rem;color:#c9d6ea;margin:.25rem 0}
+#pp-root input,#pp-root select,#pp-root textarea,#pp-root button{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid #24334b;background:#0c1320;color:#e7ecf3;transition:border-color .2s,box-shadow .2s,background-color .2s}
+#pp-root input::placeholder,#pp-root textarea::placeholder{color:#7d8aa3}
+#pp-root input:focus,#pp-root select:focus,#pp-root textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,198,255,.25)}
+#pp-root input:required,#pp-root select:required,#pp-root textarea:required{box-shadow:inset 0 0 0 1px rgba(124,198,255,.4)}
+#pp-root input:disabled,#pp-root select:disabled,#pp-root textarea:disabled,#pp-root button:disabled{opacity:.6;cursor:not-allowed}
+#pp-root input:enabled{background:#0c1320}
+#pp-root input:out-of-range{border-color:var(--danger);box-shadow:0 0 0 3px rgba(255,107,107,.25)}
+#pp-root input:in-range{border-color:var(--ok)}
+#pp-root input[type="email"],#pp-root input[required][type="text"]{background:#0d1420}
+#pp-root input[name$="mail"]{text-transform:none}
+#pp-root input[name^="pho"]{letter-spacing:.3px}
+#pp-root input[type="number"][name="age"]{text-align:center}
+#pp-root fieldset>label>input[type="radio"]:checked,#pp-root fieldset>label>input[type="checkbox"]:checked{box-shadow:0 0 0 3px rgba(155,255,209,.25)}
+#pp-root input[type="radio"]:checked+span,#pp-root input[type="checkbox"]:checked+span{color:var(--accent-2)}
+#pp-root select[size="2"]{height:auto}
+#pp-root output{display:inline-block;min-width:2ch;text-align:center;background:#0f1624;border:1px solid #24334b;border-radius:6px;padding:.15rem .35rem;margin-left:.35rem}
+#pp-root .security-level{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+#pp-root meter,#pp-root progress{width:260px;height:16px}
+#pp-root meter::-webkit-meter-bar{background:#132033;border-radius:8px}
+#pp-root progress{appearance:none}
+#pp-root progress::-webkit-progress-bar{background:#132033;border-radius:8px}
+#pp-root progress::-webkit-progress-value{background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:8px}
+#pp-root audio{width:100%}
+#pp-root #data-collection aside{background:#0f1624;border:1px dashed #2a3a55;border-radius:12px;padding:1rem}
+#pp-root .smallcaps{font-variant-caps:all-small-caps}
+#pp-root .table-note{font-size:.85rem;color:var(--muted)}
+#pp-root footer{grid-column:1/-1;background:var(--card);padding:1.25rem 1.5rem;border-radius:16px}
+</style>
+
+<article id="pp-root" data-theme="dark" class="privacy-policy" itemscope itemtype="https://schema.org/PrivacyPolicy">
     <header>
         <h1 itemprop="name">Политика конфиденциальности</h1>
-        <p>Дата вступления в силу: <time datetime="2023-11-01" itemprop="datePublished">1 сентября 2025 года</time></p>
+        <p class="context-add">Дата вступления в силу: <time datetime="2023-11-01" itemprop="datePublished">1 сентября 2025 года</time></p>
     </header>
 
-    <nav aria-label="Содержание политики">
+    <nav aria-label="Содержание">
         <h2>Содержание</h2>
         <ol>
             <li><a href="#general">Общие положения</a></li>
@@ -30,10 +128,9 @@
 
     <section id="general" itemprop="text">
         <h2>1. Общие положения</h2>
-        <p>Настоящая Политика конфиденциальности персональных данных (далее – Политика конфиденциальности) действует в отношении всей информации, которую наш кинотеатр может получить о Пользователе во время использования сайта, покупки билетов и оставления отзывов.</p>
-        
-        <blockquote cite="https://www.consultant.ru/document/cons_doc_LAW_61801/">
-            <p>Обработка персональных данных должна осуществляться на законной и справедливой основе.</p>
+        <p class="lead">Настоящая Политика конфиденциальности персональных данных действует в отношении всей информации, которую наш кинотеатр может получить о Пользователе во время использования сайта, покупки билетов и оставления отзывов.</p>
+        <blockquote cite="https://www.consultant.ru/document/cons_doc_LAW_61801/" lang="ru">
+            <p><q>Обработка персональных данных должна осуществляться на законной и справедливой основе.</q></p>
             <footer>- Закон № 12345 <cite>«О персональных данных»</cite></footer>
         </blockquote>
     </section>
@@ -42,27 +139,24 @@
         <h2>2. Основные понятия, используемые в Политике</h2>
         <dl>
             <dt><dfn>Персональные данные</dfn></dt>
-            <dd>Любая информация, относящаяся к прямо или косвенно определенному или определяемому физическому лицу (субъекту персональных данных).</dd>
-            
+            <dd>Любая информация, относящаяся к прямо или косвенно определенному или определяемому физическому лицу.</dd>
             <dt><dfn>Обработка персональных данных</dfn></dt>
-            <dd>Любое действие (операция) или совокупность действий (операций), совершаемых с использованием средств автоматизации или без использования таких средств с персональными данными.</dd>
-            
+            <dd>Любое действие или совокупность действий, совершаемых с использованием средств автоматизации или без таковых с персональными данными.</dd>
             <dt><dfn>Конфиденциальность персональных данных</dfn></dt>
-            <dd>Обязательное для соблюдения лицом, получившим доступ к персональным данным, требование не допускать их распространения без согласия субъекта персональных данных.</dd>
+            <dd>Обязательное для соблюдения лицом требование не допускать распространения персональных данных без согласия субъекта.</dd>
         </dl>
     </section>
 
     <section id="data-collection">
         <h2>3. Какие персональные данные мы собираем</h2>
         <p>При покупке билетов в нашем кинотеатре мы можем собирать следующую информацию:</p>
-        <ul>
+        <ul class="unicodelist">
             <li>Фамилия, имя, отчество</li>
             <li>Контактный телефон</li>
             <li>Адрес электронной почты</li>
-            <li>Данные о покупках (фильмы, сеансы, места)</li>
+            <li>Данные о покупках</li>
             <li>История посещений</li>
         </ul>
-        
         <p>При оставлении отзывов мы можем собирать:</p>
         <ul>
             <li>Имя или псевдоним</li>
@@ -70,7 +164,6 @@
             <li>Оценку качества услуг</li>
             <li>Дату и время отзыва</li>
         </ul>
-        
         <aside>
             <h3>Статистические данные</h3>
             <p>Мы также собираем анонимные статистические данные о посещаемости сайта с помощью <abbr title="HyperText Transfer Protocol">HTTP</abbr>-cookie.</p>
@@ -87,95 +180,86 @@
             <li>Информирование об изменениях в расписании сеансов</li>
             <li>Решение технических проблем и вопросов</li>
         </ol>
-        
-        <figure>
-    <table>
-        <caption>Статистика обработки данных за III квартал 2023 года</caption>
-        <colgroup>
-            <col>
-            <col span="2" class="data-columns">
-            <col class="security-column">
-        </colgroup>
-        <thead>
-            <tr>
-                <th id="category" scope="col" rowspan="2">Категория данных</th>
-                <th id="processing" scope="col" colspan="2">Обработка данных</th>
-                <th id="security" scope="col" rowspan="2">Инциденты безопасности</th>
-            </tr>
-            <tr>
-                <th id="records" scope="col">Записей</th>
-                <th id="size" scope="col">Объем (ГБ)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th id="personal" headers="category" scope="row">Персональные данные</th>
-                <td headers="processing records personal">15,432</td>
-                <td headers="processing size personal">24.8</td>
-                <td headers="security personal">0</td>
-            </tr>
-            <tr>
-                <th id="financial" headers="category" scope="row">Финансовые данные</th>
-                <td headers="processing records financial">9,876</td>
-                <td headers="processing size financial">15.2</td>
-                <td headers="security financial">0</td>
-            </tr>
-            <tr>
-                <th id="reviews" headers="category" scope="row">Отзывы и оценки</th>
-                <td headers="processing records reviews">1,234</td>
-                <td headers="processing size reviews">2.1</td>
-                <td headers="security reviews">0</td>
-            </tr>
-            <tr>
-                <th id="marketing" headers="category" scope="row">Маркетинговые данные</th>
-                <td headers="processing records marketing">3,567</td>
-                <td headers="processing size marketing">5.7</td>
-                <td headers="security marketing">1</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr>
-                <th id="total" headers="category" scope="row">Всего</th>
-                <td headers="processing records total">30,109</td>
-                <td headers="processing size total">47.8</td>
-                <td headers="security total">1</td>
-            </tr>
-            <tr>
-                <td colspan="4">
-                    <small>Примечание: Объем данных указан в гигабайтах. Инциденты безопасности отслеживаются с начала года.</small>
-                </td>
-            </tr>
-        </tfoot>
-    </table>
-    <figcaption>Таблица 1: Детальная статистика обработки данных за III квартал 2023 года</figcaption>
-</figure>
+        <div class="table-wrap">
+            <table class="stats-table">
+                <caption>Таблица 1: Детальная статистика обработки данных за III квартал 2023 года</caption>
+                <colgroup>
+                    <col>
+                    <col span="2" class="data-columns">
+                    <col class="security-column">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th id="category" scope="col" rowspan="2">Категория данных</th>
+                        <th id="processing" scope="col" colspan="2">Обработка данных</th>
+                        <th id="security" scope="col" rowspan="2">Инциденты безопасности</th>
+                    </tr>
+                    <tr>
+                        <th id="records" scope="col">Записей</th>
+                        <th id="size" scope="col">Объем (ГБ)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th id="personal" headers="category" scope="row">Персональные данные</th>
+                        <td headers="processing records personal">15,432</td>
+                        <td headers="processing size personal">24.8</td>
+                        <td headers="security personal">0</td>
+                    </tr>
+                    <tr>
+                        <th id="financial" headers="category" scope="row">Финансовые данные</th>
+                        <td headers="processing records financial">9,876</td>
+                        <td headers="processing size financial">15.2</td>
+                        <td headers="security financial">0</td>
+                    </tr>
+                    <tr>
+                        <th id="reviews" headers="category" scope="row">Отзывы и оценки</th>
+                        <td headers="processing records reviews">1,234</td>
+                        <td headers="processing size reviews">2.1</td>
+                        <td headers="security reviews">0</td>
+                    </tr>
+                    <tr>
+                        <th id="marketing" headers="category" scope="row">Маркетинговые данные</th>
+                        <td headers="processing records marketing">3,567</td>
+                        <td headers="processing size marketing">5.7</td>
+                        <td headers="security marketing">1</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th id="total" headers="category" scope="row">Всего</th>
+                        <td headers="processing records total">30,109</td>
+                        <td headers="processing size total">47.8</td>
+                        <td headers="security total">1</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4"><small class="table-note">Примечание: Объем данных указан в гигабайтах. Инциденты безопасности отслеживаются с начала года.</small></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </section>
 
     <section id="cookies">
         <h2>5. Использование файлов cookie</h2>
         <p>Наш сайт использует файлы cookie для:</p>
-        <ul>
+        <ul class="unicodelist">
             <li>Запоминания ваших предпочтений</li>
             <li>Анализа посещаемости сайта</li>
             <li>Предоставления персонализированного контента</li>
         </ul>
-        
         <pre>
 Функциональные cookie: необходимы для работы сайта
 Аналитические cookie: помогают улучшить наш сайт
 Маркетинговые cookie: показывают релевантную рекламу
         </pre>
-        
         <p>Пример кода установки cookie:</p>
-        <code>
-            document.cookie = "username=John Doe; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";
-        </code>
+        <code>document.cookie = "username=John Doe; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";</code>
     </section>
 
     <section id="security">
         <h2>6. Меры по защите персональных данных</h2>
         <p>Мы принимаем необходимые и достаточные организационные и технические меры для защиты персональных данных пользователей от неправомерного или случайного доступа, уничтожения, изменения, блокирования, копирования, распространения, а также от иных неправомерных действий с ними.</p>
-        
         <h3>Используемые технологии защиты:</h3>
         <ul>
             <li><strong>SSL-шифрование</strong> передаваемых данных</li>
@@ -183,7 +267,6 @@
             <li>Система <mark>обнаружения вторжений</mark></li>
             <li>Двухфакторная аутентификация для сотрудников</li>
         </ul>
-        
         <div class="security-level">
             <p>Текущий уровень безопасности: <meter value="0.9" min="0" max="1">90%</meter></p>
             <p>Прогресс внедрения новых мер защиты: <progress value="75" max="100">75%</progress></p>
@@ -201,7 +284,6 @@
             <li>На перенос данных другому оператору</li>
             <li>На возражение против обработки данных</li>
         </ul>
-        
         <p>Четверостишие о защите данных:</p>
         <pre>
 Ваши данные - ваша ценность,
@@ -209,26 +291,20 @@
 Конфиденциальность соблюдаем,
 Права ваши уважаем.
         </pre>
-        
-        <p>Для осуществления ваших прав, заполняют форму. Пример формы:</p>
+        <p class="smallcaps">Для осуществления ваших прав, заполните форму.</p>
 <form method="post" enctype="multipart/form-data">
     <fieldset>
         <legend>Форма обратной связи</legend>
-        
+
         <label for="name">Ваше имя:</label>
-        <input type="text" id="name" name="name" required placeholder="Иван Иванов" 
-               pattern="[А-Яа-яЁёA-Za-z\s]{2,50}" 
-               title="Имя должно содержать только буквы и быть от 2 до 50 символов">
-        
+        <input type="text" id="name" name="name" required placeholder="Иван Иванов" pattern="[А-Яа-яЁёA-Za-z\s]{2,50}" title="Имя должно содержать только буквы и быть от 2 до 50 символов">
+
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required placeholder="example@mail.com">
-        
+
         <label for="phone">Телефон:</label>
-        <input type="tel" id="phone" name="phone" 
-               pattern="[\+]\d{3}\s[\(]\d{2}[\)]\s\d{3}[\-]\d{2}[\-]\d{2}" 
-               placeholder="+375 (29) 456-78-90" 
-               title="Формат: +375 (29) 123-45-67">
-        
+        <input type="tel" id="phone" name="phone" pattern="[\+]\d{3}\s[\(]\d{2}[\)]\s\d{3}[\-]\d{2}[\-]\d{2}" placeholder="+375 (29) 456-78-90" title="Формат: +375 (29) 123-45-67">
+
         <label for="request-type">Тип запроса:</label>
         <select id="request-type" name="request-type" required size="2">
             <option value="">--Выберите тип запроса--</option>
@@ -236,58 +312,55 @@
             <option value="deletion">Удаление данных</option>
             <option value="objection">Возражение против обработки</option>
         </select>
-        
+
         <br><br>
         <label for="age">Возраст:</label>
-        <input type="number" id="age" name="age" min="18" max="120" step="1" placeholder="18"
-               title="Возраст должен быть от 18 до 120 лет">
-        
+        <input type="number" id="age" name="age" min="18" max="120" step="1" placeholder="18" title="Возраст должен быть от 18 до 120 лет">
+
         <label for="birthdate">Дата рождения:</label>
         <input type="date" id="birthdate" name="birthdate" min="1920-01-01" max="2020-12-31">
-        
+
         <label for="rating">Оценка услуги (1-10):</label>
-        <input type="range" id="rating" name="rating" min="1" max="10" step="1" value="5">
+        <input type="range" id="rating" name="rating" min="1" max="10" step="1" value="5" oninput="document.getElementById('rating-value').value=this.value">
         <output for="rating" id="rating-value">5</output>
-        
+
         <fieldset>
             <legend>Предпочтительный способ связи:</legend>
             <label>
                 <input type="radio" name="contact-method" value="email" checked required>
-                Email
+                <span>Email</span>
             </label>
             <label>
                 <input type="radio" name="contact-method" value="phone" required>
-                Телефон
+                <span>Телефон</span>
             </label>
             <label>
                 <input type="radio" name="contact-method" value="sms" required>
-                SMS
+                <span>SMS</span>
             </label>
         </fieldset>
-        
+
         <fieldset>
             <legend>Дополнительные опции:</legend>
             <label>
                 <input type="checkbox" name="options" value="newsletter">
-                Подписаться на рассылку
+                <span>Подписаться на рассылку</span>
             </label>
             <label>
                 <input type="checkbox" name="options" value="notifications">
-                Получать уведомления
+                <span>Получать уведомления</span>
             </label>
         </fieldset>
-        
+
         <label for="search">Поле поиска:</label>
-        <input type="search" id="search" name="search" placeholder="Введите поисковый запрос"
-               minlength="3" maxlength="50">
-        
+        <input type="search" id="search" name="search" placeholder="Введите поисковый запрос" minlength="3" maxlength="50">
+
         <label for="website">Ваш веб-сайт:</label>
-        <input type="url" id="website" name="website" placeholder="https://example.com"
-               pattern="https?://.+" title="Введите корректный URL (начинается с http:// или https://)">
-        
+        <input type="url" id="website" name="website" placeholder="https://example.com" pattern="https?://.+" title="Введите корректный URL (начинается с http:// или https://)">
+
         <label for="fav-color">Любимый цвет:</label>
         <input type="color" id="fav-color" name="fav-color" value="#0000ff">
-        
+
         <label for="city">Город:</label>
         <input list="cities" id="city" name="city" placeholder="Выберите или введите город">
         <datalist id="cities">
@@ -298,25 +371,25 @@
             <option value="Гродно">
             <option value="Могилев">
         </datalist>
-        
+
         <label for="message">Дополнительная информация:</label>
-        <textarea id="message" name="message" rows="4" cols="50" 
-                  placeholder="Опишите ваш запрос подробнее..." 
-                  minlength="10" maxlength="500"></textarea>
+        <textarea id="message" name="message" rows="4" cols="50" placeholder="Опишите ваш запрос подробнее..." minlength="10" maxlength="500"></textarea>
+
         <br>
         <label for="attachment">Прикрепить документ (при необходимости):</label>
-        <input type="file" id="attachment" name="attachment" 
-               accept=".pdf,.doc,.docx,.jpg,.png" 
-               title="Поддерживаемые форматы: PDF, DOC, DOCX, JPG, PNG">
+        <input type="file" id="attachment" name="attachment" accept=".pdf,.doc,.docx,.jpg,.png" title="Поддерживаемые форматы: PDF, DOC, DOCX, JPG, PNG">
+
         <br><br>
         <label for="consent">
             <input type="checkbox" id="consent" name="consent" required>
-            Я даю согласие на обработку моих персональных данных в соответствии с <a href="#privacy">политикой конфиденциальности</a>
+            Я даю согласие на обработку моих персональных данных в соответствии с <a href="#general">политикой конфиденциальности</a>
         </label>
+
         <br>
         <input type="hidden" id="form-version" name="form-version" value="2.0">
+
         <br>
-        <button type="button">Предварительный просмотр</button>
+        <button type="button" disabled>Предварительный просмотр</button>
         <button type="reset">Очистить форму</button>
     </fieldset>
 </form>
@@ -327,14 +400,13 @@
         <p>Мы имеем право вносить изменения в настоящую Политику конфиденциальности. При внесении изменений в актуальной редакции указывается дата последнего обновления. Новая редакция Политики вступает в силу с момента ее размещения, если иное не предусмотрено новой редакцией Политики.</p>
     </section>
 
-
     <footer>
-        
         <p>Аудиоверсия политики конфиденциальности:</p>
         <audio controls>
-            <source src="/static/privacy.ogg" type="audio/mpeg"> 
+            <source src="/static/privacy.ogg" type="audio/ogg">
             Ваш браузер не поддерживает аудио элемент.
         </audio>
+        <p><a href="https://example.com/policy.pdf">Скачать PDF-версию</a></p>
     </footer>
 </article>
 {% endblock %}
