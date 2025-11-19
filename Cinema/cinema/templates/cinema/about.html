@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+{% extends 'cinema/base.html' %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Stalinist+One&display=swap&subset=cyrillic" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<style>
+  :root{
+    --font-base: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+    --font-accent: "Stalinist One", "Nunito", Georgia, "Times New Roman", serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+
+    --bg-0:#192630;     
+    --bg-1:#131d20;     
+    --bg-2:#0f1a22;      
+    --line:#263450;      
+    --ink:#e4edf2;       
+    --ink-2:#cbd5e1;    
+    --ink-soft:#bcd1dd;  
+    --accent:#8bd3ff;    
+  }
+
+  html, body, input, button, select, textarea {
+    font-family: var(--font-base) !important;
+    font-size: 16.5px;
+  }
+  h1, h2, h3, .title-accent {
+    font-family: var(--font-accent) !important;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  code, pre, kbd, samp{ font-family: var(--font-mono) !important; }
+
+  .brand{ display:flex; flex-direction:column; align-items:center; gap:8px; margin: 8px 0 4px; }
+  .brand-name{
+    font-family: var(--font-accent) !important;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-kerning: normal;
+    font-feature-settings: "kern" 1;
+    line-height: 1;
+    font-size: clamp(28px, 4.2vw, 52px);
+  }
+
+  figure[itemprop="logo"] img{
+    display:block; margin:12px auto;
+    transform: rotate(-2deg) scale(1);
+    transition: transform .2s ease;
+  }
+  figure[itemprop="logo"] img:hover{ transform: rotate(0deg) scale(1.05); }
+
+  .certificates-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 22px;
+  }
+  .certificate-card{
+    position: relative;
+    min-height: 520px;
+    padding: clamp(18px, 3vw, 28px);
+    text-align: center;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    border: 26px solid transparent;
+    -webkit-border-image: url('/static/images/certificate.jpeg') 34 round;
+       -o-border-image: url('/static/images/certificate.jpeg') 34 round;
+          border-image: url('/static/images/certificate.jpeg') 34 round;
+    background:
+      -webkit-linear-gradient(135deg, rgba(25,38,48,.94) 0%, rgba(25,38,48,.88) 55%, rgba(25,38,48,.94) 100%),
+      url('/static/images/bg.jpg') center/cover no-repeat;
+    background:
+      linear-gradient(135deg, rgba(25,38,48,.94) 0%, rgba(25,38,48,.88) 55%, rgba(25,38,48,.94) 100%),
+      url('/static/images/bg.jpg') center/cover no-repeat;
+    box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    border-radius: 6px;
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--ink);
+  }
+  .certificate-card::before{
+    content:"";
+    position:absolute; inset: 16px;
+    background:
+      radial-gradient(40% 40% at 18% 80%, rgba(139,211,255,.10) 0%, rgba(139,211,255,0) 70%),
+      radial-gradient(50% 50% at 82% 14%, rgba(38,52,80,.18) 0%, rgba(38,52,80,0) 70%);
+    z-index: 0; pointer-events: none;
+  }
+  .certificate-inner{ position: relative; z-index: 1; width: min(920px, 100%); padding: clamp(8px, 1.5vw, 14px); }
+  .certificate__kicker{ font-weight: 700; font-size: clamp(12px, 1.2vw, 14px); letter-spacing: .16em; color: var(--ink-soft); margin-bottom: 8px; }
+  .certificate__title{
+    font-family: var(--font-accent); font-weight: 400; letter-spacing: .06em; text-transform: uppercase;
+    font-size: clamp(30px, 5.6vw, 64px); color: var(--accent); margin: 0 0 12px; text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  }
+  .certificate__desc{ font-size: clamp(16px, 1.6vw, 20px); line-height: 1.35; color: var(--ink); margin: 0 auto 16px; max-width: 80ch; }
+  .certificate__meta{
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px 20px; margin-top: 12px; font-size: 14px; color: var(--ink-2);
+  }
+  .certificate__meta b{ color: var(--ink); }
+  .history-list{
+    list-style: none; padding-left: 0; margin: 10px 0 0;
+    display: grid; gap: 10px;
+    counter-reset: yearstep; 
+  }
+  .history-list li{
+    display:grid; grid-template-columns: minmax(88px, 110px) 1fr;
+    gap: 14px; align-items:start;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 12px;
+    line-height: 1.6;          
+    hyphens: auto;             
+    overflow-wrap: anywhere;    
+  }
+  .history-list li::before{
+    content: "◆";
+    color: var(--accent);
+    font-size: 12px;
+    line-height: 1;
+    margin-top: .3em;
+    align-self: start;
+    grid-column: 1 / 2;
+    justify-self: end;
+    transform: translateX(-6px);
+  }
+  .history-list li > strong{
+    grid-column: 1 / 2;
+    font-variant-numeric: tabular-nums; 
+    letter-spacing: .06em;              
+    text-transform: uppercase;
+    color: #e9f1f5;
+  }
+  .history-list li > span[itemprop="description"]{
+    grid-column: 2 / 3;
+    text-align: justify;               
+    text-indent: 1.5em;                
+    word-spacing: .02em;                
+  }
+  .history-list li > span[itemprop="description"]::first-letter{
+    font-size: 120%;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .history-list li > span[itemprop="description"]::first-line{
+    font-variant-caps: small-caps;
+    letter-spacing: .02em;
+  }
+  .history-list li:first-child{ border-left-color:#b6e7ff; }
+  .history-list li:last-child{ box-shadow: 0 0 0 1px rgba(139,211,255,.06) inset; }
+  .history-list li:nth-child(odd){ background: #111b22; }
+  .history-list li[itemprop="temporalCoverage"][content^="200"] > strong{ color:#cfe7f2; }
+  .history-list li[itemprop="temporalCoverage"][content$="5"]{ border-left-color:#7ed0ff; }
+  .history-list a:link{ color:#b6e7ff; text-decoration: underline dotted; }
+  .history-list a:visited{ color:#8bd3ff; }
+  .history-list a:hover{ color:#ffffff; text-decoration: underline; }
+  .history-list a:active{ color:#ffd089; }
+  .history-list a:focus-visible{ outline: 2px dashed var(--accent); outline-offset: 2px; }
+  .history-list ::selection{ background: var(--accent); color:#0b1216; }
+  .history-list q:lang(ru){ quotes: "«" "»" "„" "“"; }
+  .history-list q:lang(en){ quotes: "“" "”" "‘" "’"; }
+
+  .company-details table{
+    width:100%; border-collapse: separate; border-spacing:0;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden;
+  }
+  .company-details th,
+  .company-details td{ padding: 12px 14px; vertical-align: top; }
+  .company-details th{
+    width: 36%;
+    background: var(--bg-1);
+    color: #b6e7ff;
+    text-transform: uppercase;                 
+    font-variant-caps: all-small-caps;         
+    letter-spacing: .08em;                     
+    border-right: 1px solid var(--line);
+  }
+  .company-details tr + tr td,
+  .company-details tr + tr th{ border-top: 1px solid var(--line); }
+  .company-details td{
+    color: var(--ink);
+    line-height: 1.55;                       
+  }
+  
+  .company-details td[itemprop="name"]{
+    font-weight: 700; letter-spacing:.02em; font-feature-settings:"kern" 1,"liga" 1;
+  }
+  .company-details td[itemprop="taxID"],
+  .company-details td:has([itemprop="streetAddress"]){
+    font-family: var(--font-mono);            
+    color:#e9f1f5;
+  }
+  .company-details td[itemprop="bank"]::before{
+    content:"🏦 "; opacity:.9;                 
+  }
+  .company-details td{ hyphens:auto; overflow-wrap:anywhere; }
+  .company-details tr:nth-child(even) td{ background:#111b22; }
+  .company-details tr:first-child th{ border-top-left-radius: 10px; }
+  .company-details tr:last-child td{ border-bottom-right-radius: 10px; }
+  .company-details a:link{ color:#b6e7ff; text-decoration: underline dotted; }
+  .company-details a:visited{ color:#8bd3ff; }
+  .company-details a:hover{ color:#ffffff; text-decoration: underline; }
+  .company-details a:active{ color:#ffd089; }
+  .company-details a:focus-visible{ outline:2px dashed var(--accent); outline-offset:2px; }
+  .company-details input:required{ outline: 2px solid #ffd089; }
+  .company-details input:disabled{ opacity:.5; cursor:not-allowed; }
+  .company-details input:out-of-range{ outline: 2px solid #ff7a7a; background: #2a1212; }
+  .company-details input:in-range{ outline: 2px solid #76e0b9; }
+  .company-details input:focus{ box-shadow: 0 0 0 3px rgba(139,211,255,.25); }
+  .company-details ::selection{ background: var(--accent); color:#0b1216; }
+  .company-details q:lang(ru){ quotes: "«" "»" "„" "“"; }
+  .company-details q:lang(en){ quotes: "“" "”" "‘" "’"; }
+
+  figure[itemprop="video"]{
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(25,38,48,.8), rgba(19,29,32,.95));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--ink);
+    box-shadow: 0 10px 22px rgba(0,0,0,.28);
+  }
+  figure[itemprop="video"]::before{
+    content:"ВИДЕО";
+    position:absolute; top:10px; left:10px;
+    font-size: 12px; letter-spacing:.18em; text-transform: uppercase;
+    color:#0b1216; background: var(--accent);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  figure[itemprop="video"] > video{
+    width: 100%; height: auto;
+    display:block;
+    background:#000;               
+    border-radius: 8px;
+    outline: none;
+    box-shadow: 0 6px 16px rgba(0,0,0,.35);
+  }
+  figure[itemprop="video"] > video:focus-visible{
+    box-shadow: 0 0 0 3px rgba(139,211,255,.35);
+  }
+  video::cue{
+    background: rgba(0,0,0,.55);
+    color:#ffffff;
+    text-shadow: 0 1px 0 rgba(0,0,0,.6);
+    font-family: var(--font-base);
+  }
+  audio{
+    width: 100%;
+    display:block;
+    margin: 8px 0 0;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #0f1a22, #131d20);
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 6px 16px rgba(0,0,0,.28);
+  }
+  audio:focus-visible{ outline: 2px dashed var(--accent); outline-offset: 3px; }
+</style>
+
+<article itemscope itemtype="https://schema.org/AboutPage">
+  <header>
+    <h1 itemprop="headline" class="title-accent">О компании</h1>
+  </header>
+
+  <div class="brand" aria-label="Брендинг кинотеатра">
+    <div class="brand-name">Cinema</div>
+  </div>
+
+  {% if logo %}
+  <figure itemprop="logo" itemscope itemtype="https://schema.org/ImageObject">
+    <img src="{{ logo.url }}" alt="Логотип компании" itemprop="contentUrl">
+    <meta itemprop="url" content="{{ logo.url }}">
+  </figure>
+  {% endif %}
+
+  <section itemprop="description">
+    <p>{{ company_info.content }}</p>
+  </section>
+
+  {% if company_info.video %}
+  <figure itemprop="video" itemscope itemtype="https://schema.org/VideoObject">
+    <video controls width="600">
+      <source src="{{ company_info.video.url }}" type="video/mp4">
+      Ваш браузер не поддерживает видео.
+    </video>
+    <meta itemprop="contentUrl" content="{{ company_info.video.url }}">
+    <meta itemprop="uploadDate" content="{{ company_info.updated_at|date:'c' }}">
+  </figure>
+  {% endif %}
+
+  <section>
+    <h2 class="title-accent">История компании</h2>
+    <ul class="history-list">
+      {% for event in history_events %}
+      <li itemprop="temporalCoverage" content="{{ event.year }}">
+        <strong>{{ event.year }}:</strong>
+        <span itemprop="description">{{ event.text }}</span>
+      </li>
+      {% empty %}
+      <li>История пока не добавлена.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="company-details" itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+    <h2 class="title-accent">Реквизиты компании</h2>
+    <table>
+      <tr>
+        <th>Название компании</th>
+        <td itemprop="name">{{ company_info.company_name }}</td>
+      </tr>
+      <tr>
+        <th>ИНН</th>
+        <td itemprop="taxID">{{ company_info.inn }}</td>
+      </tr>
+      <tr>
+        <th>ОГРН</th>
+        <td>{{ company_info.ogrn }}</td>
+      </tr>
+      <tr>
+        <th>Адрес</th>
+        <td itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+          <span itemprop="streetAddress">{{ company_info.address }}</span>
+        </td>
+      </tr>
+      <tr>
+        <th>Банк</th>
+        <td itemprop="bank">{{ company_info.bank }}</td>
+      </tr>
+    </table>
+  </section>
+
+  <section>
+    <h2 class="title-accent">Сертификаты</h2>
+    {% if certificates %}
+      <div class="certificates-grid">
+        {% for certificate in certificates %}
+          <article class="certificate-card" itemprop="hasCertification" itemscope itemtype="https://schema.org/Certification">
+            <div class="certificate-inner">
+              <div class="certificate__kicker">Подтверждающий документ</div>
+              <h3 class="certificate__title" itemprop="name">{{ certificate.name }}</h3>
+              {% if certificate.description %}
+                <p class="certificate__desc" itemprop="description">{{ certificate.description }}</p>
+              {% endif %}
+              <div class="certificate__meta">
+                {% if certificate.issue_date %}
+                  <div>
+                    <b>Дата выдачи:</b>
+                    <span itemprop="validFrom">{{ certificate.issue_date|date:"d.m.Y" }}</span>
+                    <meta itemprop="validFrom" content="{{ certificate.issue_date|date:'c' }}">
+                  </div>
+                {% endif %}
+                {% if certificate.issuer %}
+                  <div><b>Выдан:</b> <span itemprop="issuedBy">{{ certificate.issuer }}</span></div>
+                {% endif %}
+                {% if certificate.code %}
+                  <div><b>Номер:</b> {{ certificate.code }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>Сертификаты пока не добавлены.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h3 class="title-accent">Мы на карте:</h3>
+    <iframe src="https://yandex.by/map-widget/v1/?ll=27.590532%2C53.913009&mode=search&ol=geo&ouri=ymapsbm1%3A%2F%2Fgeo%3Fdata%3DCgg2NjY3ODgzMBI70JHQtdC70LDRgNGD0YHRjCwg0JzRltC90YHQuiwg0LLRg9C70ZbRhtCwINCT0ZbQutCw0LvRiywgMTIiCg1oudxBFeymV0I%2C&z=17.14" width="560" height="400" frameborder="1" allowfullscreen="true" style="position:relative;" itemprop="hasMap" itemscope itemtype="https://schema.org/Map"></iframe>
+  </section>
+  
+  <section>
+    <h2 class="title-accent">Наши спонсоры</h2>
+    {% if sponsors %}
+      <ul>
+        {% for sponsor in sponsors %}
+          <li>{{ sponsor.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Спонсоры пока не добавлены.</p>
+    {% endif %}
+  </section>
+</article>
+
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 30px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .login-title {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #fff;
+        font-size: 24px;
+    }
+    
+    .login-form .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .login-form label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ddd;
+    }
+    
+    .login-form input {
+        width: 100%;
+        padding: 12px;
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 16px;
+    }
+    
+    .login-form input:focus {
+        border-color: #e50914;
+        outline: none;
+    }
+    
+    .login-form .error {
+        color: #e50914;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    
+    .login-form .btn-login {
+        width: 100%;
+        padding: 12px;
+        background: #e50914;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .login-form .btn-login:hover {
+        background: #f40612;
+    }
+    
+    .register-link {
+        text-align: center;
+        margin-top: 20px;
+        color: #aaa;
+    }
+    
+    .register-link a {
+        color: #e50914;
+        text-decoration: none;
+    }
+    
+    .register-link a:hover {
+        text-decoration: underline;
+    }
+    
+    .social-login {
+        margin-top: 25px;
+        text-align: center;
+    }
+    
+    .social-login p {
+        color: #aaa;
+        margin-bottom: 15px;
+    }
+    
+    .social-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .social-btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        text-decoration: none;
+        transition: transform 0.3s;
+    }
+    
+    .social-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .social-google {
+        background: #DB4437;
+    }
+    
+    .social-facebook {
+        background: #4267B2;
+    }
+    
+    .social-vk {
+        background: #4A76A8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h2 class="login-title">Вход в аккаунт</h2>
+    
+    <form method="post" class="login-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        
+        {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+        
+        <div class="form-group">
+            <label for="username">Имя пользователя</label>
+            <input type="text" id="username" name="username" required autofocus>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        
+        <button type="submit" class="btn-login">Войти</button>
+    </form>
+    
+    <div class="register-link">
+        Нет аккаунта? <a href="{% url 'cinema:register' %}">Зарегистрируйтесь</a>
+    </div>
+    
+</div>
+{% endblock %}

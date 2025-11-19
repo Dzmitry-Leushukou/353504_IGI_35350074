@@ -1,0 +1,76 @@
+{% extends "cinema/base.html" %}
+
+{% block content %}
+
+<style>
+  .employee{ display:flex; gap:12px; align-items:flex-start; }
+  .employee img{ width:120px; height:120px; object-fit:cover; border-radius:8px; display:block; }
+  .employee .info{ flex:1 1 auto; min-width:0; }
+  @media (max-width:576px){
+    .employee{ flex-direction:column; align-items:center; text-align:center; }
+  }
+
+  .card{ background:#131d20; border:1px solid #263450; color:#e9f1f5; border-radius:12px; }
+  .card .card-title{ color:#fff; }
+  .card a{ color:#8bd3ff; }
+  .card a:hover{ color:#b6e7ff; }
+  .card .card-text{ overflow-wrap:anywhere; word-break:break-word; }
+
+  .page-left-pad{ padding-left:32px; }
+  @media (min-width:1200px){ .page-left-pad{ padding-left:48px; } }
+
+  .employees ul[role="list"],
+  .employees .row{
+    list-style:none;
+    padding-left:0;
+    margin-left:0;
+  }
+  .employees li{ list-style:none; }
+</style>
+
+<main class="container page-left-pad">
+    
+  <section class="company-info mb-5" aria-labelledby="company-heading">
+    <h2 id="company-heading" style="color:#fff;">Контактная информация</h2>
+    <article class="card h-100">
+      <section class="card-body">
+        <h3 class="card-title">{{ company.company_name }}</h3>
+        <address class="card-text">
+          <strong>Адрес:</strong> {{ company.address }}<br>
+          <strong>Телефон:</strong> <a href="tel:{{ company.phone }}">{{ company.phone }}</a><br>
+          <strong>Email:</strong> <a href="mailto:{{ company.email }}">{{ company.email }}</a><br>
+          <strong>Реквизиты:</strong> {{ company.requisites }}
+        </address>
+      </section>
+    </article>
+  </section>
+
+  <section class="employees" aria-labelledby="employees-heading">
+    <h2 id="employees-heading" style="color:#fff;">Наши сотрудники</h2>
+    <ul class="row" role="list">
+      {% for employee in employees %}
+      <li class="col-md-4 mb-4" role="listitem">
+        <article class="card h-100">
+          <section class="card-body">
+            <div class="employee">
+              <img src="{{ employee.photo.url }}" alt="Фотография сотрудника {{ employee.full_name }}">
+              <div class="info">
+                <h3 class="card-title">{{ employee.full_name }}</h3>
+                <div class="card-text">
+                  <p><strong>Должность:</strong> {{ employee.get_position_display }}</p>
+                  <p><strong>Телефон:</strong> <a href="tel:{{ employee.phone }}">{{ employee.phone }}</a></p>
+                  <p><strong>Email:</strong> <a href="mailto:{{ employee.user.email }}">{{ employee.user.email }}</a></p>
+                  <p><strong>Дата рождения:</strong> <time datetime="{{ employee.birth_date|date:'Y-m-d' }}">{{ employee.birth_date|date:"d.m.Y" }}</time></p>
+                  <p><strong>Работает с:</strong> <time datetime="{{ employee.hire_date|date:'Y-m-d' }}">{{ employee.hire_date|date:"d.m.Y" }}</time></p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </article>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+</main>
+{% endblock %}

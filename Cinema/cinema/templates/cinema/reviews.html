@@ -1,0 +1,107 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+.btn-review,.btn-edit,.btn-delete{
+  display:inline-block; padding:10px 14px; border-radius:12px;
+  text-decoration:none; font-weight:800; line-height:1;
+  border:2px solid transparent; transition:.15s;
+}
+.btn-review:link{ color:#eafff4; background:#0e2218; border-color:#2ecc71; }
+.btn-edit:link{   color:#e9f3ff; background:#071629; border-color:#3b82f6; }
+.btn-delete:link{ color:#ffecec; background:#26090a; border-color:#ef4444; }
+.btn-review:visited{ color:#9cf2c7; background:#0b1a13; }
+.btn-edit:visited{   color:#bcd7ff; background:#061120; }
+.btn-delete:visited{ color:#ffbcbc; background:#1e0708; }
+.btn-review:hover{ background:#1c3e2e; transform: translateY(-2px) scale(1.01); box-shadow:0 10px 24px rgba(46,204,113,.35); }
+.btn-edit:hover{   background:#123a67; transform: translateY(-2px) scale(1.01); box-shadow:0 10px 24px rgba(59,130,246,.35); }
+.btn-delete:hover{ background:#5a1a1a; transform: translateY(-2px) scale(1.01); box-shadow:0 10px 24px rgba(239,68,68,.35); }
+.btn-review:active,.btn-edit:active,.btn-delete:active{
+  transform: translateY(0) scale(.99);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.6);
+}
+.btn-review:focus,.btn-review:focus-visible{ outline:4px solid rgba(46,204,113,.6); outline-offset:3px; }
+.btn-edit:focus,.btn-edit:focus-visible{   outline:4px solid rgba(59,130,246,.6); outline-offset:3px; }
+.btn-delete:focus,.btn-delete:focus-visible{ outline:4px solid rgba(239,68,68,.6); outline-offset:3px; }
+
+.reviews-container article.review-card:nth-of-type(even){ background-color: rgba(255,255,255,.02); }
+.reviews-container article.review-card:first-of-type{ border-top:1px solid #214c68; }
+.reviews-container article.review-card:last-of-type{ margin-bottom:80px; }
+
+.reviews-container{ max-width: 960px; margin: 0 auto; padding: 0 16px; }
+.reviews-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.review-card{ border:1px solid #263450; border-radius:10px; padding:12px; margin:8px 0; }
+.review-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.review-user{ display:flex; align-items:center; gap:10px; }
+.user-avatar{
+  width:36px; height:36px; border-radius:50%;
+  display:grid; place-items:center; background:#263450; color:#e9f1f5; font-weight:700;
+}
+.user-name{ font-weight:600; }
+.review-text{ margin:8px 0 0 0; }
+.permission-warning{ margin-top:12px; display:flex; align-items:center; gap:8px; color:#cbd5e1; }
+.no-reviews{ margin-top:12px; }
+</style>
+
+<main class="reviews-container">
+  <header class="reviews-header">
+    <h2>Отзывы о кинотеатре</h2>
+
+    {% if user.is_authenticated and user.profile.can_write_reviews %}
+      {% if user_review %}
+        <div class="review-actions">
+          <a href="{% url 'cinema:edit_review' %}" class="btn-edit">Редактировать отзыв</a>
+          <a href="{% url 'cinema:delete_review' %}" class="btn-delete">Удалить отзыв</a>
+        </div>
+      {% else %}
+        <a href="{% url 'cinema:add_review' %}" class="btn-review">Добавить отзыв</a>
+      {% endif %}
+    {% elif not user.is_authenticated %}
+      <a href="{% url 'cinema:login' %}?next={% url 'cinema:reviews' %}" class="btn-review">Войти, чтобы оставить отзыв</a>
+    {% endif %}
+  </header>
+
+  {% if reviews %}
+    {% for review in reviews %}
+      <article class="review-card">
+        <header class="review-header">
+          <div class="review-user">
+            <div class="user-avatar">{{ review.user.username|first|upper }}</div>
+            <div>
+              <div class="user-name">{{ review.user.username }}</div>
+              <div class="review-rating">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= review.rating %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+                ({{ review.get_rating_display }})
+              </div>
+            </div>
+          </div>
+          <time class="review-date">{{ review.created_at|date:"d.m.Y H:i" }}</time>
+        </header>
+        <p class="review-text">{{ review.text }}</p>
+      </article>
+    {% endfor %}
+  {% else %}
+    <aside class="no-reviews">
+      <p>Пока нет отзывов. Будьте первым!</p>
+      {% if not user.is_authenticated %}
+        <a href="{% url 'cinema:login' %}?next={% url 'cinema:reviews' %}" class="btn-review">Войти, чтобы оставить отзыв</a>
+      {% endif %}
+    </aside>
+  {% endif %}
+
+  {% if user.is_authenticated and not user.profile.can_write_reviews %}
+    <aside class="permission-warning">
+      <i class="bi bi-info-circle"></i>
+      <span>Только обычные пользователи могут оставлять отзывы</span>
+    </aside>
+  {% endif %}
+</main>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends 'cinema/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="container-xxl py-5">
+  <header class="mb-4">Статистика продаж</header>
+
+  {# Форма выбора фильма для фильтрации #}
+  <form method="get" class="mb-4 row g-3">
+    <div class="col-md-6">
+      <label for="movieSelect" class="form-label">Фильтр по фильму</label>
+      <select id="movieSelect" name="movie_id" class="form-select">
+        <option value="">— Все фильмы —</option>
+        {% for movie in movies %}
+        <option value="{{ movie.id }}"
+          {% if selected_movie and movie.id == selected_movie.id %}selected{% endif %}>
+          {{ movie.title }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 align-self-end">
+      <button type="submit" class="btn btn-primary">Применить</button>
+    </div>
+  </form>
+
+  <section class="card mb-5">
+    <div class="card-body">
+      <h5 class="card-title">Выручка по датам</h5>
+      {% if sales_by_date %}
+      <img src="data:image/png;base64,{{ chart_revenue_by_date }}" class="img-fluid" alt="График выручки по датам">
+      <table class="table table-sm table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Продано билетов</th>
+            <th>Выручка (₽)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in sales_by_date %}
+          <tr>
+            <td>{{ row.day|date:"d.m.Y" }}</td>
+            <td>{{ row.tickets_sold }}</td>
+            <td>{{ row.revenue }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Итого</th>
+            <th>{{ sales_by_date|length|add:'0' }}</th>
+            <th>{{ total_revenue }}</th>
+          </tr>
+          <tr>
+            <th colspan="2">Средняя выручка в день</th>
+            <th>
+              {% if daily_mean %}{{ daily_mean }}{% else %}—{% endif %}
+            </th>
+          </tr>
+          <tr>
+            <th colspan="2">Медианная выручка в день</th>
+            <th>
+              {% if daily_median %}{{ daily_median }}{% else %}—{% endif %}
+            </th>
+          </tr>
+        </tfoot>
+      </table>
+      {% else %}
+      <p class="text-muted">Нет данных о продажах.</p>
+      {% endif %}
+    </section>
+  </section>
+
+  <section class="card mb-5">
+    <div class="card-body">
+      <h5 class="card-title">ТОП-10 фильмов по выручке</h5>
+      {% if sales_by_movie %}
+      <img src="data:image/png;base64,{{ chart_revenue_by_movie }}" class="img-fluid" alt="График выручки по фильмам">
+      <table class="table table-sm table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>Фильм</th>
+            <th>Продано билетов</th>
+            <th>Выручка (₽)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in sales_by_movie %}
+          <tr>
+            <td>{{ row.session__movie__title }}</td>
+            <td>{{ row.tickets_sold }}</td>
+            <td>{{ row.revenue }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted">Нет данных о продажах по фильмам.</p>
+      {% endif %}
+    </section>
+  </section>
+
+  <section class="card mb-5">
+    <div class="card-body">
+      <h5 class="card-title">Доля продаж по жанрам (топ-5)</h5>
+      {% if genre_sales_list %}
+      <img src="data:image/png;base64,{{ chart_genres_pie }}" class="img-fluid" alt="Пирог по жанрам">
+      <table class="table table-sm table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>Жанр</th>
+            <th>Продано билетов</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in genre_sales_list %}
+          <tr>
+            <td>{{ item.genre }}</td>
+            <td>{{ item.tickets_sold }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="mt-3"><strong>Прибыль по жанрам:</strong></p>
+      <table class="table table-sm table-bordered">
+        <thead>
+          <tr>
+            <th>Жанр</th>
+            <th>Выручка (₽)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in genre_revenue_list %}
+          <tr>
+            <td>{{ item.genre }}</td>
+            <td>{{ item.revenue }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="text-muted">Нет данных о жанрах.</p>
+      {% endif %}
+    </section>
+  </section>
+
+  <section class="card mb-5">
+    <div class="card-body">
+      <h5 class="card-title">Список клиентов и статистика по возрасту</h5>
+      {% if clients_data %}
+      <table class="table table-sm table-bordered mb-3">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Возраст</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients_data %}
+          <tr>
+            <td>{{ client.username }}</td>
+            <td>{{ client.age }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <ul>
+        <li>Средний возраст: <strong>{% if age_mean %}{{ age_mean }}{% else %}—{% endif %}</strong></li>
+        <li>Медианный возраст: <strong>{% if age_median %}{{ age_median }}{% else %}—{% endif %}</strong></li>
+        <li>Мода по возрасту: <strong>{% if age_mode %}{{ age_mode }}{% else %}—{% endif %}</strong></li>
+      </ul>
+      {% else %}
+      <p class="text-muted">Нет данных о клиентах.</p>
+      {% endif %}
+    </section>
+  </section>
+</main>
+{% endblock %}
