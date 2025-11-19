@@ -105,6 +105,133 @@
   .row3 .dot:nth-child(4){ background:#8bd3ff; }
   .row3 .dot:nth-child(5){ background:#b48bff; }
   .preloader__label{ margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+
+  /* ===== СЛАЙДЕР НА ГЛАВНОЙ ===== */
+  .slider-section{
+    margin:24px auto;
+    max-width:1000px;
+  }
+  .slider{
+    position:relative;
+    max-width:100%;
+    margin:12px auto 0;
+    overflow:hidden;
+    border-radius:12px;
+    border:1px solid #1f2937;
+    background:#020617;
+  }
+  .slider__viewport{
+    position:relative;
+    width:100%;
+    height:100%;
+  }
+  .slider__slide{
+    display:none;
+  }
+  .slider__slide--active{
+    display:block;
+  }
+  .slider__slide img{
+    display:block;
+    width:100%;
+    height:auto;
+  }
+  .slider__nav{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:rgba(15,23,42,.75);
+    color:#e5e7eb;
+    font-size:26px;
+    padding:6px 10px;
+    cursor:pointer;
+    border-radius:999px;
+  }
+  .slider__nav--prev{ left:8px; }
+  .slider__nav--next{ right:8px; }
+  .slider__nav:hover{
+    background:rgba(30,64,175,.9);
+  }
+  .slider__pagination{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    padding:8px 0 4px;
+  }
+  .slider__pagination-btn{
+    width:10px;
+    height:10px;
+    border-radius:999px;
+    border:1px solid #9ca3af;
+    background:transparent;
+    cursor:pointer;
+  }
+  .slider__pagination-btn--active{
+    background:#e5e7eb;
+  }
+  .slider__info{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 10px 10px;
+    font-size:14px;
+    color:#e5e7eb;
+    gap:8px;
+  }
+  .slider__caption{
+    flex:1;
+  }
+  .slider__counter{
+    white-space:nowrap;
+    opacity:.85;
+  }
+  .slider-settings-form{
+    margin:8px auto 0;
+    padding:8px 12px;
+    border-radius:10px;
+    border:1px dashed #1f2937;
+    background:rgba(15,23,42,.7);
+    color:#e5e7eb;
+  }
+  .slider-settings-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 16px;
+    margin-bottom:8px;
+    font-size:13px;
+  }
+  .slider-settings-grid label{
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .slider-settings-form fieldset{
+    border:none;
+    padding:0;
+    margin:0;
+  }
+  .slider-settings-form legend{
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .slider-settings-form input[type="number"]{
+    width:70px;
+  }
+  .btn-primary{
+    display:inline-block;
+    padding:6px 14px;
+    border-radius:999px;
+    border:none;
+    background:#2563eb;
+    color:#e5e7eb;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .btn-primary:hover{
+    background:#1d4ed8;
+  }
 </style>
 
 <section class="hero">
@@ -161,6 +288,56 @@
         <i class="bi bi-cloud-sun-fill me-2"></i>
         Погода в Минске: <strong>{{ weather_info }}</strong>
       </div>
+    {% endif %}
+
+    {% if active_movies %}
+    <section class="slider-section">
+      <h2 class="section-title">Афиша (слайдер)</h2>
+
+      {% if slider_form %}
+      <form method="post" action="{% url 'cinema:home' %}" class="slider-settings-form">
+        {% csrf_token %}
+        <fieldset>
+          <legend>Настройки слайдера (только для администратора)</legend>
+          <div class="slider-settings-grid">
+            <label>
+              {{ slider_form.auto }} Автопрокрутка
+            </label>
+            <label>
+              {{ slider_form.delay }} Интервал (сек)
+            </label>
+            <label>
+              {{ slider_form.loop }} Зацикливание (loop)
+            </label>
+            <label>
+              {{ slider_form.navs }} Стрелки (navs)
+            </label>
+            <label>
+              {{ slider_form.pags }} Пагинация (pags)
+            </label>
+            <label>
+              {{ slider_form.stop_mouse_hover }} Останавливать при наведении
+            </label>
+          </div>
+          <button type="submit" class="btn-primary">Сохранить настройки</button>
+        </fieldset>
+      </form>
+      {% endif %}
+
+      <div class="slider" id="mainSlider">
+        <div class="slider__viewport"></div>
+
+        <button class="slider__nav slider__nav--prev" type="button" aria-label="Предыдущий слайд">‹</button>
+        <button class="slider__nav slider__nav--next" type="button" aria-label="Следующий слайд">›</button>
+
+        <div class="slider__pagination" aria-label="Пагинация слайдера"></div>
+
+        <div class="slider__info">
+          <div class="slider__caption"></div>
+          <div class="slider__counter"></div>
+        </div>
+      </div>
+    </section>
     {% endif %}
 
     <hr class="section-divider">
@@ -243,5 +420,218 @@
     <div class="preloader__label">загрузка…</div>
   </div>
 </div>
+
+
+<script>
+  (function () {
+    // Формируем данные слайдов из фильмов в прокате (берём максимум 5)
+    const slidesData = [
+      {% for movie in active_movies|slice:":5" %}
+      {
+        image: "{{ movie.poster.url }}",
+        title: "{{ movie.title|escapejs }}",
+        link: "{% url 'cinema:movie_detail' movie.pk %}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    if (!slidesData.length) {
+      return;
+    }
+
+    const sliderOptions = {
+      loop: {{ slider_settings.loop|yesno:"true,false" }},
+      navs: {{ slider_settings.navs|yesno:"true,false" }},
+      pags: {{ slider_settings.pags|yesno:"true,false" }},
+      auto: {{ slider_settings.auto|yesno:"true,false" }},
+      stopMouseHover: {{ slider_settings.stop_mouse_hover|yesno:"true,false" }},
+      delay: ({{ slider_settings.delay|default:5 }}) * 1000
+    };
+
+    class Slider {
+      constructor(rootElement, slides, options) {
+        this.root = rootElement;
+        this.slides = slides;
+        this.options = Object.assign({
+          loop: true,
+          navs: true,
+          pags: true,
+          auto: true,
+          delay: 5000,
+          stopMouseHover: true
+        }, options || {});
+
+        this.currentIndex = 0;
+        this.timerId = null;
+
+        this.viewport = this.root.querySelector('.slider__viewport');
+        this.captionEl = this.root.querySelector('.slider__caption');
+        this.counterEl = this.root.querySelector('.slider__counter');
+        this.paginationEl = this.root.querySelector('.slider__pagination');
+        this.prevBtn = this.root.querySelector('.slider__nav--prev');
+        this.nextBtn = this.root.querySelector('.slider__nav--next');
+
+        this.init();
+      }
+
+      init() {
+        this.renderSlides();
+        this.renderPagination();
+        this.updateView();
+        this.bindEvents();
+        this.applyOptionsVisibility();
+        if (this.options.auto) {
+          this.startAuto();
+        }
+      }
+
+      renderSlides() {
+        this.viewport.innerHTML = '';
+        this.slides.forEach((slide, index) => {
+          const a = document.createElement('a');
+          a.href = slide.link;
+          a.className = 'slider__slide';
+          a.dataset.index = String(index);
+
+          const img = document.createElement('img');
+          img.src = slide.image;
+          img.alt = slide.title;
+
+          a.appendChild(img);
+          this.viewport.appendChild(a);
+        });
+      }
+
+      renderPagination() {
+        this.paginationEl.innerHTML = '';
+        if (!this.options.pags) {
+          this.paginationEl.style.display = 'none';
+          return;
+        }
+        this.paginationEl.style.display = 'flex';
+
+        this.slides.forEach((_, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'slider__pagination-btn';
+          btn.dataset.index = String(index);
+          btn.setAttribute('aria-label', 'Перейти к слайду ' + (index + 1));
+          this.paginationEl.appendChild(btn);
+        });
+      }
+
+      bindEvents() {
+        if (this.prevBtn) {
+          this.prevBtn.addEventListener('click', () => this.prev());
+        }
+        if (this.nextBtn) {
+          this.nextBtn.addEventListener('click', () => this.next());
+        }
+
+        this.paginationEl.addEventListener('click', (e) => {
+          const target = e.target;
+          if (target && target.classList.contains('slider__pagination-btn')) {
+            const index = Number(target.dataset.index || '0');
+            this.goTo(index);
+          }
+        });
+
+        if (this.options.stopMouseHover) {
+          this.root.addEventListener('mouseenter', () => this.stopAuto());
+          this.root.addEventListener('mouseleave', () => {
+            if (this.options.auto) {
+              this.startAuto();
+            }
+          });
+        }
+      }
+
+      applyOptionsVisibility() {
+        if (this.prevBtn && this.nextBtn) {
+          const display = this.options.navs ? '' : 'none';
+          this.prevBtn.style.display = display;
+          this.nextBtn.style.display = display;
+        }
+      }
+
+      updateView() {
+        const slideEls = this.viewport.querySelectorAll('.slider__slide');
+        slideEls.forEach((el) => el.classList.remove('slider__slide--active'));
+
+        const activeSlide = slideEls[this.currentIndex];
+        if (activeSlide) {
+          activeSlide.classList.add('slider__slide--active');
+        }
+
+        const slide = this.slides[this.currentIndex];
+        if (slide) {
+          if (this.captionEl) {
+            this.captionEl.textContent = slide.title;
+          }
+          if (this.counterEl) {
+            this.counterEl.textContent = (this.currentIndex + 1) + ' / ' + this.slides.length;
+          }
+        }
+
+        const pagBtns = this.paginationEl.querySelectorAll('.slider__pagination-btn');
+        pagBtns.forEach((btn) => btn.classList.remove('slider__pagination-btn--active'));
+        const activeBtn = pagBtns[this.currentIndex];
+        if (activeBtn) {
+          activeBtn.classList.add('slider__pagination-btn--active');
+        }
+      }
+
+      goTo(index) {
+        if (index < 0) {
+          if (this.options.loop) {
+            index = this.slides.length - 1;
+          } else {
+            return;
+          }
+        }
+        if (index >= this.slides.length) {
+          if (this.options.loop) {
+            index = 0;
+          } else {
+            return;
+          }
+        }
+        this.currentIndex = index;
+        this.updateView();
+      }
+
+      next() {
+        this.goTo(this.currentIndex + 1);
+      }
+
+      prev() {
+        this.goTo(this.currentIndex - 1);
+      }
+
+      startAuto() {
+        this.stopAuto();
+        this.timerId = window.setInterval(() => {
+          this.next();
+        }, this.options.delay);
+      }
+
+      stopAuto() {
+        if (this.timerId !== null) {
+          window.clearInterval(this.timerId);
+          this.timerId = null;
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const sliderRoot = document.getElementById('mainSlider');
+      if (!sliderRoot || !slidesData.length) {
+        return;
+      }
+      new Slider(sliderRoot, slidesData, sliderOptions);
+    });
+  })();
+</script>
+
 
 {% endblock %}

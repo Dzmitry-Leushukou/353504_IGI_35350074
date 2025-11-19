@@ -1,5 +1,5 @@
 from django.views import View
-from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy, PromoCode, Profile, LogoModel, AdvModel
+from .models import News, Movie, About, Contact, Employee, FAQ,Vacancy, PromoCode, Profile, LogoModel, AdvModel, SliderSettings
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy,reverse
@@ -13,14 +13,13 @@ from django.utils import timezone
 from django.views.generic import DetailView
 from django.db.models import F
 from django.utils.translation import gettext_lazy as _
-from .forms import UserRegistrationForm
+from .forms import UserRegistrationForm, ReviewForm,TicketPurchaseForm, SliderSettingsForm
 from django.contrib.auth import login, authenticate
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 from django.contrib.auth.views import LogoutView
 from .models import Review
-from .forms import ReviewForm,TicketPurchaseForm   
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponseForbidden
 from decimal import Decimal, ROUND_DOWN
@@ -653,7 +652,9 @@ class MovieListView(ListView):
         return context
 
 class HomeView(View):
-    def get(self, request):
+    def _build_context(self, request, slider_form=None):
+        """Собираем контекст для главной страницы, включая настройки слайдера."""
+        # Цитата дня
         quote_text, quote_author = "", ""
         try:
             response = requests.get("https://zenquotes.io/api/random", timeout=5)
@@ -665,10 +666,12 @@ class HomeView(View):
             quote_text = "Не удалось загрузить цитату."
             quote_author = ""
 
+        # Погода (Минск)
         weather_info = ""
         try:
             response = requests.get(
-                "https://api.open-meteo.com/v1/forecast?latitude=53.9&longitude=27.5667&current_weather=true",
+                "https://api.open-meteo.com/v1/forecast"
+                "?latitude=53.9&longitude=27.5667&current_weather=true",
                 timeout=5
             )
             data = response.json()
@@ -679,27 +682,61 @@ class HomeView(View):
             print("Ошибка при запросе погоды:", e)
             weather_info = "Погода временно недоступна."
 
+        # Фильмы в прокате
         active_movies = Movie.objects.filter(
             sessions__start_time__gte=timezone.now()
         ).distinct()
 
+        # Логотип
         lm = LogoModel.objects.first()
         logo = lm.logo if lm else None
+
+        # Реклама
         banners = AdvModel.objects.all()
         banner = random.choice(banners) if banners else None
-        last_news = News.objects.order_by('-publish_date').first
+
+        # Последняя новость
+        last_news = News.objects.order_by('-publish_date').first()
+
+        # Настройки слайдера
+        slider_settings = SliderSettings.get_solo()
+        if slider_form is None and (request.user.is_staff or request.user.is_superuser):
+            slider_form = SliderSettingsForm(instance=slider_settings)
+
         context = {
             'quote_text': quote_text,
             'quote_author': quote_author,
             'weather_info': weather_info,
             'active_movies': active_movies,
-            'logo' : logo,
-            'adv_img' : banner.img,
-            'adv_src' : banner.src,  
-            'last_news' : last_news
+            'logo': logo,
+            'adv_img': banner.img if banner else None,
+            'adv_src': banner.src if banner else None,
+            'last_news': last_news,
+            'slider_settings': slider_settings,
+            'slider_form': slider_form,
         }
+        return context
+
+    def get(self, request):
+        context = self._build_context(request)
         return render(request, 'cinema/home.html', context)
-      
+
+    def post(self, request):
+        """Сохранение настроек слайдера. Только для администратора/персонала."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return HttpResponseForbidden("Только администратор может изменять настройки слайдера.")
+
+        slider_settings = SliderSettings.get_solo()
+        form = SliderSettingsForm(request.POST, instance=slider_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Настройки слайдера сохранены.")
+            return redirect('cinema:home')
+
+        context = self._build_context(request, slider_form=form)
+        return render(request, 'cinema/home.html', context)
+
+
 class AboutView(View):
     def get(self, request):
         try:

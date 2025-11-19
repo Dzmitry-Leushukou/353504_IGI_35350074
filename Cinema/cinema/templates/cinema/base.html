@@ -112,18 +112,22 @@
         {% endif %}
       </div>
 
-      <div class="nav-right">
+            <div class="nav-right">
         {% if user.is_authenticated %}
           <div class="user-greeting" style="display:flex;align-items:center;gap:8px;">
             <i class="bi bi-person-circle" aria-hidden="true"></i>
             <span>👤{{ user.username }}</span>
-            <form action="{% url 'logout' %}" method="post">
+            <form action="{% url 'logout' %}" method="post" style="margin:0;">
               {% csrf_token %}
               <button type="submit" class="logout-btn">Выйти</button>
             </form>
           </div>
+        {% else %}
+          <a href="{% url 'cinema:login' %}" class="nav-link">Войти</a>
+          <a href="{% url 'cinema:register' %}" class="nav-link">Регистрация</a>
         {% endif %}
       </div>
+
     </nav>
   </header>
 

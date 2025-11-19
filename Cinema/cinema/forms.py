@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee,PromoCode, Profile, Client
+from .models import Employee,PromoCode, Profile, Client, SliderSettings
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
@@ -220,3 +220,22 @@ class EmployeeAdminForm(forms.ModelForm):
             )
         
         return super().clean()
+
+class SliderSettingsForm(forms.ModelForm):
+    """Форма для управления настройками слайдера на главной странице."""
+
+    class Meta:
+        model = SliderSettings
+        fields = ['auto', 'delay', 'loop', 'navs', 'pags', 'stop_mouse_hover']
+        labels = {
+            'auto': 'Автопрокрутка',
+            'delay': 'Интервал (секунды)',
+            'loop': 'Зацикливание (loop)',
+            'navs': 'Стрелки (navs)',
+            'pags': 'Пагинация (pags)',
+            'stop_mouse_hover': 'Останавливать при наведении',
+        }
+        widgets = {
+            'delay': forms.NumberInput(attrs={'min': 1, 'max': 60}),
+        }
+

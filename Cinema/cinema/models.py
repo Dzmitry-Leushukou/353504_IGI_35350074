@@ -805,3 +805,49 @@ class SponsorModel(models.Model):
         verbose_name="Ссылка"
     )
     name = models.CharField("Название", max_length=255, null=True)
+
+class SliderSettings(models.Model):
+    """Настройки слайдера на главной странице."""
+
+    loop = models.BooleanField(
+        default=True,
+        verbose_name="Зацикливание (loop)"
+    )
+    navs = models.BooleanField(
+        default=True,
+        verbose_name="Показывать стрелки (navs)"
+    )
+    pags = models.BooleanField(
+        default=True,
+        verbose_name="Показывать пагинацию (pags)"
+    )
+    auto = models.BooleanField(
+        default=True,
+        verbose_name="Автоматическая прокрутка (auto)"
+    )
+    stop_mouse_hover = models.BooleanField(
+        default=True,
+        verbose_name="Останавливать при наведении (stopMouseHover)"
+    )
+    delay = models.PositiveIntegerField(
+        default=5,
+        validators=[MinValueValidator(1), MaxValueValidator(60)],
+        verbose_name="Интервал между слайдами (сек)"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата последнего изменения"
+    )
+
+    class Meta:
+        verbose_name = "Настройки слайдера"
+        verbose_name_plural = "Настройки слайдера"
+
+    def __str__(self):
+        return "Настройки слайдера"
+
+    @classmethod
+    def get_solo(cls):
+        """Гарантированно одна запись с pk=1."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
