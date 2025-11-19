@@ -4,7 +4,6 @@
 {% block content %}
 
 <style>
-  /* Контейнер страницы */
   .vacancy-list{
     max-width: 1100px;
     margin: 0 auto;
@@ -12,7 +11,6 @@
   }
   .vacancy-list h1{ margin: 8px 0 16px; }
 
-  /* Карточка вакансии */
   .vacancy-card{
     background: #131d20;
     color: #e9f1f5;
@@ -22,11 +20,10 @@
     margin: 0 0 16px 0;
     position: relative;
   }
-  /* clearfix, чтобы плавающие блоки не «выпирали» за карточку */
   .vacancy-card::after{
     content:"";
     display:block;
-    clear:both;     /* <-- ключ к макету на float/clear */
+    clear:both;     
   }
 
   .vacancy-card h2{
@@ -34,23 +31,22 @@
     color: #fff;
   }
 
-  /* Плавающие блоки */
-  .vacancy-sidebar{        /* правая колонка: зарплата/быстрые факты */
-    float: right;          /* <-- float */
+  .vacancy-sidebar{       
+    float: right;     
     width: 280px;
     border: 1px solid #334155;
     border-radius: 8px;
     padding: 10px;
     background: #0f1620;
-    box-shadow: 0 8px 18px rgba(0,0,0,.35); /* заметная тень на тёмном фоне */
-    margin: 0 0 12px 16px; /* отступ слева от основного текста */
+    box-shadow: 0 8px 18px rgba(0,0,0,.35); 
+    margin: 0 0 12px 16px; 
   }
   .vacancy-sidebar .salary strong{ color:#8bd3ff; }
 
-  .vacancy-body{           /* левая колонка: описание/требования */
-    float: left;           /* <-- float */
-    width: calc(100% - 296px); /* 280 + 16 отступ */
-    min-width: 320px;      /* чтобы текст не становился слишком узким */
+  .vacancy-body{          
+    float: left;          
+    width: calc(100% - 296px); 
+    min-width: 320px;     
   }
 
   .vacancy-section{
@@ -62,13 +58,12 @@
   }
 
   .vacancy-date{
-    clear: both;           /* <-- clear: опускаем дату ниже обеих колонок */
+    clear: both;         
     margin-top: 10px;
     text-align: right;
     color: #cbd5e1;
   }
 
-  /* Плашка «нет вакансий» */
   .no-vacancies{
     border: 1px dashed #334155;
     border-radius: 10px;
@@ -77,11 +72,10 @@
     padding: 12px 14px;
   }
 
-  /* Адаптив: на узких экранах отключаем float и складываем столбиком */
   @media (max-width: 820px){
     .vacancy-sidebar,
     .vacancy-body{
-      float: none;         /* отключаем float */
+      float: none;        
       width: 100%;
       margin: 0 0 12px 0;
     }
@@ -98,7 +92,6 @@
 
         <h2>{{ vacancy.title }}</h2>
 
-        <!-- ПРАВАЯ плавающая колонка -->
         <aside class="vacancy-sidebar">
           <div class="salary">
             <strong>{% trans "Зарплата:" %}</strong>
@@ -106,7 +99,6 @@
           </div>
         </aside>
 
-        <!-- ЛЕВАЯ плавающая колонка -->
         <div class="vacancy-body">
           <section class="vacancy-section">
             <h3>{% trans "Описание" %}</h3>
@@ -119,7 +111,6 @@
           </section>
         </div>
 
-        <!-- Блок даты под обеими колонками -->
         <div class="vacancy-date">
           <strong>{% trans "Дата размещения:" %}</strong>
           {{ vacancy.created_at|date:"d E Y" }}

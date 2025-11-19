@@ -25,7 +25,6 @@
     .site-nav a{ color:#e9f1f5; text-decoration:none; margin-right:12px; }
     .site-nav a:hover{ color:#b6e7ff; }
 
-    /* Заголовки под тёмный фон */
     h1{ color:#ffffff; }
     h2{ color:#e9f1f5; }
     h3{ color:#cfe7f2; }
@@ -35,14 +34,12 @@
     h1 a, h2 a, h3 a, h4 a, h5 a, h6 a{ color:inherit; text-decoration:underline; }
     h1 a:hover, h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover, h6 a:hover{ opacity:.9; }
 
-    /* --- Футер и спонсоры --- */
     .site-footer{
-      border-top: 4px solid #263450;   /* явная разделяющая линия футера */
+      border-top: 4px solid #263450;   
       margin-top: 32px;
       padding-top: 16px;
     }
 
-    /* Контейнер логотипов спонсоров */
     .sponsors{
       display:flex;
       flex-wrap:wrap;
@@ -52,15 +49,13 @@
       padding:12px 0;
     }
 
-    /* КРУГЛЫЕ БЛОКИ-ПЛЕЙСХОЛДЕРЫ ДЛЯ ПАРТНЁРОВ (ширина, цвет, тип, тень настраиваются) */
     .sponsors a{
-      /* === Настраиваемые переменные === */
-      --size:        96px;                 /* ширина/высота круга */
-      --border-w:    3px;                  /* толщина рамки */
-      --border-type: solid;                /* solid | dashed | dotted | double */
-      --border-color:#8bd3ff;              /* цвет рамки */
-      --bg:          #0f1a22;              /* фон внутри круга */
-      --shadow:      0 6px 16px rgba(0,0,0,.28); /* тень */
+      --size:        96px;                 
+      --border-w:    3px;                  
+      --border-type: solid;                
+      --border-color:#8bd3ff;             
+      --bg:          #0f1a22;            
+      --shadow:      0 6px 16px rgba(0,0,0,.28);
 
       width: var(--size);
       height: var(--size);
@@ -77,7 +72,6 @@
       transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
 
-    /* Логотип внутри круга */
     .sponsors a img{
       max-width: 70%;
       max-height: 70%;
@@ -85,14 +79,12 @@
       display: block;
     }
 
-    /* Ховер-эффект (минимальный) */
     .sponsors a:hover{
       transform: translateY(-2px);
       box-shadow: 0 10px 22px rgba(0,0,0,.35);
       border-color: #b6e7ff;
     }
 
-    /* На очень узких экранах круги чуть меньше */
     @media (max-width: 480px){
       .sponsors a{ --size:72px; }
     }
