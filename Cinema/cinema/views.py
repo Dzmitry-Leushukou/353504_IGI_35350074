@@ -700,7 +700,7 @@ class HomeView(View):
 
         # Настройки слайдера
         slider_settings = SliderSettings.get_solo()
-        if slider_form is None and (request.user.is_staff or request.user.is_superuser):
+        if slider_form is None and request.user.is_superuser:
             slider_form = SliderSettingsForm(instance=slider_settings)
 
         context = {
@@ -722,8 +722,8 @@ class HomeView(View):
         return render(request, 'cinema/home.html', context)
 
     def post(self, request):
-        """Сохранение настроек слайдера. Только для администратора/персонала."""
-        if not (request.user.is_staff or request.user.is_superuser):
+        """Сохранение настроек слайдера. Только для администратора."""
+        if not request.user.is_superuser:
             return HttpResponseForbidden("Только администратор может изменять настройки слайдера.")
 
         slider_settings = SliderSettings.get_solo()
@@ -938,3 +938,30 @@ class PaymentSuccessView(LoginRequiredMixin, View):
         }
         context.update(kwargs)
         return context
+
+from django.contrib.auth.decorators import user_passes_test
+from django.http import JsonResponse
+from .models import Contact
+
+def is_admin(user):
+    return user.is_staff
+
+@user_passes_test(is_admin)
+def add_employee(request):
+    if request.method == "POST":
+        Contact.objects.create(
+            full_name=request.POST.get("full_name"),
+            position=request.POST.get("position"),
+            email=request.POST.get("email"),
+            phone=request.POST.get("phone"),
+            photo=request.FILES.get("photo")
+        )
+        return redirect("contacts")
+    return redirect("contacts")
+
+@user_passes_test(is_admin)
+def reward_employees(request):
+    ids=request.POST.getlist("ids[]")
+    employees=Contact.objects.filter(id__in=ids)
+    names=[e.full_name for e in employees]
+    return JsonResponse({"status":"ok","message":"Премированы: "+", ".join(names)})

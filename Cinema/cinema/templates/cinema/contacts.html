@@ -10,11 +10,19 @@
     .employee{ flex-direction:column; align-items:center; text-align:center; }
   }
 
-  .card{ background:#131d20; border:1px solid #263450; color:#e9f1f5; border-radius:12px; }
-  .card .card-title{ color:#fff; }
-  .card a{ color:#8bd3ff; }
-  .card a:hover{ color:#b6e7ff; }
+  .card{ background:var(--card-bg); border:1px solid var(--border); color:var(--card-text); border-radius:12px; }
+ .card .card-title{ color:var(--card-text); }
+  .card a{ color:var(--accent); }
+  .card a:hover{ color:var(--accent); opacity: 0.8; }
   .card .card-text{ overflow-wrap:anywhere; word-break:break-word; }
+  
+  /* Ensure proper theme support for contact page elements */
+  body.theme-light .card {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  }
+  body.theme-light .card a {
+    color: var(--accent);
+  }
 
   .page-left-pad{ padding-left:32px; }
   @media (min-width:1200px){ .page-left-pad{ padding-left:48px; } }
@@ -31,7 +39,7 @@
 <main class="container page-left-pad">
     
   <section class="company-info mb-5" aria-labelledby="company-heading">
-    <h2 id="company-heading" style="color:#fff;">Контактная информация</h2>
+    <h2 id="company-heading" style="color:var(--text);">Контактная информация</h2>
     <article class="card h-100">
       <section class="card-body">
         <h3 class="card-title">{{ company.company_name }}</h3>
@@ -46,9 +54,19 @@
   </section>
 
   <section class="employees" aria-labelledby="employees-heading">
-    <h2 id="employees-heading" style="color:#fff;">Наши сотрудники</h2>
+    <h2 id="employees-heading" style="color:var(--text);">Наши сотрудники</h2>
+
+{% if user.is_staff %}
+<section class="admin-controls" style="margin:20px 0; padding:16px; border:1px solid var(--border); border-radius:8px; background:var(--card-bg)">
+    <h3 style="margin-top:0;">Администрирование сотрудников</h3>
+    <button id="btn-reward" class="btn" style="padding:8px 14px; border-radius:6px; cursor:pointer; background:var(--accent); color:white;">💰 Премировать выбранных</button>
+    <div id="reward-result" style="margin-top:10px; font-weight:bold;"></div>
+</section>
+{% endif %}
+
     <ul class="row" role="list">
       {% for employee in employees %}
+    {% if user.is_staff %}<input type="checkbox" class="reward-checkbox" value="{{ employee.id }}" style="margin-right:12px;">{% endif %}
       <li class="col-md-4 mb-4" role="listitem">
         <article class="card h-100">
           <section class="card-body">
@@ -73,4 +91,23 @@
   </section>
 
 </main>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const btnReward = document.getElementById("btn-reward");
+    if (btnReward) btnReward.onclick = () => {
+        const checked = [...document.querySelectorAll(".reward-checkbox:checked")].map(cb => cb.value);
+        fetch("{% url 'reward_employees' %}", {
+            method: "POST",
+            headers: {"X-CSRFToken": "{{ csrf_token }}","X-Requested-With":"XMLHttpRequest"},
+            body: new URLSearchParams({ "ids[]": checked })
+        })
+        .then(r=>r.json())
+        .then(data=>{
+            document.getElementById("reward-result").innerText = data.message;
+        });
+    };
+});
+</script>
 {% endblock %}

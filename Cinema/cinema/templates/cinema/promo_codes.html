@@ -3,8 +3,8 @@
 {% block content %}
 
 <style>
-  .promo-container{ color:#e4edf2; }
-  .promo-container h1{ margin:12px 0; color:#ffffff; }
+  .promo-container{}
+  .promo-container h1{ margin:12px 0; }
 
   .promo-list{ list-style:none; padding:0; margin:0; }
 
@@ -19,18 +19,18 @@
   }
 
   .promo-card{
-    border:1px solid #263450;
+    border:1px solid var(--border);
     border-radius:8px;
     padding:10px;
-    color:#e9f1f5;
+    color:var(--card-text);
   }
   .promo-card .promo-header{ display:flex; justify-content:space-between; gap:8px; }
-  .promo-card .promo-code{ margin:0; font-weight:700; color:#ffffff; }
+  .promo-card .promo-code{ margin:0; font-weight:700; color:var(--text); }
   .promo-card .promo-discount{
     font-weight:700; background:#8bd3ff; color:#00131a;
     padding:2px 8px; border-radius:999px;
   }
-  .promo-card .promo-details strong{ color:#ffffff; }
+  .promo-card .promo-details strong{ color:var(--text); }
 
   .promo-card.active{ border-color:#10b981; }
   .promo-card.inactive{ opacity:.9; }

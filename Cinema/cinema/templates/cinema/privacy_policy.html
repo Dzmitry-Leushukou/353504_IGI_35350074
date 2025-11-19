@@ -9,15 +9,53 @@
 
 {% block content %}
 <style>
-#pp-root{--bg:#0b0d12;--card:#121620;--ink:#e7ecf3;--muted:#9fb1c7;--accent:#7cc6ff;--accent-2:#9bffd1;--danger:#ff6b6b;--ok:#42d392;--warn:#ffd166;--table-line:#223047;--table-head:#182131;--table-row:#0f1320;--table-row-alt:#121a2a;--empty:#1d2535;--focus:#c4f1ff}
+/* Default dark theme variables */
+#pp-root {
+  --bg: #0b0d12;
+  --card: #121620;
+  --ink: #e7ecf3;
+  --muted: #9fb1c7;
+  --accent: #7cc6ff;
+  --accent-2: #9bffd1;
+  --danger: #ff6b6b;
+  --ok: #42d392;
+ --warn: #ffd166;
+  --table-line: #223047;
+  --table-head: #182131;
+  --table-row: #0f1320;
+  --table-row-alt: #121a2a;
+  --empty: #1d2535;
+  --focus: #c4f1ff;
+}
+
+/* Light theme overrides */
+body.theme-light #pp-root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --ink: #111827;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-2: #16a34a;
+  --danger: #dc2626;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --table-line: #d1d5db;
+  --table-head: #f3f4f6;
+  --table-row: #ffffff;
+  --table-row-alt: #f9fafb;
+  --empty: #e5e7eb;
+  --focus: #93c5fd;
+}
+
 #pp-root{color:var(--ink)}
 #pp-root a{color:var(--accent);text-decoration:underline;text-underline-offset:.18em;transition:.2s}
 #pp-root a:link{color:var(--accent)}
 #pp-root a:visited{color:#b68cff}
-#pp-root a:hover{color:#fff}
+#pp-root a:hover{color:#000}
+body.theme-light #pp-root a:hover{color:#444}
 #pp-root a:active{color:var(--accent-2)}
 #pp-root a:focus{outline:2px solid var(--focus);outline-offset:2px}
-#pp-root .privacy-policy{max-width:1180px;margin:24px auto;padding:24px;display:grid;grid-template-columns:300px 1fr;gap:24px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,0));border-radius:20px}
+#pp-root .privacy-policy{max-width:1180px;margin:24px auto;padding:24px;display:grid;grid-template-columns:300px 1fr;gap:24px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,0));border-radius:20px}
 #pp-root .privacy-policy header{grid-column:1/-1;background:var(--card);padding:20px 24px;border-radius:16px}
 #pp-root .privacy-policy header h1{margin:0 0 8px 0;font-weight:800;letter-spacing:.3px;text-transform:uppercase}
 #pp-root .privacy-policy header p{margin:0;color:var(--muted)}
@@ -32,16 +70,19 @@
 #pp-root nav[aria-label="Содержание"] li:nth-child(3)>a{color:var(--accent-2)}
 #pp-root nav[aria-label="Содержание"] a{display:inline-block;padding:.15rem .25rem;border-radius:8px}
 #pp-root nav[aria-label="Содержание"] a:hover{background:#1a2333}
+body.theme-light #pp-root nav[aria-label="Содержание"] a:hover{background:#e5e7eb}
 #pp-root article.privacy-policy section{background:var(--card);padding:20px 24px;border-radius:16px}
 #pp-root article.privacy-policy section h2{text-transform:uppercase;letter-spacing:.08em}
 #pp-root article.privacy-policy p,#pp-root article.privacy-policy li,#pp-root article.privacy-policy dd,#pp-root article.privacy-policy dt{hyphens:auto;overflow-wrap:break-word;letter-spacing:.15px;word-spacing:.08em;text-align:justify}
 #pp-root article.privacy-policy p{margin:.9rem 0 1rem 0;text-indent:1.25em;line-height:1.75}
 #pp-root article.privacy-policy p:first-of-type::first-letter{font-size:220%;line-height:1;padding:.1rem .35rem .1rem .15rem;margin-right:.1rem;background:linear-gradient(145deg,#243043,#1a2232);border-radius:6px;float:left}
+body.theme-light #pp-root article.privacy-policy p:first-of-type::first-letter{background:linear-gradient(145deg,#e5e7eb,#d1d5db);color:var(--ink)}
 #pp-root .lead{font-variant-caps:small-caps}
 #pp-root .context-add::before{content:"Важно: ";color:var(--warn)}
 #pp-root .context-add::after{content:" · Благодарим за доверие";color:var(--muted)}
 #pp-root *::selection{background:#345;color:#fff}
-#pp-root blockquote{margin:1rem 0;padding:1rem 1.25rem;border-left:4px solid var(--accent);background:#121a2a;border-radius:8px}
+body.theme-light #pp-root *::selection{background:#93c5fd;color:#000}
+#pp-root blockquote{margin:1rem 0;padding:1rem 1.25rem;border-left:4px solid var(--accent);background:var(--card);border-radius:8px}
 #pp-root blockquote footer{margin-top:.5rem;color:var(--muted);font-style:italic}
 #pp-root :lang(ru){quotes:"«" "»" "„" "“"}
 #pp-root :lang(en){quotes:"“" "”" "‘" "’"}
@@ -51,14 +92,18 @@
 #pp-root .table-wrap{display:flex;justify-content:center}
 #pp-root table.stats-table{border-collapse:collapse!important;border:none!important;min-width:720px;background:linear-gradient(180deg,var(--table-row),var(--table-row-alt))}
 #pp-root table.stats-table caption{caption-side:top;text-align:left;padding:.6rem .8rem;background:#0f1624;color:#d6e6ff;border-top-left-radius:12px;border-top-right-radius:12px;font-weight:700}
+body.theme-light #pp-root table.stats-table caption{background:#f3f4f6;color:var(--ink)}
 #pp-root table.stats-table thead th{background:var(--table-head);text-align:center;vertical-align:middle}
 #pp-root table.stats-table tbody th{background:#101827;text-align:left;vertical-align:middle}
-#pp-root table.stats-table tfoot th,#pp-root table.stats-table tfoot td{background:#0e1522}
+body.theme-light #pp-root table.stats-table tbody th{background:#f9fafb}
+#pp-root table.stats-table #pp-root table.stats-table tfoot th,#pp-root table.stats-table tfoot td{background:var(--table-head);color:var(--ink)}
 #pp-root table.stats-table th,#pp-root table.stats-table td{border:1px solid var(--table-line);padding:.6rem .7rem;vertical-align:middle;text-align:center}
 #pp-root table.stats-table td:empty,#pp-root table.stats-table th:empty{background:var(--empty)!important}
-#pp-root table.stats-table tbody tr:nth-child(odd){background:rgba(255,255,255,.02)}
-#pp-root table.stats-table tbody tr:nth-child(even){background:rgba(255,255,255,.06)}
+#pp-root table.stats-table tbody tr:nth-child(odd){background:rgba(255,255,.02)}
+body.theme-light #pp-root table.stats-table tbody tr:nth-child(odd){background:var(--table-row)}
+#pp-root table.stats-table tbody tr:nth-child(even){background:rgba(255,255,.06)}
 #pp-root table.stats-table tbody tr:hover{background:#1a2740}
+body.theme-light #pp-root table.stats-table tbody tr:hover{background:#e5e7eb}
 #pp-root col.data-columns{background:linear-gradient(180deg,rgba(124,198,255,.06),rgba(124,198,255,.02))}
 #pp-root col.security-column{background:linear-gradient(180deg,rgba(255,107,107,.08),rgba(255,107,107,.02))}
 #pp-root #data-usage table.stats-table{margin:1rem auto;border-radius:12px;overflow:hidden;display:table}
@@ -68,45 +113,60 @@
 #pp-root #data-usage table.stats-table td:last-child,#pp-root #data-usage table.stats-table th:last-child{font-weight:600}
 #pp-root ul.unicodelist{list-style-type:"◆ "}
 #pp-root ul.unicodelist li::marker{font-size:.9em}
-#pp-root #cookies pre{background:#0f1624;color:#cfe3ff;padding:.75rem 1rem;border-radius:10px;overflow:auto}
-#pp-root code{display:block;background:#0f1624;color:#b5f3ff;padding:.6rem .75rem;border-radius:10px;overflow:auto}
+#pp-root #cookies pre{background:var(--card);color:var(--ink);padding:.75rem 1rem;border-radius:10px;overflow:auto}
+#pp-root code{display:block;background:var(--card);color:var(--ink);padding:.6rem .75rem;border-radius:10px;overflow:auto}
+body.theme-light #pp-root code{background:#f3f4f6;color:var(--ink)}
 #pp-root abbr[title]{text-decoration:underline dotted}
 #pp-root a[href^="http"]{white-space:nowrap}
-#pp-root a[href$=".pdf"]{padding:.1rem .35rem;border-radius:6px;background:#182131}
-#pp-root form{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:16px;background:#101726;padding:16px;border-radius:14px}
-#pp-root form fieldset{grid-column:1/-1;background:#0f1522;border:1px solid #1e2a3f;border-radius:12px;padding:16px 18px}
-#pp-root form legend{padding:0 .5rem;color:#cbd8ee}
-#pp-root label{display:block;font-size:.95rem;color:#c9d6ea;margin:.25rem 0}
-#pp-root input,#pp-root select,#pp-root textarea,#pp-root button{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid #24334b;background:#0c1320;color:#e7ecf3;transition:border-color .2s,box-shadow .2s,background-color .2s}
+#pp-root a[href$=".pdf"]{padding:.1rem .35rem;border-radius:6px;background:var(--card)}
+#pp-root form{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:16px;background:var(--card);padding:16px;border-radius:14px}
+body.theme-light #pp-root form{background:#f3f4f6}
+#pp-root form fieldset{grid-column:1/-1;background:var(--card);border:1px solid var(--table-line);border-radius:12px;padding:16px 18px}
+#pp-root form legend{padding:0 .5rem;color:var(--ink)}
+body.theme-light #pp-root form legend{color:var(--ink)}
+#pp-root label{display:block;font-size:.95rem;color:var(--muted);margin:.25rem 0}
+#pp-root input,#pp-root select,#pp-root textarea,#pp-root button{width:100%;padding:.6rem .7rem;border-radius:10px;border:1px solid var(--table-line);background:var(--card);color:var(--ink);transition:border-color .2s,box-shadow .2s,background-color .2s}
+body.theme-light #pp-root input,body.theme-light #pp-root select,body.theme-light #pp-root textarea,body.theme-light #pp-root button{border:1px solid var(--table-line);background:#ffffff;color:var(--ink)}
 #pp-root input::placeholder,#pp-root textarea::placeholder{color:#7d8aa3}
 #pp-root input:focus,#pp-root select:focus,#pp-root textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,198,255,.25)}
 #pp-root input:required,#pp-root select:required,#pp-root textarea:required{box-shadow:inset 0 0 0 1px rgba(124,198,255,.4)}
+body.theme-light #pp-root input:required,body.theme-light #pp-root select:required,body.theme-light #pp-root textarea:required{box-shadow:inset 0 0 0 1px rgba(37, 99, 235, .4)}
 #pp-root input:disabled,#pp-root select:disabled,#pp-root textarea:disabled,#pp-root button:disabled{opacity:.6;cursor:not-allowed}
 #pp-root input:enabled{background:#0c1320}
-#pp-root input:out-of-range{border-color:var(--danger);box-shadow:0 0 0 3px rgba(255,107,107,.25)}
+body.theme-light #pp-root input:enabled{background:#ffffff}
+#pp-root input:out-of-range{border-color:var(--danger);box-shadow:0 0 3px rgba(255,107,107,.25)}
 #pp-root input:in-range{border-color:var(--ok)}
-#pp-root input[type="email"],#pp-root input[required][type="text"]{background:#0d1420}
+#pp-root input[type="email"],#pp-root input[required][type="text"]{background:var(--card)}
 #pp-root input[name$="mail"]{text-transform:none}
 #pp-root input[name^="pho"]{letter-spacing:.3px}
 #pp-root input[type="number"][name="age"]{text-align:center}
 #pp-root fieldset>label>input[type="radio"]:checked,#pp-root fieldset>label>input[type="checkbox"]:checked{box-shadow:0 0 0 3px rgba(155,255,209,.25)}
+body.theme-light #pp-root fieldset>label>input[type="radio"]:checked,body.theme-light #pp-root fieldset>label>input[type="checkbox"]:checked{box-shadow:0 0 0 3px rgba(22, 163, 74, .25)}
 #pp-root input[type="radio"]:checked+span,#pp-root input[type="checkbox"]:checked+span{color:var(--accent-2)}
 #pp-root select[size="2"]{height:auto}
-#pp-root output{display:inline-block;min-width:2ch;text-align:center;background:#0f1624;border:1px solid #24334b;border-radius:6px;padding:.15rem .35rem;margin-left:.35rem}
+#pp-root output{display:inline-block;min-width:2ch;text-align:center;background:var(--card);border:1px solid var(--table-line);border-radius:6px;padding:.15rem .35rem;margin-left:.35rem}
+body.theme-light #pp-root output{background:#f3f4f6;border:1px solid var(--table-line)}
 #pp-root .security-level{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
 #pp-root meter,#pp-root progress{width:260px;height:16px}
-#pp-root meter::-webkit-meter-bar{background:#132033;border-radius:8px}
+#pp-root meter::-webkit-meter-bar{background:var(--card);border-radius:8px}
+body.theme-light #pp-root meter::-webkit-meter-bar{background:#e5e7eb}
 #pp-root progress{appearance:none}
-#pp-root progress::-webkit-progress-bar{background:#132033;border-radius:8px}
+body.theme-light #pp-root progress::-webkit-progress-bar{background:#e5e7eb;border-radius:8px}
+#pp-root progress::-webkit-progress-bar{background:var(--card);border-radius:8px}
+body.theme-light #pp-root progress::-webkit-progress-value{background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:8px}
 #pp-root progress::-webkit-progress-value{background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:8px}
+body.theme-light #pp-root audio{width:100%}
 #pp-root audio{width:100%}
-#pp-root #data-collection aside{background:#0f1624;border:1px dashed #2a3a55;border-radius:12px;padding:1rem}
+body.theme-light #pp-root #data-collection aside{background:#f3f4f6;border:1px dashed var(--table-line);border-radius:12px;padding:1rem}
+#pp-root #data-collection aside{background:var(--card);border:1px dashed var(--table-line);border-radius:12px;padding:1rem}
 #pp-root .smallcaps{font-variant-caps:all-small-caps}
 #pp-root .table-note{font-size:.85rem;color:var(--muted)}
 #pp-root footer{grid-column:1/-1;background:var(--card);padding:1.25rem 1.5rem;border-radius:16px}
+body.theme-light #pp-root footer{grid-column:1/-1;background:var(--card);padding:1.25rem 1.5rem;border-radius:16px}
+.total-row{background:var(--table-head);color:var(--ink);font-weight:700}
 </style>
 
-<article id="pp-root" data-theme="dark" class="privacy-policy" itemscope itemtype="https://schema.org/PrivacyPolicy">
+<article id="pp-root" class="privacy-policy" itemscope itemtype="https://schema.org/PrivacyPolicy">
     <header>
         <h1 itemprop="name">Политика конфиденциальности</h1>
         <p class="context-add">Дата вступления в силу: <time datetime="2023-11-01" itemprop="datePublished">1 сентября 2025 года</time></p>
@@ -170,75 +230,89 @@
         </aside>
     </section>
 
-    <section id="data-usage">
-        <h2>4. Цели сбора и обработки персональных данных</h2>
-        <p>Мы используем ваши персональные данные для следующих целей:</p>
-        <ol>
-            <li>Оформление и подтверждение покупки билетов</li>
-            <li>Предоставление информации о сеансах и специальных предложениях</li>
-            <li>Обработка отзывов и улучшение качества услуг</li>
-            <li>Информирование об изменениях в расписании сеансов</li>
-            <li>Решение технических проблем и вопросов</li>
-        </ol>
-        <div class="table-wrap">
-            <table class="stats-table">
-                <caption>Таблица 1: Детальная статистика обработки данных за III квартал 2023 года</caption>
-                <colgroup>
-                    <col>
-                    <col span="2" class="data-columns">
-                    <col class="security-column">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th id="category" scope="col" rowspan="2">Категория данных</th>
-                        <th id="processing" scope="col" colspan="2">Обработка данных</th>
-                        <th id="security" scope="col" rowspan="2">Инциденты безопасности</th>
-                    </tr>
-                    <tr>
-                        <th id="records" scope="col">Записей</th>
-                        <th id="size" scope="col">Объем (ГБ)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th id="personal" headers="category" scope="row">Персональные данные</th>
-                        <td headers="processing records personal">15,432</td>
-                        <td headers="processing size personal">24.8</td>
-                        <td headers="security personal">0</td>
-                    </tr>
-                    <tr>
-                        <th id="financial" headers="category" scope="row">Финансовые данные</th>
-                        <td headers="processing records financial">9,876</td>
-                        <td headers="processing size financial">15.2</td>
-                        <td headers="security financial">0</td>
-                    </tr>
-                    <tr>
-                        <th id="reviews" headers="category" scope="row">Отзывы и оценки</th>
-                        <td headers="processing records reviews">1,234</td>
-                        <td headers="processing size reviews">2.1</td>
-                        <td headers="security reviews">0</td>
-                    </tr>
-                    <tr>
-                        <th id="marketing" headers="category" scope="row">Маркетинговые данные</th>
-                        <td headers="processing records marketing">3,567</td>
-                        <td headers="processing size marketing">5.7</td>
-                        <td headers="security marketing">1</td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th id="total" headers="category" scope="row">Всего</th>
-                        <td headers="processing records total">30,109</td>
-                        <td headers="processing size total">47.8</td>
-                        <td headers="security total">1</td>
-                    </tr>
-                    <tr>
-                        <td colspan="4"><small class="table-note">Примечание: Объем данных указан в гигабайтах. Инциденты безопасности отслеживаются с начала года.</small></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </section>
+   <section id="data-usage">
+    <h2>4. Цели сбора и обработки персональных данных</h2>
+    <p>Мы используем ваши персональные данные для следующих целей:</p>
+    <ol>
+        <li>Оформление и подтверждение покупки билетов</li>
+        <li>Предоставление информации о сеансах и специальных предложениях</li>
+        <li>Обработка отзывов и улучшение качества услуг</li>
+        <li>Информирование об изменениях в расписании сеансов</li>
+        <li>Решение технических проблем и вопросов</li>
+    </ol>
+
+    <div class="table-wrap">
+        <table class="stats-table">
+            <caption>Таблица 1: Детальная статистика обработки данных за III квартал 2023 года</caption>
+
+            <colgroup>
+                <col>
+                <col span="2" class="data-columns">
+                <col class="security-column">
+            </colgroup>
+
+            <thead>
+                <tr>
+                    <th scope="col" rowspan="2">Категория данных</th>
+                    <th scope="col" colspan="2">Обработка данных</th>
+                    <th scope="col" rowspan="2">Инциденты безопасности</th>
+                </tr>
+                <tr>
+                    <th scope="col">Записей</th>
+                    <th scope="col">Объем (ГБ)</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <th scope="row">Персональные данные</th>
+                    <td>15,432</td>
+                    <td>24.8</td>
+                    <td>0</td>
+                </tr>
+
+                <tr>
+                    <th scope="row">Финансовые данные</th>
+                    <td>9,876</td>
+                    <td>15.2</td>
+                    <td>0</td>
+                </tr>
+
+                <tr>
+                    <th scope="row">Отзывы и оценки</th>
+                    <td>1,234</td>
+                    <td>2.1</td>
+                    <td>0</td>
+                </tr>
+
+                <tr>
+                    <th scope="row">Маркетинговые данные</th>
+                    <td>3,567</td>
+                    <td>5.7</td>
+                    <td>1</td>
+                </tr>
+            </tbody>
+
+            <tfoot>
+                <tr class="total-row">
+                    <th scope="row">Всего</th>
+                    <td>30,109</td>
+                    <td>47.8</td>
+                    <td>1</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4">
+                        <small class="table-note">
+                            Примечание: Объем данных указан в гигабайтах. Инциденты безопасности отслеживаются с начала года.
+                        </small>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</section>
+
 
     <section id="cookies">
         <h2>5. Использование файлов cookie</h2>

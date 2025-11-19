@@ -17,9 +17,9 @@
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
 
     --bg-0:#192630;     
-    --bg-1:#131d20;     
+    --bg-1:var(--card-bg);     
     --bg-2:#0f1a22;      
-    --line:#263450;      
+    --line:var(--border);      
     --ink:#e4edf2;       
     --ink-2:#cbd5e1;    
     --ink-soft:#bcd1dd;  
@@ -140,7 +140,7 @@
     font-variant-numeric: tabular-nums; 
     letter-spacing: .06em;              
     text-transform: uppercase;
-    color: #e9f1f5;
+    color: var(--card-text);
   }
   .history-list li > span[itemprop="description"]{
     grid-column: 2 / 3;
@@ -201,7 +201,7 @@
   .company-details td[itemprop="taxID"],
   .company-details td:has([itemprop="streetAddress"]){
     font-family: var(--font-mono);            
-    color:#e9f1f5;
+    color:var(--card-text);
   }
   .company-details td[itemprop="bank"]::before{
     content:"🏦 "; opacity:.9;                 
@@ -263,11 +263,37 @@
     display:block;
     margin: 8px 0 0;
     border-radius: 8px;
-    background: linear-gradient(180deg, #0f1a22, #131d20);
+    background: linear-gradient(180deg, #0f1a22, var(--card-bg));
     border: 1px solid var(--line);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 6px 16px rgba(0,0,0,.28);
   }
   audio:focus-visible{ outline: 2px dashed var(--accent); outline-offset: 3px; }
+
+  /* Light theme overrides for readability */
+  body.theme-light .history-list li{
+    background:#ffffff;
+    border-color:#d1d5db;
+  }
+  body.theme-light .history-list li:nth-child(odd){
+    background:#f9fafb;
+  }
+  body.theme-light .history-list li,
+  body.theme-light .history-list li > strong,
+  body.theme-light .history-list li span[itemprop="description"]{
+    color:#111827;
+  }
+  body.theme-light .company-details table{
+    background:#ffffff;
+    border-color:#d1d5db;
+  }
+  body.theme-light .company-details th{
+    background:#f3f4f6;
+    color:#111827;
+  }
+  body.theme-light .company-details td{
+    color:#111827;
+  }
+
 </style>
 
 <article itemscope itemtype="https://schema.org/AboutPage">

@@ -36,3 +36,14 @@ urlpatterns = [
      path('ticket/<int:ticket_id>/pay/', views.PayTicketView.as_view(), name='pay_ticket'),
     path('ticket/<int:ticket_id>/payment-success/', views.PaymentSuccessView.as_view(), name='payment_success'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+from .views import add_employee, reward_employees
+urlpatterns += [
+    path('contacts/add/', add_employee, name='add_employee'),
+    path('contacts/reward/', reward_employees, name='reward_employees'),
+]
+
+
+urlpatterns += [
+    path('contacts/add/', views.add_employee, name='add_employee'),
+    path('contacts/reward/', views.reward_employees, name='reward_employees'),
+]
