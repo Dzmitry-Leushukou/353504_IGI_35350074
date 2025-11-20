@@ -76,19 +76,19 @@
   @keyframes smile{ 0%{ transform:scaleX(0);} 60%{ transform:scaleX(1.2);} 100%{ transform:scaleX(1);} }
   @keyframes brand-in{ to{ opacity:1; filter:blur(0);} }
 
-  .preloader{ position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:50; pointer-events:none; background:rgba(15,26,32,.88); border:1px solid var(--line); border-radius:12px; padding:10px 16px; box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04); user-select:none; width:max-content; }
-  .preloader__wrap{ display:grid; gap:8px; }
-  .preloader__row{ display:flex; gap:10px; justify-content:center; filter:drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
+  .{ position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:50; pointer-events:none; background:rgba(15,26,32,.88); border:1px solid var(--line); border-radius:12px; padding:10px 16px; box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04); user-select:none; width:max-content; }
+  .__wrap{ display:grid; gap:8px; }
+  .__row{ display:flex; gap:10px; justify-content:center; filter:drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
   .dot{ width:12px; height:12px; border-radius:50%; opacity:.18; transform:translateY(6px) scale(.75); animation:dot-wave var(--pre-cycle) ease-in-out infinite both; animation-delay:calc(var(--rowDelay,0s) + var(--colDelay,0s)); }
   @keyframes dot-wave{ 0%{ opacity:.18; transform:translateY(6px) scale(.75);} 8%{ opacity:.55; transform:translateY(2px) scale(.9);} 14%{ opacity:1; transform:translateY(0) scale(1.12);} 22%{ opacity:.95; transform:translateY(0) scale(1);} 30%{ opacity:.85; transform:translateY(0) scale(.95);} 70%{ opacity:.22; transform:translateY(4px) scale(.8);} 100%{ opacity:.18; transform:translateY(6px) scale(.75);} }
   .row1{ --rowDelay:calc(0 * var(--row-step)); }
   .row2{ --rowDelay:calc(1 * var(--row-step)); }
   .row3{ --rowDelay:calc(2 * var(--row-step)); }
-  .preloader__row .dot:nth-child(1){ --colDelay:calc(0 * var(--col-step)); }
-  .preloader__row .dot:nth-child(2){ --colDelay:calc(1 * var(--col-step)); }
-  .preloader__row .dot:nth-child(3){ --colDelay:calc(2 * var(--col-step)); }
-  .preloader__row .dot:nth-child(4){ --colDelay:calc(3 * var(--col-step)); }
-  .preloader__row .dot:nth-child(5){ --colDelay:calc(4 * var(--col-step)); }
+  .__row .dot:nth-child(1){ --colDelay:calc(0 * var(--col-step)); }
+  .__row .dot:nth-child(2){ --colDelay:calc(1 * var(--col-step)); }
+  .__row .dot:nth-child(3){ --colDelay:calc(2 * var(--col-step)); }
+  .__row .dot:nth-child(4){ --colDelay:calc(3 * var(--col-step)); }
+  .__row .dot:nth-child(5){ --colDelay:calc(4 * var(--col-step)); }
   .row1 .dot:nth-child(1){ background:#8bd3ff; }
   .row1 .dot:nth-child(2){ background:#b48bff; }
   .row1 .dot:nth-child(3){ background:#34d399; }
@@ -104,7 +104,7 @@
   .row3 .dot:nth-child(3){ background:#ef4444; }
   .row3 .dot:nth-child(4){ background:#8bd3ff; }
   .row3 .dot:nth-child(5){ background:#b48bff; }
-  .preloader__label{ margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+  .__label{ margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
 
   /* ===== СЛАЙДЕР НА ГЛАВНОЙ ===== */
   .slider-section{
@@ -406,18 +406,18 @@
   </div>
 </section>
 
-<div class="preloader" id="preloader" aria-live="polite">
-  <div class="preloader__wrap">
-    <div class="preloader__row row1">
+<div class="" id="" aria-live="polite">
+  <div class="__wrap">
+    <div class="__row row1">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
-    <div class="preloader__row row2">
+    <div class="__row row2">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
-    <div class="preloader__row row3">
+    <div class="__row row3">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
-    <div class="preloader__label">загрузка…</div>
+    <div class="__label">загрузка…</div>
   </div>
 </div>
 

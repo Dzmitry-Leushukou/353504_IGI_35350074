@@ -83,6 +83,7 @@
         text-decoration: underline;
     }
 </style>
+<script src="{% static 'js/lr3_age.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -90,6 +91,15 @@
     <header class="register-title">Регистрация</header>
     
     <form method="post" class="register-form">
+<div class="mb-3">
+  <label class="form-label">Дата рождения (проверка возраста для ЛР3):</label>
+  <div class="d-flex gap-2 flex-wrap">
+    <input type="date" id="birth" class="form-control" style="max-width:220px">
+    <button id="age-btn" type="button" class="btn btn-outline-primary">Проверить</button>
+  </div>
+  <div id="age-result" class="form-text mt-2"></div>
+</div>
+
         {% csrf_token %}
         
         {% if form.non_field_errors %}
@@ -156,4 +166,5 @@
         Уже есть аккаунт? <a href="{% url 'cinema:login' %}">Войти</a>
     </aside>
 </main>
+<script src="{% static 'js/lr3_age.js' %}"></script>
 {% endblock %}

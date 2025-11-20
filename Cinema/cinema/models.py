@@ -587,7 +587,7 @@ class Employee(models.Model):
                 message="Дата рождения не может быть ранее 1900 года"
             )
         ],
-        blank=False, 
+        blank=False,
         null=False,
     )
     photo = models.ImageField(
@@ -598,6 +598,12 @@ class Employee(models.Model):
     hire_date = models.DateField(
         auto_now_add=True,
         verbose_name="Дата приёма на работу"
+    )
+    description = models.TextField(
+        verbose_name="Описание работы",
+        blank=True,
+        null=True,
+        help_text="Описание выполняемых работ сотрудником"
     )
 
     class Meta:

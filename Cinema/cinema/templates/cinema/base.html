@@ -315,7 +315,8 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
         {% endif %}
       </div>
 
-    </nav>
+      <a href="{% url 'cinema:exp' %}" class="nav-link">Exp</a>
+</nav>
   </header>
 
   <main role="main">
@@ -342,8 +343,7 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
       {% endfor %}
     </section>
     <p class="footer-copy">© 2025 Кинотеатр</p>
-  </footer>
-<script>
+  </footer><script>
   (function () {
     function applyTheme(theme) {
       var body = document.body;

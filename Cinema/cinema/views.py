@@ -21,7 +21,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.views import LogoutView
 from .models import Review
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from decimal import Decimal, ROUND_DOWN
 import io
 import base64
@@ -34,6 +34,10 @@ from django.db.models.functions import TruncDate
 import requests
 import calendar
 from datetime import datetime
+import json
+import re
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 
 def calculate_age(birth_date):
@@ -592,7 +596,7 @@ class FAQListView(ListView):
         context['terms'] = FAQ.objects.filter(entry_type=FAQ.TERM).order_by('-created_at')
         return context
     
-class ContactView(ListView):
+class ContactView(View):
     def get(self, request):
         company_contact = Contact.objects.first()
 
@@ -856,7 +860,6 @@ class DeleteTicketView(LoginRequiredMixin, View):
         return redirect('cinema:my_tickets')
     
 
-# cinema/views.py
 class ConfirmDeleteTicketView(LoginRequiredMixin, View):
     login_url = 'cinema:login'
     
@@ -940,8 +943,6 @@ class PaymentSuccessView(LoginRequiredMixin, View):
         return context
 
 from django.contrib.auth.decorators import user_passes_test
-from django.http import JsonResponse
-from .models import Contact
 
 def is_admin(user):
     return user.is_staff
@@ -965,3 +966,157 @@ def reward_employees(request):
     employees=Contact.objects.filter(id__in=ids)
     names=[e.full_name for e in employees]
     return JsonResponse({"status":"ok","message":"Премированы: "+", ".join(names)})
+
+class EmployeeAPIView(View):
+    """API для работы с сотрудниками"""
+    
+    def get(self, request):
+        employees = Employee.objects.select_related('user').all()
+        
+        employees_data = []
+        for emp in employees:
+            employees_data.append({
+                "id": emp.id,
+                "full_name": emp.full_name,
+                "position": emp.position,
+                "phone": emp.phone,
+                "email": emp.user.email if emp.user else "нет@email.com",
+                "photo_url": emp.photo.url if emp.photo else "/static/img/default-avatar.jpg",
+                "description": emp.description or f"Сотрудник работает с {emp.hire_date.strftime('%d.%m.%Y')}"
+            })
+        
+        return JsonResponse({"employees": employees_data})
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def post(self, request):
+        """Добавление нового сотрудника"""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return JsonResponse({"error": "Доступ запрещен"}, status=403)
+        
+        try:
+            data = json.loads(request.body)
+            
+            # Валидация данных
+            if not self.validate_phone(data.get('phone', '')):
+                return JsonResponse({"error": "Неверный формат телефона"}, status=400)
+            
+            # Проверяем наличие обязательных полей
+            if not all([data.get('full_name'), data.get('position'), data.get('phone'), data.get('email')]):
+                return JsonResponse({"error": "Не все обязательные поля заполнены"}, status=400)
+            
+            # Создание нового пользователя
+            from django.contrib.auth.models import User
+            import uuid
+            from datetime import date
+            username = data['full_name'].replace(' ', '_').lower() + str(uuid.uuid4())[:8]
+            user = User.objects.create_user(
+                username=username,
+                email=data.get('email', ''),
+                first_name=data['full_name'].split()[0] if data['full_name'].split() else '',
+                last_name=' '.join(data['full_name'].split()[1:]) if len(data['full_name'].split()) > 1 else ''
+            )
+            
+            # Создание сотрудника
+            # Для тестирования используем дату рождения 30 лет назад
+            test_birth_date = date.today().replace(year=date.today().year - 30)
+            employee = Employee.objects.create(
+                user=user,
+                position=data['position'],
+                phone=data['phone'],
+                birth_date=test_birth_date,  # В реальном приложении нужно получать из данных
+                description=data.get('description', '')
+            )
+            
+            # Подготовка данных для ответа
+            new_employee = {
+                "id": employee.id,
+                "full_name": employee.full_name,
+                "position": employee.position,
+                "phone": employee.phone,
+                "email": user.email,
+                "photo_url": "/static/img/default-avatar.jpg",  # Временный URL, в реальном приложении будет использоваться employee.photo.url
+                "description": employee.description or f"Сотрудник работает с {employee.hire_date.strftime('%d.%m.%Y')}"
+            }
+            
+            return JsonResponse({"success": True, "employee": new_employee})
+            
+        except Exception as e:
+            # Удаляем пользователя, если создание сотрудника не удалось
+            if 'user' in locals():
+                user.delete()
+            return JsonResponse({"error": str(e)}, status=400)
+    
+    def validate_phone(self, phone):
+        """Валидация телефонного номера"""
+        pattern = r'^(\+375\s?\(\d{2}\)\s?\d{3}[- ]?\d{2}[- ]?\d{2}|8\s?\(\d{3}\)\s?\d{3}[- ]?\d{4}|8029\d{7}|8\s?\d{3}\s?\d{3}[- ]?\d{4})$'
+        return re.match(pattern, phone.replace(' ', '')) is not None
+    
+    def validate_url(self, url):
+        """Валидация URL"""
+        pattern = r'^(http://|https://).*\.(php|html)$'
+        return re.match(pattern, url) is not None
+
+def reward_employees_api(request):
+    """API для премирования сотрудников"""
+    if request.method == 'POST' and (request.user.is_staff or request.user.is_superuser):
+        try:
+            data = json.loads(request.body)
+            employee_ids = data.get('employee_ids', [])
+            
+            # Получаем сотрудников (в реальном проекте - из БД)
+            employees = Employee.objects.filter(id__in=employee_ids)
+            names = [emp.full_name.split()[0] for emp in employees]  # Берем только фамилии
+            
+            reward_text = f"Поздравляем сотрудников {', '.join(names)} с премией! Ваш труд высоко ценится руководством кинотеатра."
+            
+            return JsonResponse({
+                "success": True,
+                "message": reward_text,
+                "rewarded_count": len(names)
+            })
+            
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    
+    return JsonResponse({"error": "Метод не разрешен"}, status=405)
+
+
+class LR3GeneratorView(TemplateView):
+    template_name = "cinema/lr3_generator.html"
+
+class LR3CatalogView(TemplateView):
+    template_name = "cinema/lr3_catalog.html"
+
+def movies_api(request):
+    qs = Movie.objects.all()
+    data = []
+    for m in qs:
+        data.append({
+            "id": m.id,
+            "title": m.title,
+            "price": float(getattr(m, "ticket_price", 10) or 10),
+            "poster": m.poster.url if getattr(m, "poster", None) else "",
+            "desc": m.description[:160] if getattr(m, "description", "") else "",
+        })
+    return JsonResponse({"movies": data})
+
+class LR3AgeView(TemplateView):
+    template_name = "cinema/lr3_age.html"
+
+class LR3OOPView(TemplateView):
+    template_name = "cinema/lr3_oop.html"
+
+class LR3APIView(TemplateView):
+    template_name = "cinema/lr3_api.html"
+
+class LR3ChartsView(TemplateView):
+    template_name = "cinema/lr3_charts.html"
+
+class LR3ScrollCinemaView(TemplateView):
+    template_name = "cinema/lr3_scroll.html"
+
+class ExpView(TemplateView):
+    template_name = 'cinema/exp.html'
