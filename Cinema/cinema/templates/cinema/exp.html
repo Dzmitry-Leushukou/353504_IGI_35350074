@@ -73,6 +73,47 @@
             <div id="class-output" class="mt-3"></div>
         </div>
     </div>
+
+    <hr class="my-5">
+
+    <h1>График функции sin(x) и её разложения в ряд</h1>
+    <p class="text-muted">Сравнение разложения функции sin(x) в ряд Тейлора и вычисления через Math.sin</p>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <canvas id="functionChart"></canvas>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Настройки графика</h5>
+                    <div class="mb-3">
+                        <label for="nValue" class="form-label">Количество членов ряда (n):</label>
+                        <input type="number" id="nValue" class="form-control" value="5" min="1" max="20">
+                    </div>
+                    <div class="mb-3">
+                        <label for="xMin" class="form-label">Минимальное значение x:</label>
+                        <input type="number" id="xMin" class="form-control" value="-10" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="xMax" class="form-label">Максимальное значение x:</label>
+                        <input type="number" id="xMax" class="form-control" value="10" step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="step" class="form-label">Шаг:</label>
+                        <input type="number" id="step" class="form-control" value="0.1" step="0.01">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="animationCheck" checked>
+                        <label class="form-check-label" for="animationCheck">Анимировать построение</label>
+                    </div>
+                    <button id="updateChart" class="btn btn-primary w-100 mb-2">Обновить график</button>
+                    <button id="animateChart" class="btn btn-info w-100 mb-2">Анимировать построение</button>
+                    <button id="saveChart" class="btn btn-success w-100">Сохранить график</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <style>
@@ -254,6 +295,10 @@
 }
 </style>
 
+<!-- Подключение библиотек -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script src="{% static 'js/generator.js' %}"></script>
 <script src="{% static 'js/packages.js' %}"></script>
+<script src="{% static 'js/chart.js' %}"></script>
 {% endblock %}
