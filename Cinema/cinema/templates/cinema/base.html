@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="ru">
-<head><style>
+<head>
+<style>
 :root {
     --card-bg: #ffffff;
     --card-text: #111827;
@@ -285,12 +286,13 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
         <a href="{% url 'cinema:contacts' %}">Контакты</a>
         <a href="{% url 'cinema:privacy_policy' %}">Политика конфиденциальности</a>
         <a href="{% url 'cinema:about' %}">О нас</a>
+        <a href="{% url 'cinema:exp' %}" class="nav-link">Exp</a>
         {% if user.is_authenticated and user.is_staff or user.is_authenticated and user.is_superuser %}
           <a class="nav-link" href="{% url 'cinema:statistics' %}">Статистика</a>
         {% endif %}
       </div>
 
-            <div class="nav-right">
+      <div class="nav-right">
         <label class="theme-toggle" for="themeToggle">
           <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀️</span>
           <input type="checkbox" id="themeToggle" aria-label="Переключатель темы">
@@ -314,9 +316,7 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
           <a href="{% url 'cinema:register' %}" class="nav-link">Регистрация</a>
         {% endif %}
       </div>
-
-      <a href="{% url 'cinema:exp' %}" class="nav-link">Exp</a>
-</nav>
+    </nav>
   </header>
 
   <main role="main">
@@ -343,7 +343,9 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
       {% endfor %}
     </section>
     <p class="footer-copy">© 2025 Кинотеатр</p>
-  </footer><script>
+  </footer>
+  
+  <script>
   (function () {
     function applyTheme(theme) {
       var body = document.body;
@@ -386,14 +388,14 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
       }
     });
   })();
-</script>
+  </script>
 
-<script>
-(function() {
-    let theme = localStorage.getItem("theme") || "dark";
-    if(theme === "light") document.body.classList.add("theme-light");
-})();
-</script>
+  <script>
+  (function() {
+      let theme = localStorage.getItem("theme") || "dark";
+      if(theme === "light") document.body.classList.add("theme-light");
+  })();
+  </script>
 
 </body>
 </html>
