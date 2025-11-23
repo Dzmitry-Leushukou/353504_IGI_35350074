@@ -115,7 +115,6 @@ body.theme-dark {
       .sponsors a{ --size:72px; }
     }
   
-    /* Переключатель темы (темная/светлая) */
     .theme-toggle{
       display:flex;
       align-items:center;
@@ -203,6 +202,47 @@ body.theme-dark {
       color:#111827;
     }
 
+    .battery-status {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 12px;
+      font-size: 14px;
+      gap: 4px;
+    }
+
+    .nav-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .nav-right-top {
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-right-bottom {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-right {
+        gap: 4px;
+      }
+      
+      .battery-status {
+        font-size: 12px;
+        margin-right: 8px;
+      }
+      
+      .theme-toggle {
+        margin-right: 8px;
+        font-size: 12px;
+      }
+    }
 </style>
 
 <style>
@@ -214,7 +254,6 @@ body.theme-dark{
  --bg:#192630; --text:#e4edf2; --card-bg:#131d20; --card-text:#e9f1f5;
  --border:#263450; --accent:#4aa3ff;
 }
-/* generic card fix */
 .card, .promo-card, .news-item, .policy-container, .policy-box,
 .policy-content, .policy-section, .about-block{
  background:var(--card-bg)!important;
@@ -293,28 +332,37 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
       </div>
 
       <div class="nav-right">
-        <label class="theme-toggle" for="themeToggle">
-          <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀️</span>
-          <input type="checkbox" id="themeToggle" aria-label="Переключатель темы">
-          <span class="theme-toggle__track" aria-hidden="true">
-            <span class="theme-toggle__thumb"></span>
-          </span>
-          <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">🌙</span>
-        </label>
+        <div class="nav-right-top">
+          <label class="theme-toggle" for="themeToggle">
+            <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀️</span>
+            <input type="checkbox" id="themeToggle" aria-label="Переключатель темы">
+            <span class="theme-toggle__track" aria-hidden="true">
+              <span class="theme-toggle__thumb"></span>
+            </span>
+            <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">🌙</span>
+          </label>
 
-        {% if user.is_authenticated %}
-          <div class="user-greeting" style="display:flex;align-items:center;gap:8px;">
-            <i class="bi bi-person-circle" aria-hidden="true"></i>
-            <span>👤{{ user.username }}</span>
-            <form action="{% url 'logout' %}" method="post" style="margin:0;">
-              {% csrf_token %}
-              <button type="submit" class="logout-btn">Выйти</button>
-            </form>
+          <div id="battery-status" class="battery-status">
+            <span id="battery-level">--%</span>
+            <span id="battery-icon">🔋</span>
           </div>
-        {% else %}
-          <a href="{% url 'cinema:login' %}" class="nav-link">Войти</a>
-          <a href="{% url 'cinema:register' %}" class="nav-link">Регистрация</a>
-        {% endif %}
+        </div>
+
+        <div class="nav-right-bottom">
+          {% if user.is_authenticated %}
+            <div class="user-greeting" style="display:flex;align-items:center;gap:8px;">
+              <i class="bi bi-person-circle" aria-hidden="true"></i>
+              <span>👤{{ user.username }}</span>
+              <form action="{% url 'logout' %}" method="post" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">Выйти</button>
+              </form>
+            </div>
+          {% else %}
+            <a href="{% url 'cinema:login' %}" class="nav-link">Войти</a>
+            <a href="{% url 'cinema:register' %}" class="nav-link">Регистрация</a>
+          {% endif %}
+        </div>
       </div>
     </nav>
   </header>
@@ -358,7 +406,6 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
       try {
         localStorage.setItem('siteTheme', theme);
       } catch (e) {
-        // ignore
       }
 
       var toggle = document.getElementById('themeToggle');
@@ -375,7 +422,6 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
           saved = stored;
         }
       } catch (e) {
-        // ignore
       }
 
       applyTheme(saved);
@@ -397,6 +443,7 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
   })();
   </script>
 
+  <script src="{% static 'js/battery.js' %}"></script>
 </body>
 </html>
 
