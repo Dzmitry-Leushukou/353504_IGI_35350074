@@ -8,15 +8,17 @@
         max-width: 500px;
         margin: 50px auto;
         padding: 30px;
-        background: #1a1a1a;
+        background: var(--card-bg);
         border-radius: 8px;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        color: var(--card-text);
+        border: 1px solid var(--border);
     }
     
     .register-title {
         text-align: center;
         margin-bottom: 25px;
-        color: #fff;
+        color: var(--card-text);
         font-size: 24px;
     }
     
@@ -27,16 +29,16 @@
     .register-form label {
         display: block;
         margin-bottom: 8px;
-        color: #ddd;
+        color: var(--card-text);
     }
     
     .register-form input {
         width: 100%;
         padding: 12px;
-        background: #2a2a2a;
-        border: 1px solid #444;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
         border-radius: 4px;
-        color: #fff;
+        color: var(--card-text);
         font-size: 16px;
     }
     
@@ -71,7 +73,7 @@
     .login-link {
         text-align: center;
         margin-top: 20px;
-        color: #aaa;
+        color: var(--card-text);
     }
     
     .login-link a {
@@ -82,24 +84,33 @@
     .login-link a:hover {
         text-decoration: underline;
     }
+
+    .age-result {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        min-height: 20px;
+    }
+
+    .age-valid {
+        border-color: #34d399;
+        background: rgba(52, 211, 153, 0.1);
+    }
+
+    .age-invalid {
+        border-color: #e50914;
+        background: rgba(229, 9, 20, 0.1);
+    }
 </style>
-<script src="{% static 'js/lr3_age.js' %}"></script>
 {% endblock %}
 
 {% block content %}
 <main class="register-container">
     <header class="register-title">Регистрация</header>
-    
-    <form method="post" class="register-form">
-<div class="mb-3">
-  <label class="form-label">Дата рождения (проверка возраста для ЛР3):</label>
-  <div class="d-flex gap-2 flex-wrap">
-    <input type="date" id="birth" class="form-control" style="max-width:220px">
-    <button id="age-btn" type="button" class="btn btn-outline-primary">Проверить</button>
-  </div>
-  <div id="age-result" class="form-text mt-2"></div>
-</div>
 
+    <form method="post" class="register-form">
         {% csrf_token %}
         
         {% if form.non_field_errors %}
@@ -152,8 +163,9 @@
         </fieldset>
         
         <fieldset class="form-group">
-            <label for="id_birth_date">Дата рождения</label>
+            <label for="id_birth_date">Дата рождения (автоматическая проверка возраста)</label>
             {{ form.birth_date }}
+            <div id="ageResult" class="age-result"></div>
             {% if form.birth_date.errors %}
                 <div class="error">{{ form.birth_date.errors.0 }}</div>
             {% endif %}
@@ -166,5 +178,67 @@
         Уже есть аккаунт? <a href="{% url 'cinema:login' %}">Войти</a>
     </aside>
 </main>
-<script src="{% static 'js/lr3_age.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const birthDateInput = document.getElementById('id_birth_date');
+    const ageResult = document.getElementById('ageResult');
+    
+    // Дни недели на русском
+    const daysOfWeek = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
+    
+    // Функция для расчета возраста
+    function calculateAge(birthDate) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+    
+    // Функция для проверки возраста
+    function checkAge() {
+        const birthDateValue = birthDateInput.value;
+        
+        if (!birthDateValue) {
+            ageResult.innerHTML = '';
+            ageResult.className = 'age-result';
+            return;
+        }
+        
+        const birthDate = new Date(birthDateValue);
+        const today = new Date();
+        
+        // Проверка на будущую дату
+        if (birthDate > today) {
+            ageResult.innerHTML = '<span style="color: #e50914;">Дата рождения не может быть в будущем</span>';
+            ageResult.className = 'age-result age-invalid';
+            return;
+        }
+        
+        const age = calculateAge(birthDate);
+        const dayOfWeek = daysOfWeek[birthDate.getDay()];
+        
+        if (age < 18) {
+            ageResult.innerHTML = `<span style="color: #e50914;">Вам ${age} лет. Для регистрации необходимо разрешение родителей.</span>`;
+            ageResult.className = 'age-result age-invalid';
+        } else {
+            ageResult.innerHTML = `<span style="color: #34d399;">Вам ${age} лет. День недели вашего рождения: ${dayOfWeek}.</span>`;
+            ageResult.className = 'age-result age-valid';
+        }
+    }
+    
+    // Проверка возраста при изменении поля
+    birthDateInput.addEventListener('change', checkAge);
+    birthDateInput.addEventListener('input', checkAge);
+    
+    // Проверка при загрузке, если поле уже заполнено (например, при ошибке формы)
+    if (birthDateInput.value) {
+        checkAge();
+    }
+});
+</script>
 {% endblock %}
