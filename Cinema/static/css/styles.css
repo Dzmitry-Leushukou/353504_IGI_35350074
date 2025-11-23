@@ -437,3 +437,40 @@ a {
 a:hover {
   text-decoration: none;
 }
+
+/* Стили для каталога фильмов */
+#catalog .card {
+  background: var(--card-bg);
+  color: var(--card-text);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+#catalog .card:hover {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+#catalog .card-title a {
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+#catalog .card-title a:hover {
+  color: var(--accent);
+}
+
+/* Адаптивность каталога */
+@media (max-width: 768px) {
+  #catalog .col-sm-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .d-flex.justify-content-between.align-items-center.mb-4 {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}

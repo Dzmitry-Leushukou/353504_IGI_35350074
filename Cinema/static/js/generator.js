@@ -55,7 +55,7 @@
             <div class="field-settings">
                 <div>
                     <label>Имя (name):</label>
-                    <input type="text" class="setting-name" value="${fieldConfig.name}" placeholder="имя_поля">
+                    <input type="text" class="setting-name" value="${fieldConfig.name}" placeholder="Имя поля">
                 </div>
                 <div>
                     <label>Подсказка (placeholder):</label>
