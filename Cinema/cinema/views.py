@@ -600,7 +600,8 @@ class ContactView(View):
     def get(self, request):
         company_contact = Contact.objects.first()
 
-        employees = Employee.objects.all().select_related('user')
+        # Get all employees with their user information
+        employees = Employee.objects.select_related('user').all()
 
         context = {
             'company': company_contact,
@@ -967,6 +968,13 @@ def reward_employees(request):
     names=[e.full_name for e in employees]
     return JsonResponse({"status":"ok","message":"Премированы: "+", ".join(names)})
 
+import requests
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+import os
+from urllib.parse import urlparse
+import uuid
+
 class EmployeeAPIView(View):
     """API для работы с сотрудниками"""
     
@@ -978,10 +986,10 @@ class EmployeeAPIView(View):
             employees_data.append({
                 "id": emp.id,
                 "full_name": emp.full_name,
-                "position": emp.position,
+                "position": emp.get_position_display(),  # Use display value for position
                 "phone": emp.phone,
-                "email": emp.user.email if emp.user else "нет@email.com",
-                "photo_url": emp.photo.url if emp.photo else "/static/img/default-avatar.jpg",
+                "email": emp.user.email if emp.user and emp.user.email else "нет@email.com",
+                "photo_url": request.build_absolute_uri(emp.photo.url) if emp.photo else request.build_absolute_uri('/static/images/favicon.png'),
                 "description": emp.description or f"Сотрудник работает с {emp.hire_date.strftime('%d.%m.%Y')}"
             })
         
@@ -997,47 +1005,110 @@ class EmployeeAPIView(View):
             return JsonResponse({"error": "Доступ запрещен"}, status=403)
         
         try:
-            data = json.loads(request.body)
+            # Проверяем, является ли запрос multipart/form-data (для загрузки файлов)
+            if request.content_type.startswith('multipart/form-data'):
+                # Обработка загрузки файла
+                full_name = request.POST.get('full_name')
+                position = request.POST.get('position')
+                phone = request.POST.get('phone')
+                email = request.POST.get('email')
+                description = request.POST.get('description')
+                photo_file = request.FILES.get('photo')
+                photo_url = request.POST.get('photo_url', '')
+            else:
+                # Обработка JSON-запроса
+                data = json.loads(request.body)
+                full_name = data.get('full_name')
+                position = data.get('position')
+                phone = data.get('phone')
+                email = data.get('email')
+                description = data.get('description')
+                photo_url = data.get('photo_url', '')
+                photo_file = None
             
             # Валидация данных
-            if not self.validate_phone(data.get('phone', '')):
+            if not self.validate_phone(phone or ''):
                 return JsonResponse({"error": "Неверный формат телефона"}, status=400)
             
+            # Валидация URL если он предоставлен
+            if photo_url and not self.validate_url(photo_url):
+                return JsonResponse({"error": "Неверный формат URL фотографии"}, status=400)
+            
             # Проверяем наличие обязательных полей
-            if not all([data.get('full_name'), data.get('position'), data.get('phone'), data.get('email')]):
+            if not all([full_name, position, phone, email]):
                 return JsonResponse({"error": "Не все обязательные поля заполнены"}, status=400)
             
             # Создание нового пользователя
             from django.contrib.auth.models import User
-            import uuid
             from datetime import date
-            username = data['full_name'].replace(' ', '_').lower() + str(uuid.uuid4())[:8]
+            import uuid
+            username = full_name.replace(' ', '_').lower() + str(uuid.uuid4())[:8]
             user = User.objects.create_user(
                 username=username,
-                email=data.get('email', ''),
-                first_name=data['full_name'].split()[0] if data['full_name'].split() else '',
-                last_name=' '.join(data['full_name'].split()[1:]) if len(data['full_name'].split()) > 1 else ''
+                email=email,
+                first_name=full_name.split()[0] if full_name.split() else '',
+                last_name=' '.join(full_name.split()[1:]) if len(full_name.split()) > 1 else ''
             )
+            
+            # Определение позиции из переданных данных
+            position_key = None
+            for key, value in Employee.POSITIONS:
+                if value == position or key == position:
+                    position_key = key
+                    break
+            
+            if not position_key:
+                # Если позиция не найдена в списках, используем первую доступную
+                position_key = Employee.POSITIONS[0][0] if Employee.POSITIONS else 'manager'
             
             # Создание сотрудника
             # Для тестирования используем дату рождения 30 лет назад
             test_birth_date = date.today().replace(year=date.today().year - 30)
+            
+            # Создаем сотрудника
             employee = Employee.objects.create(
                 user=user,
-                position=data['position'],
-                phone=data['phone'],
+                position=position_key,  # Используем ключ позиции, а не отображаемое значение
+                phone=phone,
                 birth_date=test_birth_date,  # В реальном приложении нужно получать из данных
-                description=data.get('description', '')
+                description=description or ''
             )
+            
+            # Если предоставлен файл фотографии, сохраняем его
+            if photo_file:
+                employee.photo = photo_file
+                employee.save()
+            # Если предоставлен URL фотографии, скачиваем и сохраняем изображение
+            elif photo_url:
+                try:
+                    response = requests.get(photo_url, timeout=10)  # Добавляем таймаут
+                    if response.status_code == 200:
+                        # Получаем расширение файла из URL
+                        parsed_url = urlparse(photo_url)
+                        file_ext = os.path.splitext(parsed_url.path)[1]
+                        if not file_ext:
+                            file_ext = '.jpg'  # по умолчанию
+                        
+                        # Генерируем уникальное имя файла
+                        filename = f"employee_{employee.id}_{uuid.uuid4()}{file_ext}"
+                        
+                        # Сохраняем файл
+                        employee.photo.save(filename, ContentFile(response.content), save=True)
+                except Exception as e:
+                    # Если не удалось загрузить фото, продолжаем без него
+                    print(f"Ошибка загрузки фото: {e}")
+                    # Логируем ошибку для отладки
+                    import logging
+                    logging.error(f"Ошибка загрузки фото по URL {photo_url}: {e}")
             
             # Подготовка данных для ответа
             new_employee = {
                 "id": employee.id,
                 "full_name": employee.full_name,
-                "position": employee.position,
+                "position": employee.get_position_display(),  # Используем отображаемое значение
                 "phone": employee.phone,
                 "email": user.email,
-                "photo_url": "/static/img/default-avatar.jpg",  # Временный URL, в реальном приложении будет использоваться employee.photo.url
+                "photo_url": request.build_absolute_uri(employee.photo.url) if employee.photo else request.build_absolute_uri('/static/images/favicon.png'),
                 "description": employee.description or f"Сотрудник работает с {employee.hire_date.strftime('%d.%m.%Y')}"
             }
             
@@ -1051,12 +1122,13 @@ class EmployeeAPIView(View):
     
     def validate_phone(self, phone):
         """Валидация телефонного номера"""
-        pattern = r'^(\+375\s?\(\d{2}\)\s?\d{3}[- ]?\d{2}[- ]?\d{2}|8\s?\(\d{3}\)\s?\d{3}[- ]?\d{4}|8029\d{7}|8\s?\d{3}\s?\d{3}[- ]?\d{4})$'
+        # Проверяем форматы: 80291112233, 8 (029) 1112233, +375 (29) 111-22-33, +375 (29) 111 22 33
+        pattern = r'^(\+375\s?\(\d{2}\)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}|8\s?\(\d{3}\)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}|80\d{2}\d{7}|8\s?\d{3}\s?\d{3}[-\s]?\d{2}[-\s]?\d{2})$'
         return re.match(pattern, phone.replace(' ', '')) is not None
     
     def validate_url(self, url):
-        """Валидация URL"""
-        pattern = r'^(http://|https://).*\.(php|html)$'
+        """Валидация URL фотографии - должен начинаться с http:// или https:// и заканчиваться на расширение изображения"""
+        pattern = r'^(http://|https://).*\.(jpg|jpeg|png|gif|webp|bmp)$'
         return re.match(pattern, url) is not None
 
 def reward_employees_api(request):

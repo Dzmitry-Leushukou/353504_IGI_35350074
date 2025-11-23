@@ -10,6 +10,7 @@ class EmployeeTable {
         this.isAdmin = config.isAdmin;
         this.apiEndpoints = config.apiEndpoints;
         this.staticUrl = config.staticUrl;
+        this.selectedIds = new Set();
         
         this.init();
     }
@@ -21,14 +22,14 @@ class EmployeeTable {
     }
 
     showPreloader() {
-        const preloader = document.getElementById('global-preloader');
+        const preloader = document.getElementById('table-preloader');
         if (preloader) {
             preloader.style.display = 'flex';
         }
     }
 
     hidePreloader() {
-        const preloader = document.getElementById('global-preloader');
+        const preloader = document.getElementById('table-preloader');
         if (preloader) {
             preloader.style.display = 'none';
         }
@@ -55,13 +56,11 @@ class EmployeeTable {
                     description: emp.description
                 }));
             } else {
-                // Если данных нет, оставляем пустой массив
                 this.data = [];
             }
             
         } catch (error) {
             console.error('Ошибка загрузки данных:', error);
-            // Показываем сообщение об ошибке вместо использования демо-данных
             this.showNotification('Ошибка загрузки данных: ' + error.message, 'error');
             this.data = [];
         } finally {
@@ -71,19 +70,11 @@ class EmployeeTable {
         }
     }
 
-    getDemoData() {
-        // Вместо возврата фиктивных данных, возвращаем пустой массив
-        // Это заставит приложение отображать сообщение "Сотрудники не найдены"
-        return [];
-    }
-
     bindEvents() {
-        // Сортировка
         document.querySelectorAll('#emp-table th[data-sort]').forEach(th => {
             th.addEventListener('click', () => this.sortTable(th.dataset.sort));
         });
 
-        // Фильтрация
         const filterBtn = document.getElementById('filter-btn');
         const resetBtn = document.getElementById('reset-btn');
         const filterInput = document.getElementById('filter-input');
@@ -115,7 +106,6 @@ class EmployeeTable {
             });
         }
 
-        // Добавление сотрудника (только для админов)
         if (this.isAdmin) {
             const addBtn = document.getElementById('add-btn');
             const cancelBtn = document.getElementById('cancel-btn');
@@ -142,9 +132,9 @@ class EmployeeTable {
                 });
             }
 
-            // Валидация в реальном времени
             const phoneInput = document.getElementById('phone');
             const urlInput = document.getElementById('photo_url');
+            const fileInput = document.getElementById('photo_file');
 
             if (phoneInput) {
                 phoneInput.addEventListener('input', () => {
@@ -160,7 +150,12 @@ class EmployeeTable {
                 });
             }
 
-            // Проверка валидности формы при изменении полей
+            if (fileInput) {
+                fileInput.addEventListener('change', () => {
+                    this.checkFormValidity();
+                });
+            }
+
             ['full_name', 'position', 'email', 'description'].forEach(field => {
                 const element = document.getElementById(field);
                 if (element) {
@@ -168,7 +163,6 @@ class EmployeeTable {
                 }
             });
 
-            // Премирование
             if (rewardBtn) {
                 rewardBtn.addEventListener('click', () => this.rewardEmployees());
             }
@@ -184,6 +178,7 @@ class EmployeeTable {
         const email = document.getElementById('email')?.value.trim() || '';
         const description = document.getElementById('description')?.value.trim() || '';
         const photoUrl = document.getElementById('photo_url')?.value.trim() || '';
+        const photoFile = document.getElementById('photo_file')?.files[0] || null;
 
         const isPhoneValid = this.validatePhone(true);
         const isUrlValid = photoUrl ? this.validateUrl(true) : true;
@@ -204,7 +199,7 @@ class EmployeeTable {
         if (!phoneInput) return false;
 
         const phone = phoneInput.value;
-        const phoneRegex = /^(\+375\s?\(\d{2}\)\s?\d{3}[- ]?\d{2}[- ]?\d{2}|8\s?\(\d{3}\)\s?\d{3}[- ]?\d{4}|8029\d{7}|8\s?\d{3}\s?\d{3}[- ]?\d{4})$/;
+        const phoneRegex = /^(\+375\s?\(\d{2}\)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}|8\s?\(\d{3}\)\s?\d{3}[-\s]?\d{2}[-\s]?\d{2}|80\d{2}\d{7}|8\s?\d{3}\s?\d{3}[-\s]?\d{2}[-\s]?\d{2})$/;
         const phoneValid = phoneRegex.test(phone.replace(/\s/g, ''));
         
         if (!silent) {
@@ -234,13 +229,13 @@ class EmployeeTable {
         if (!urlInput) return true;
 
         const url = urlInput.value;
-        const urlRegex = /^(http:\/\/|https:\/\/).*\.(php|html)$/;
+        const urlRegex = /^(http:\/\/|https:\/\/).*\.(jpg|jpeg|png|gif|webp|bmp)$/;
         const urlValid = url ? urlRegex.test(url) : true;
         
         if (!silent) {
             if (url && !urlValid) {
                 if (urlValidation) {
-                    urlValidation.textContent = 'URL должен начинаться с http:// или https:// и заканчиваться на .php или .html';
+                    urlValidation.textContent = 'URL должен начинаться с http:// или https:// и заканчиваться на расширение изображения (.jpg, .jpeg, .png, .gif, .webp, .bmp)';
                     urlValidation.style.display = 'block';
                 }
                 urlInput.classList.add('invalid-field');
@@ -290,7 +285,6 @@ class EmployeeTable {
             let bVal = b[this.sortColumn];
 
             if (this.sortColumn === 'phone') {
-                // Нормализация телефонных номеров для сортировки
                 aVal = aVal.replace(/\D/g, '');
                 bVal = bVal.replace(/\D/g, '');
             }
@@ -321,7 +315,6 @@ class EmployeeTable {
         pageData.forEach(employee => {
             const row = document.createElement('tr');
             row.addEventListener('click', (e) => {
-                // Не показываем детали при клике на чекбокс
                 if (!e.target.classList.contains('employee-checkbox')) {
                     this.showRowDetails(employee);
                 }
@@ -335,10 +328,12 @@ class EmployeeTable {
                      onerror="this.src='${defaultAvatar}'">
             </td>`;
 
+            const isChecked = this.selectedIds.has(employee.id);
             const checkboxCell = this.isAdmin ? 
                 `<td class="text-center">
                     <input type="checkbox" class="employee-checkbox form-check-input" data-id="${employee.id}"
-                           onchange="window.employeeTable.updateRewardButton()">
+                           ${isChecked ? 'checked' : ''}
+                           onchange="window.employeeTable.handleCheckboxChange(this)">
                 </td>` : '';
 
             row.innerHTML = `
@@ -353,13 +348,24 @@ class EmployeeTable {
             tbody.appendChild(row);
         });
 
-        // Обновление индикаторов сортировки
         document.querySelectorAll('#emp-table th[data-sort]').forEach(th => {
             th.classList.remove('sort-asc', 'sort-desc');
             if (th.dataset.sort === this.sortColumn) {
                 th.classList.add(`sort-${this.sortDirection}`);
             }
         });
+    }
+
+    handleCheckboxChange(checkbox) {
+        const employeeId = parseInt(checkbox.dataset.id);
+        
+        if (checkbox.checked) {
+            this.selectedIds.add(employeeId);
+        } else {
+            this.selectedIds.delete(employeeId);
+        }
+        
+        this.updateRewardButton();
     }
 
     renderPagination() {
@@ -372,7 +378,6 @@ class EmployeeTable {
 
         if (totalPages <= 1) return;
 
-        // Кнопка "Назад"
         const prevLi = document.createElement('li');
         prevLi.className = `page-item ${this.currentPage === 1 ? 'disabled' : ''}`;
         prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous">
@@ -387,9 +392,19 @@ class EmployeeTable {
         });
         pager.appendChild(prevLi);
 
-        // Номера страниц
-        const startPage = Math.max(1, this.currentPage - 2);
-        const endPage = Math.min(totalPages, startPage + 4);
+        const maxVisiblePages = 5;
+        let startPage = 1;
+        let endPage = totalPages;
+
+        if (totalPages > maxVisiblePages) {
+            const half = Math.floor(maxVisiblePages / 2);
+            startPage = Math.max(1, this.currentPage - half);
+            endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+        }
 
         for (let i = startPage; i <= endPage; i++) {
             const li = document.createElement('li');
@@ -403,7 +418,6 @@ class EmployeeTable {
             pager.appendChild(li);
         }
 
-        // Кнопка "Вперед"
         const nextLi = document.createElement('li');
         nextLi.className = `page-item ${this.currentPage === totalPages ? 'disabled' : ''}`;
         nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next">
@@ -461,17 +475,15 @@ class EmployeeTable {
             return;
         }
 
-        const formData = {
-            full_name: document.getElementById('full_name')?.value.trim() || '',
-            position: document.getElementById('position')?.value || '',
-            phone: document.getElementById('phone')?.value.trim() || '',
-            email: document.getElementById('email')?.value.trim() || '',
-            photo_url: document.getElementById('photo_url')?.value.trim() || '',
-            description: document.getElementById('description')?.value.trim() || ''
-        };
+        const fullName = document.getElementById('full_name')?.value.trim() || '';
+        const position = document.getElementById('position')?.value || '';
+        const phone = document.getElementById('phone')?.value.trim() || '';
+        const email = document.getElementById('email')?.value.trim() || '';
+        const photoUrl = document.getElementById('photo_url')?.value.trim() || '';
+        const photoFile = document.getElementById('photo_file')?.files[0] || null;
+        const description = document.getElementById('description')?.value.trim() || '';
 
-        // Валидация
-        if (!this.validatePhone(true) || !this.validateUrl(true)) {
+        if (!this.validatePhone(true) || (photoUrl && !this.validateUrl(true))) {
             this.showNotification('Исправьте ошибки в форме', 'error');
             return;
         }
@@ -479,36 +491,126 @@ class EmployeeTable {
         this.showPreloader();
 
         try {
-            const response = await fetch(this.apiEndpoints.employees, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': this.getCSRFToken()
-                },
-                body: JSON.stringify(formData)
-            });
+            if (photoFile) {
+                const formData = new FormData();
+                formData.append('full_name', fullName);
+                formData.append('position', position);
+                formData.append('phone', phone);
+                formData.append('email', email);
+                formData.append('photo', photoFile);
+                formData.append('photo_url', photoUrl);
+                formData.append('description', description);
+                formData.append('csrfmiddlewaretoken', this.getCSRFToken());
 
-            const result = await response.json();
-
-            if (response.ok) {
-                // Добавляем нового сотрудника в таблицу
-                this.data.unshift({
-                    id: result.employee.id,
-                    full_name: result.employee.full_name,
-                    position: result.employee.position,
-                    phone: result.employee.phone,
-                    email: result.employee.email,
-                    photo_url: result.employee.photo_url,
-                    description: result.employee.description
+                const response = await fetch(this.apiEndpoints.employees, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': this.getCSRFToken()
+                    }
                 });
-                this.resetForm();
-                document.getElementById('add-form').style.display = 'none';
-                this.currentPage = 1;
-                this.render();
-                
-                this.showNotification('Сотрудник успешно добавлен!', 'success');
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    this.data.unshift({
+                        id: result.employee.id,
+                        full_name: result.employee.full_name,
+                        position: result.employee.position,
+                        phone: result.employee.phone,
+                        email: result.employee.email,
+                        photo_url: result.employee.photo_url,
+                        description: result.employee.description
+                    });
+                    this.resetForm();
+                    document.getElementById('add-form').style.display = 'none';
+                    this.currentPage = 1;
+                    this.render();
+                    
+                    this.showNotification('Сотрудник успешно добавлен!', 'success');
+                } else {
+                    throw new Error(result.error || 'Ошибка при добавлении сотрудника');
+                }
+            } else if (photoUrl) {
+                const jsonData = {
+                    full_name: fullName,
+                    position: position,
+                    phone: phone,
+                    email: email,
+                    photo_url: photoUrl,
+                    description: description
+                };
+
+                const response = await fetch(this.apiEndpoints.employees, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    this.data.unshift({
+                        id: result.employee.id,
+                        full_name: result.employee.full_name,
+                        position: result.employee.position,
+                        phone: result.employee.phone,
+                        email: result.employee.email,
+                        photo_url: result.employee.photo_url,
+                        description: result.employee.description
+                    });
+                    this.resetForm();
+                    document.getElementById('add-form').style.display = 'none';
+                    this.currentPage = 1;
+                    this.render();
+                    
+                    this.showNotification('Сотрудник успешно добавлен!', 'success');
+                } else {
+                    throw new Error(result.error || 'Ошибка при добавлении сотрудника');
+                }
             } else {
-                throw new Error(result.error || 'Ошибка при добавлении сотрудника');
+                const jsonData = {
+                    full_name: fullName,
+                    position: position,
+                    phone: phone,
+                    email: email,
+                    photo_url: '',
+                    description: description
+                };
+
+                const response = await fetch(this.apiEndpoints.employees, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    this.data.unshift({
+                        id: result.employee.id,
+                        full_name: result.employee.full_name,
+                        position: result.employee.position,
+                        phone: result.employee.phone,
+                        email: result.employee.email,
+                        photo_url: result.employee.photo_url,
+                        description: result.employee.description
+                    });
+                    this.resetForm();
+                    document.getElementById('add-form').style.display = 'none';
+                    this.currentPage = 1;
+                    this.render();
+                    
+                    this.showNotification('Сотрудник успешно добавлен!', 'success');
+                } else {
+                    throw new Error(result.error || 'Ошибка при добавлении сотрудника');
+                }
             }
         } catch (error) {
             console.error('Ошибка:', error);
@@ -524,9 +626,7 @@ class EmployeeTable {
             return;
         }
 
-        const selectedCheckboxes = document.querySelectorAll('.employee-checkbox:checked');
-        
-        if (selectedCheckboxes.length === 0) {
+        if (this.selectedIds.size === 0) {
             const rewardResult = document.getElementById('reward-result');
             if (rewardResult) {
                 rewardResult.innerHTML = '<div class="alert alert-warning">Выберите сотрудников для премирования</div>';
@@ -534,7 +634,7 @@ class EmployeeTable {
             return;
         }
 
-        const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.id);
+        const selectedIds = Array.from(this.selectedIds);
 
         this.showPreloader();
 
@@ -553,18 +653,23 @@ class EmployeeTable {
             if (response.ok) {
                 const rewardResult = document.getElementById('reward-result');
                 if (rewardResult) {
+                    const selectedNames = this.data
+                        .filter(emp => selectedIds.includes(emp.id))
+                        .map(emp => emp.full_name)
+                        .join(', ');
+
                     rewardResult.innerHTML = `
                         <div class="alert alert-success">
                             <h5>🎉 Премирование сотрудников</h5>
                             <p>${result.message}</p>
-                            <p class="mb-0"><strong>Премировано сотрудников:</strong> ${result.rewarded_count}</p>
+                            <p><strong>Премировано сотрудников:</strong> ${result.rewarded_count}</p>
+                            <p class="mb-0"><strong>Список премированных:</strong> ${selectedNames}</p>
                         </div>
                     `;
                 }
 
-                // Сбрасываем чекбоксы
-                selectedCheckboxes.forEach(checkbox => checkbox.checked = false);
-                this.updateRewardButton();
+                this.selectedIds.clear();
+                this.render();
             } else {
                 throw new Error(result.error || 'Ошибка при премировании');
             }
@@ -582,16 +687,16 @@ class EmployeeTable {
     updateRewardButton() {
         if (!this.isAdmin) return;
         
-        const selectedCount = document.querySelectorAll('.employee-checkbox:checked').length;
+        const selectedCount = this.selectedIds.size;
         const rewardBtn = document.getElementById('btn-reward');
         
         if (rewardBtn) {
             if (selectedCount > 0) {
                 rewardBtn.disabled = false;
-                rewardBtn.textContent = `Премировать выбранных (${selectedCount})`;
+                rewardBtn.innerHTML = `<i class="fas fa-gift"></i> Премировать выбранных (${selectedCount})`;
             } else {
                 rewardBtn.disabled = true;
-                rewardBtn.textContent = 'Премировать выбранных';
+                rewardBtn.innerHTML = `<i class="fas fa-gift"></i> Премировать выбранных`;
             }
         }
     }
@@ -604,12 +709,14 @@ class EmployeeTable {
         const urlValidation = document.getElementById('url-validation');
         const phoneInput = document.getElementById('phone');
         const urlInput = document.getElementById('photo_url');
+        const fileInput = document.getElementById('photo_file');
         const submitBtn = document.getElementById('submit-btn');
 
         if (phoneValidation) phoneValidation.style.display = 'none';
         if (urlValidation) urlValidation.style.display = 'none';
         if (phoneInput) phoneInput.classList.remove('invalid-field');
         if (urlInput) urlInput.classList.remove('invalid-field');
+        if (fileInput) fileInput.value = '';
         if (submitBtn) submitBtn.disabled = true;
     }
 
@@ -630,7 +737,6 @@ class EmployeeTable {
     }
 
     showNotification(message, type = 'info') {
-        // Удаляем существующие уведомления
         document.querySelectorAll('.alert-toast').forEach(alert => alert.remove());
 
         const alertClass = {
@@ -660,7 +766,6 @@ class EmployeeTable {
     }
 }
 
-// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     if (window.CINEMA_CONFIG) {
         window.employeeTable = new EmployeeTable(window.CINEMA_CONFIG);
