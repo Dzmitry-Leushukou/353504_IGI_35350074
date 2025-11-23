@@ -81,7 +81,9 @@
     
     <div class="row">
         <div class="col-md-8">
-            <canvas id="functionChart"></canvas>
+            <div class="chart-wrapper">
+                <canvas id="functionChart"></canvas>
+            </div>
         </div>
         <div class="col-md-4">
             <div class="card">
@@ -89,19 +91,19 @@
                     <h5 class="card-title">Настройки графика</h5>
                     <div class="mb-3">
                         <label for="nValue" class="form-label">Количество членов ряда (n):</label>
-                        <input type="number" id="nValue" class="form-control" value="5" min="1" max="20">
+                        <input type="number" id="nValue" class="form-control" value="5" min="1">
                     </div>
                     <div class="mb-3">
                         <label for="xMin" class="form-label">Минимальное значение x:</label>
-                        <input type="number" id="xMin" class="form-control" value="-10" step="0.1">
+                        <input type="number" id="xMin" class="form-control" value="-10">
                     </div>
                     <div class="mb-3">
                         <label for="xMax" class="form-label">Максимальное значение x:</label>
-                        <input type="number" id="xMax" class="form-control" value="10" step="0.1">
+                        <input type="number" id="xMax" class="form-control" value="10">
                     </div>
                     <div class="mb-3">
                         <label for="step" class="form-label">Шаг:</label>
-                        <input type="number" id="step" class="form-control" value="0.1" step="0.01">
+                        <input type="number" id="step" class="form-control" value="0.1" min="0.001">
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="animationCheck" checked>
@@ -263,6 +265,19 @@
     color: white;
 }
 
+.chart-wrapper {
+    height: 400px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+#functionChart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 @media (max-width: 768px) {
     .field-settings {
         grid-template-columns: 1fr;
@@ -292,10 +307,14 @@
         overflow-x: auto;
         white-space: nowrap;
     }
+    
+    .chart-wrapper {
+        height: 300px;
+        padding: 10px;
+    }
 }
 </style>
 
-<!-- Подключение библиотек -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script src="{% static 'js/generator.js' %}"></script>

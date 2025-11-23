@@ -1,4 +1,3 @@
-// Функция для вычисления факториала
 function factorial(n) {
     if (n === 0 || n === 1) return 1;
     let result = 1;
@@ -8,7 +7,6 @@ function factorial(n) {
     return result;
 }
 
-// Функция для вычисления ряда Тейлора для sin(x)
 function taylorSin(x, n) {
     let sum = 0;
     for (let i = 0; i <= n; i++) {
@@ -18,18 +16,15 @@ function taylorSin(x, n) {
     return sum;
 }
 
-// Создание и обновление графика
 let functionChart = null;
 let isAnimating = false;
 
-// Функция для получения данных графика
 function getChartData() {
-    const n = parseInt(document.getElementById('nValue').value);
-    const xMin = parseFloat(document.getElementById('xMin').value);
-    const xMax = parseFloat(document.getElementById('xMax').value);
-    const step = parseFloat(document.getElementById('step').value);
+    const n = parseInt(document.getElementById('nValue').value) || 5;
+    const xMin = parseFloat(document.getElementById('xMin').value) || -10;
+    const xMax = parseFloat(document.getElementById('xMax').value) || 10;
+    const step = parseFloat(document.getElementById('step').value) || 0.1;
     
-    // Генерация данных
     const labels = [];
     const seriesData = [];
     const mathData = [];
@@ -43,17 +38,14 @@ function getChartData() {
     return { labels, seriesData, mathData, n };
 }
 
-// Функция для создания графика
 function createChart(animate = false) {
     const { labels, seriesData, mathData, n } = getChartData();
     const ctx = document.getElementById('functionChart').getContext('2d');
     
-    // Удаляем предыдущий график, если он существует
     if (functionChart) {
         functionChart.destroy();
     }
     
-    // Создаем новый график
     functionChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -83,6 +75,7 @@ function createChart(animate = false) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             animation: {
                 duration: animate ? 2000 : 0,
                 easing: 'easeOutQuart',
@@ -137,7 +130,6 @@ function createChart(animate = false) {
     });
 }
 
-// Функция для анимированного построения графика слева направо
 function animateChartProgressive() {
     if (isAnimating) return;
     
@@ -145,16 +137,13 @@ function animateChartProgressive() {
     const { labels, seriesData, mathData, n } = getChartData();
     const ctx = document.getElementById('functionChart').getContext('2d');
     
-    // Удаляем предыдущий график, если он существует
     if (functionChart) {
         functionChart.destroy();
     }
     
-    // Создаем пустые массивы для постепенного заполнения
     const progressiveSeriesData = new Array(seriesData.length).fill(null);
     const progressiveMathData = new Array(mathData.length).fill(null);
     
-    // Создаем новый график с пустыми данными
     functionChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -171,7 +160,6 @@ function animateChartProgressive() {
                     fill: false,
                     segment: {
                         borderColor: ctx => {
-                            // Пропускаем точки с null значениями
                             if (ctx.p0.parsed.y === null || ctx.p1.parsed.y === null) {
                                 return 'transparent';
                             }
@@ -190,7 +178,6 @@ function animateChartProgressive() {
                     fill: false,
                     segment: {
                         borderColor: ctx => {
-                            // Пропускаем точки с null значениями
                             if (ctx.p0.parsed.y === null || ctx.p1.parsed.y === null) {
                                 return 'transparent';
                             }
@@ -202,8 +189,9 @@ function animateChartProgressive() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             animation: {
-                duration: 0 // Отключаем стандартную анимацию
+                duration: 0
             },
             plugins: {
                 title: {
@@ -251,10 +239,9 @@ function animateChartProgressive() {
         }
     });
     
-    // Анимируем построение графика слева направо
     let currentIndex = 0;
     const totalPoints = labels.length;
-    const animationSpeed = 2000 / totalPoints; // Общая длительность анимации 2 секунды
+    const animationSpeed = Math.min(2000 / totalPoints, 50);
     
     function addPoint() {
         if (currentIndex < totalPoints) {
@@ -273,7 +260,6 @@ function animateChartProgressive() {
     addPoint();
 }
 
-// Функция для сохранения графика
 function saveChart() {
     if (functionChart) {
         const link = document.createElement('a');
@@ -283,12 +269,9 @@ function saveChart() {
     }
 }
 
-// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Создаем первоначальный график
     createChart(false);
     
-    // Добавляем обработчики событий
     document.getElementById('updateChart').addEventListener('click', function() {
         const shouldAnimate = document.getElementById('animationCheck').checked;
         createChart(shouldAnimate);
@@ -300,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('saveChart').addEventListener('click', saveChart);
     
-    // Обновляем график при изменении параметров
     document.getElementById('nValue').addEventListener('change', function() {
         const shouldAnimate = document.getElementById('animationCheck').checked;
         createChart(shouldAnimate);
@@ -321,7 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
         createChart(shouldAnimate);
     });
     
-    // Автоматическая анимация при загрузке
     setTimeout(() => {
         if (document.getElementById('animationCheck').checked) {
             animateChartProgressive();
