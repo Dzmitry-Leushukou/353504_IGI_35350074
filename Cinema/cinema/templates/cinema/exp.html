@@ -116,6 +116,26 @@
             </div>
         </div>
     </div>
+
+    <div class="scroll-section">
+        <div class="scroll-container">
+            <div class="cup-container">
+                <div class="cup" data-cup="1">
+                    <img src="{% static 'images/gold_cup.png' %}" alt="Золотой кубок" class="cup-image">
+                </div>
+            </div>
+            <div class="cup-container">
+                <div class="cup" data-cup="2">
+                    <img src="{% static 'images/silver_cup.png' %}" alt="Серебряный кубок" class="cup-image">
+                </div>
+            </div>
+            <div class="cup-container">
+                <div class="cup" data-cup="3">
+                    <img src="{% static 'images/bronze_cup.png' %}" alt="Бронзовый кубок" class="cup-image">
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
 
 <style>
@@ -278,6 +298,50 @@
     height: 100% !important;
 }
 
+.scroll-section {
+    height: 400vh;
+    position: relative;
+    margin: 2rem 0;
+}
+
+.scroll-container {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 50px;
+}
+
+.cup-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.cup {
+    transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+}
+
+.cup.active {
+    opacity: 1;
+}
+
+.cup-image {
+    width: 200px;
+    height: 240px;
+    object-fit: contain;
+}
+
 @media (max-width: 768px) {
     .field-settings {
         grid-template-columns: 1fr;
@@ -312,6 +376,19 @@
         height: 300px;
         padding: 10px;
     }
+    
+    .scroll-section {
+        height: 300vh;
+    }
+    
+    .cup-image {
+        width: 150px;
+        height: 180px;
+    }
+    
+    .scroll-container {
+        padding-top: 30px;
+    }
 }
 </style>
 
@@ -320,4 +397,63 @@
 <script src="{% static 'js/generator.js' %}"></script>
 <script src="{% static 'js/packages.js' %}"></script>
 <script src="{% static 'js/chart.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cups = document.querySelectorAll('.cup');
+    const section = document.querySelector('.scroll-section');
+    const cupContainers = document.querySelectorAll('.cup-container');
+    
+    // Начальное состояние - все кубки скрыты
+    cups.forEach(cup => {
+        cup.style.opacity = '0';
+        cup.style.transform = 'scale(0.3) rotate(0deg)';
+    });
+    
+    function updateAnimation() {
+        const sectionTop = section.getBoundingClientRect().top;
+        const sectionHeight = section.offsetHeight;
+        const windowHeight = window.innerHeight;
+        
+        const scrollProgress = Math.max(0, Math.min(1, -sectionTop / (sectionHeight - windowHeight)));
+        
+        // Активируем кубки по мере прокрутки
+        cupContainers.forEach((container, index) => {
+            const cup = container.querySelector('.cup');
+            const cupNumber = parseInt(cup.getAttribute('data-cup'));
+            const activationPoint = (cupNumber - 1) * 0.3; // Каждый кубок активируется через 30% прогресса
+            
+            if (scrollProgress >= activationPoint) {
+                const localProgress = Math.min(1, (scrollProgress - activationPoint) / 0.3);
+                
+                cup.classList.add('active');
+                
+                const rotation = localProgress * 360;
+                const scale = 0.3 + localProgress * 0.7; // От 0.3 до 1.0
+                const translateY = localProgress * -50;
+                
+                cup.style.transform = `rotate(${rotation}deg) scale(${scale}) translateY(${translateY}px)`;
+                cup.style.opacity = localProgress;
+            } else {
+                cup.classList.remove('active');
+                cup.style.opacity = '0';
+                cup.style.transform = 'scale(0.3) rotate(0deg)';
+            }
+        });
+    }
+    
+    let ticking = false;
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            requestAnimationFrame(function() {
+                updateAnimation();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+    
+    updateAnimation();
+});
+</script>
 {% endblock %}
