@@ -132,13 +132,38 @@ class EmployeeTable {
                 });
             }
 
+            const fullNameInput = document.getElementById('full_name');
+            const positionSelect = document.getElementById('position');
             const phoneInput = document.getElementById('phone');
+            const emailInput = document.getElementById('email');
             const urlInput = document.getElementById('photo_url');
             const fileInput = document.getElementById('photo_file');
+            const descriptionInput = document.getElementById('description');
+
+            if (fullNameInput) {
+                fullNameInput.addEventListener('input', () => {
+                    this.validateFullName();
+                    this.checkFormValidity();
+                });
+            }
+
+            if (positionSelect) {
+                positionSelect.addEventListener('change', () => {
+                    this.validatePosition();
+                    this.checkFormValidity();
+                });
+            }
 
             if (phoneInput) {
                 phoneInput.addEventListener('input', () => {
                     this.validatePhone();
+                    this.checkFormValidity();
+                });
+            }
+
+            if (emailInput) {
+                emailInput.addEventListener('input', () => {
+                    this.validateEmail();
                     this.checkFormValidity();
                 });
             }
@@ -156,12 +181,12 @@ class EmployeeTable {
                 });
             }
 
-            ['full_name', 'position', 'email', 'description'].forEach(field => {
-                const element = document.getElementById(field);
-                if (element) {
-                    element.addEventListener('input', () => this.checkFormValidity());
-                }
-            });
+            if (descriptionInput) {
+                descriptionInput.addEventListener('input', () => {
+                    this.validateDescription();
+                    this.checkFormValidity();
+                });
+            }
 
             if (rewardBtn) {
                 rewardBtn.addEventListener('click', () => this.rewardEmployees());
@@ -180,11 +205,15 @@ class EmployeeTable {
         const photoUrl = document.getElementById('photo_url')?.value.trim() || '';
         const photoFile = document.getElementById('photo_file')?.files[0] || null;
 
+        const isFullNameValid = this.validateFullName(true);
+        const isPositionValid = this.validatePosition(true);
         const isPhoneValid = this.validatePhone(true);
+        const isEmailValid = this.validateEmail(true);
+        const isDescriptionValid = this.validateDescription(true);
         const isUrlValid = photoUrl ? this.validateUrl(true) : true;
         
         const allRequiredFilled = fullName && position && phone && email && description;
-        const allValid = isPhoneValid && isUrlValid;
+        const allValid = isFullNameValid && isPositionValid && isPhoneValid && isEmailValid && isDescriptionValid && isUrlValid;
 
         const submitBtn = document.getElementById('submit-btn');
         if (submitBtn) {
@@ -192,9 +221,63 @@ class EmployeeTable {
         }
     }
 
+    validateFullName(silent = false) {
+        const fullNameInput = document.getElementById('full_name');
+        const fullNameValidationIcon = document.getElementById('full_name-validation-icon');
+        
+        if (!fullNameInput) return false;
+
+        const fullName = fullNameInput.value.trim();
+        const fullNameValid = fullName.length > 0;
+        
+        if (!silent) {
+            if (fullNameValid) {
+                if (fullNameValidationIcon) {
+                    fullNameValidationIcon.style.display = 'flex';
+                }
+                fullNameInput.classList.remove('invalid-field');
+                fullNameInput.classList.add('valid-field');
+                return true;
+            } else {
+                if (fullNameValidationIcon) {
+                    fullNameValidationIcon.style.display = 'none';
+                }
+                fullNameInput.classList.remove('valid-field');
+                fullNameInput.classList.add('invalid-field');
+                return false;
+            }
+        }
+        
+        return fullNameValid;
+    }
+
+    validatePosition(silent = false) {
+        const positionSelect = document.getElementById('position');
+        
+        if (!positionSelect) return false;
+
+        const position = positionSelect.value;
+        const positionValid = !!position;
+        
+        if (!silent) {
+            if (positionValid) {
+                positionSelect.classList.remove('invalid-field');
+                positionSelect.classList.add('valid-field');
+                return true;
+            } else {
+                positionSelect.classList.remove('valid-field');
+                positionSelect.classList.add('invalid-field');
+                return false;
+            }
+        }
+        
+        return positionValid;
+    }
+
     validatePhone(silent = false) {
         const phoneInput = document.getElementById('phone');
         const phoneValidation = document.getElementById('phone-validation');
+        const phoneValidationIcon = document.getElementById('phone-validation-icon');
         
         if (!phoneInput) return false;
 
@@ -208,23 +291,108 @@ class EmployeeTable {
                     phoneValidation.textContent = 'Неверный формат телефона. Пример: +375 (29) 123-45-67';
                     phoneValidation.style.display = 'block';
                 }
+                if (phoneValidationIcon) {
+                    phoneValidationIcon.style.display = 'none';
+                }
+                phoneInput.classList.remove('valid-field');
                 phoneInput.classList.add('invalid-field');
                 return false;
+            } else if (phone && phoneValid) {
+                if (phoneValidation) {
+                    phoneValidation.style.display = 'none';
+                }
+                if (phoneValidationIcon) {
+                    phoneValidationIcon.style.display = 'flex';
+                }
+                phoneInput.classList.remove('invalid-field');
+                phoneInput.classList.add('valid-field');
+                return true;
             } else {
                 if (phoneValidation) {
                     phoneValidation.style.display = 'none';
                 }
-                phoneInput.classList.remove('invalid-field');
-                return true;
+                if (phoneValidationIcon) {
+                    phoneValidationIcon.style.display = 'none';
+                }
+                phoneInput.classList.remove('invalid-field', 'valid-field');
+                return false;
             }
         }
         
         return phoneValid;
     }
 
+    validateEmail(silent = false) {
+        const emailInput = document.getElementById('email');
+        const emailValidationIcon = document.getElementById('email-validation-icon');
+        
+        if (!emailInput) return false;
+
+        const email = emailInput.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailValid = emailRegex.test(email);
+        
+        if (!silent) {
+            if (email && emailValid) {
+                if (emailValidationIcon) {
+                    emailValidationIcon.style.display = 'flex';
+                }
+                emailInput.classList.remove('invalid-field');
+                emailInput.classList.add('valid-field');
+                return true;
+            } else if (email && !emailValid) {
+                if (emailValidationIcon) {
+                    emailValidationIcon.style.display = 'none';
+                }
+                emailInput.classList.remove('valid-field');
+                emailInput.classList.add('invalid-field');
+                return false;
+            } else {
+                if (emailValidationIcon) {
+                    emailValidationIcon.style.display = 'none';
+                }
+                emailInput.classList.remove('invalid-field', 'valid-field');
+                return false;
+            }
+        }
+        
+        return emailValid;
+    }
+
+    validateDescription(silent = false) {
+        const descriptionInput = document.getElementById('description');
+        const descriptionValidationIcon = document.getElementById('description-validation-icon');
+        
+        if (!descriptionInput) return false;
+
+        const description = descriptionInput.value;
+        const descriptionValid = description.length > 0;
+        
+        if (!silent) {
+            if (descriptionValid) {
+                if (descriptionValidationIcon) {
+                    descriptionValidationIcon.style.display = 'flex';
+                }
+                descriptionInput.classList.remove('invalid-field');
+                descriptionInput.classList.add('valid-field');
+                return true;
+            } else {
+                if (descriptionValidationIcon) {
+                    descriptionValidationIcon.style.display = 'none';
+                }
+                descriptionInput.classList.remove('valid-field');
+                descriptionInput.classList.add('invalid-field');
+                return false;
+            }
+        }
+        
+        return descriptionValid;
+    }
+
     validateUrl(silent = false) {
         const urlInput = document.getElementById('photo_url');
         const urlValidation = document.getElementById('url-validation');
+        const urlValidationIcon = document.getElementById('url-validation-icon');
         
         if (!urlInput) return true;
 
@@ -238,13 +406,30 @@ class EmployeeTable {
                     urlValidation.textContent = 'URL должен начинаться с http:// или https:// и заканчиваться на расширение изображения (.jpg, .jpeg, .png, .gif, .webp, .bmp)';
                     urlValidation.style.display = 'block';
                 }
+                if (urlValidationIcon) {
+                    urlValidationIcon.style.display = 'none';
+                }
+                urlInput.classList.remove('valid-field');
                 urlInput.classList.add('invalid-field');
                 return false;
+            } else if (url && urlValid) {
+                if (urlValidation) {
+                    urlValidation.style.display = 'none';
+                }
+                if (urlValidationIcon) {
+                    urlValidationIcon.style.display = 'flex';
+                }
+                urlInput.classList.remove('invalid-field');
+                urlInput.classList.add('valid-field');
+                return true;
             } else {
                 if (urlValidation) {
                     urlValidation.style.display = 'none';
                 }
-                urlInput.classList.remove('invalid-field');
+                if (urlValidationIcon) {
+                    urlValidationIcon.style.display = 'none';
+                }
+                urlInput.classList.remove('invalid-field', 'valid-field');
                 return true;
             }
         }
@@ -270,7 +455,7 @@ class EmployeeTable {
 
         this.filteredData = this.data.filter(employee => 
             employee.full_name.toLowerCase().includes(this.filterText) ||
-            employee.position.toLowerCase().includes(this.filterText) ||
+            this.getPositionDisplayName(employee.position).toLowerCase().includes(this.filterText) ||
             employee.phone.toLowerCase().includes(this.filterText) ||
             employee.email.toLowerCase().includes(this.filterText) ||
             (employee.description && employee.description.toLowerCase().includes(this.filterText))
@@ -339,7 +524,7 @@ class EmployeeTable {
             row.innerHTML = `
                 ${photoCell}
                 <td>${employee.full_name}</td>
-                <td>${employee.position}</td>
+                <td>${this.getPositionDisplayName(employee.position)}</td>
                 <td>${employee.phone}</td>
                 <td>${employee.email}</td>
                 ${checkboxCell}
@@ -354,6 +539,16 @@ class EmployeeTable {
                 th.classList.add(`sort-${this.sortDirection}`);
             }
         });
+    }
+
+    getPositionDisplayName(position) {
+        const positions = {
+            'manager': 'Менеджер',
+            'cashier': 'Кассир',
+            'admin': 'Администратор',
+            'cleaner': 'Уборщик'
+        };
+        return positions[position] || position;
     }
 
     handleCheckboxChange(checkbox) {
@@ -458,7 +653,7 @@ class EmployeeTable {
                 </div>
                 <div class="col-md-9">
                     <h4>${employee.full_name}</h4>
-                    <p><strong>Должность:</strong> ${employee.position}</p>
+                    <p><strong>Должность:</strong> ${this.getPositionDisplayName(employee.position)}</p>
                     <p><strong>Телефон:</strong> ${employee.phone}</p>
                     <p><strong>Email:</strong> ${employee.email}</p>
                     <p><strong>Описание работ:</strong> ${employee.description || 'Описание не указано'}</p>
@@ -483,7 +678,7 @@ class EmployeeTable {
         const photoFile = document.getElementById('photo_file')?.files[0] || null;
         const description = document.getElementById('description')?.value.trim() || '';
 
-        if (!this.validatePhone(true) || (photoUrl && !this.validateUrl(true))) {
+        if (!this.validateFullName(true) || !this.validatePosition(true) || !this.validatePhone(true) || !this.validateEmail(true) || !this.validateDescription(true) || (photoUrl && !this.validateUrl(true))) {
             this.showNotification('Исправьте ошибки в форме', 'error');
             return;
         }
@@ -707,15 +902,33 @@ class EmployeeTable {
         
         const phoneValidation = document.getElementById('phone-validation');
         const urlValidation = document.getElementById('url-validation');
+        const fullNameValidationIcon = document.getElementById('full_name-validation-icon');
+        const phoneValidationIcon = document.getElementById('phone-validation-icon');
+        const emailValidationIcon = document.getElementById('email-validation-icon');
+        const urlValidationIcon = document.getElementById('url-validation-icon');
+        const descriptionValidationIcon = document.getElementById('description-validation-icon');
+        const fullNameInput = document.getElementById('full_name');
+        const positionSelect = document.getElementById('position');
         const phoneInput = document.getElementById('phone');
+        const emailInput = document.getElementById('email');
         const urlInput = document.getElementById('photo_url');
+        const descriptionInput = document.getElementById('description');
         const fileInput = document.getElementById('photo_file');
         const submitBtn = document.getElementById('submit-btn');
 
         if (phoneValidation) phoneValidation.style.display = 'none';
         if (urlValidation) urlValidation.style.display = 'none';
-        if (phoneInput) phoneInput.classList.remove('invalid-field');
-        if (urlInput) urlInput.classList.remove('invalid-field');
+        if (fullNameValidationIcon) fullNameValidationIcon.style.display = 'none';
+        if (phoneValidationIcon) phoneValidationIcon.style.display = 'none';
+        if (emailValidationIcon) emailValidationIcon.style.display = 'none';
+        if (urlValidationIcon) urlValidationIcon.style.display = 'none';
+        if (descriptionValidationIcon) descriptionValidationIcon.style.display = 'none';
+        if (fullNameInput) fullNameInput.classList.remove('invalid-field', 'valid-field');
+        if (positionSelect) positionSelect.classList.remove('invalid-field', 'valid-field');
+        if (phoneInput) phoneInput.classList.remove('invalid-field', 'valid-field');
+        if (emailInput) emailInput.classList.remove('invalid-field', 'valid-field');
+        if (urlInput) urlInput.classList.remove('invalid-field', 'valid-field');
+        if (descriptionInput) descriptionInput.classList.remove('invalid-field', 'valid-field');
         if (fileInput) fileInput.value = '';
         if (submitBtn) submitBtn.disabled = true;
     }

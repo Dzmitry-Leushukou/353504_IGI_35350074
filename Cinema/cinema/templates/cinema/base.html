@@ -479,13 +479,6 @@ body.theme-light .privacy-container *[style*="background: #0f172a"] {
   })();
   </script>
 
-  <script>
-  (function() {
-      let theme = localStorage.getItem("theme") || "dark";
-      if(theme === "light") document.body.classList.add("theme-light");
-  })();
-  </script>
-
   <script src="{% static 'js/battery.js' %}"></script>
   <script src="{% static 'js/geolocation.js' %}"></script>
 </body>

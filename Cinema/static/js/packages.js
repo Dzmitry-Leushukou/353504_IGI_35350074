@@ -1,4 +1,4 @@
-class Package {
+class BasePackage {
     constructor(sender, recipient, weight, date) {
         this._sender = sender;
         this._recipient = recipient;
@@ -53,6 +53,53 @@ class Package {
         const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
         return packageDate >= lastMonth && packageDate <= currentDate;
     }
+
+    getPackageInfo() {
+        return `Посылка от ${this._sender} к ${this._recipient}, вес: ${this._weight}кг`;
+    }
+}
+
+class ExpressPackage extends BasePackage {
+    constructor(sender, recipient, weight, date, priority, trackingNumber) {
+        super(sender, recipient, weight, date);
+        this._priority = priority;
+        this._trackingNumber = trackingNumber;
+    }
+
+    get priority() {
+        return this._priority;
+    }
+
+    get trackingNumber() {
+        return this._trackingNumber;
+    }
+
+    set priority(value) {
+        this._priority = value;
+    }
+
+    set trackingNumber(value) {
+        this._trackingNumber = value;
+    }
+
+    static createFromForm(formData) {
+        return new ExpressPackage(
+            formData.get('sender'),
+            formData.get('recipient'),
+            parseFloat(formData.get('weight')),
+            formData.get('date'),
+            formData.get('priority') || 'standard',
+            formData.get('trackingNumber') || ''
+        );
+    }
+
+    getPackageInfo() {
+        return `${super.getPackageInfo()}, приоритет: ${this._priority}, трек: ${this._trackingNumber || 'нет'}`;
+    }
+
+    calculateDeliveryTime() {
+        return this._priority === 'express' ? 1 : 3;
+    }
 }
 
 class PackageManager {
@@ -66,7 +113,7 @@ class PackageManager {
 
     addFromForm(formElement) {
         const formData = new FormData(formElement);
-        const packageObj = Package.createFromForm(formData);
+        const packageObj = ExpressPackage.createFromForm(formData);
         this.addPackage(packageObj);
         formElement.reset();
         this.displayAll();
@@ -89,18 +136,21 @@ class PackageManager {
                             <th>Получатель</th>
                             <th>Вес (кг)</th>
                             <th>Дата</th>
+                            <th>Тип</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
         
         this.packages.forEach(pkg => {
+            const type = pkg instanceof ExpressPackage ? 'Экспресс' : 'Стандарт';
             html += `
                 <tr>
                     <td>${pkg.sender}</td>
                     <td>${pkg.recipient}</td>
                     <td>${pkg.weight}</td>
                     <td>${pkg.date}</td>
+                    <td>${type}</td>
                 </tr>
             `;
         });
@@ -146,74 +196,68 @@ class PackageManager {
         const currentDate = new Date();
         const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
         
-        const date1 = new Date(lastMonth);
-        date1.setDate(lastMonth.getDate() + 5);
-        
-        const date2 = new Date(lastMonth);
-        date2.setDate(lastMonth.getDate() + 10);
-        
-        const date3 = new Date(lastMonth);
-        date3.setDate(lastMonth.getDate() + 15);
-        
-        const date4 = new Date(lastMonth);
-        date4.setDate(lastMonth.getDate() + 20);
+        const dates = [5, 10, 15, 20].map(days => {
+            const date = new Date(lastMonth);
+            date.setDate(lastMonth.getDate() + days);
+            return date.toISOString().split('T')[0];
+        });
 
         this.packages = [
-            new Package("Иванов", "Петров", 2.5, date1.toISOString().split('T')[0]),
-            new Package("Сидоров", "Петров", 1.8, date2.toISOString().split('T')[0]),
-            new Package("Кузнецов", "Смирнов", 3.2, date3.toISOString().split('T')[0]),
-            new Package("Попов", "Иванова", 0.9, date4.toISOString().split('T')[0]),
-            new Package("Новиков", "Петров", 4.1, date1.toISOString().split('T')[0]),
-            new Package("Васильев", "Смирнов", 2.7, date2.toISOString().split('T')[0]),
-            new Package("Морозов", "Иванова", 1.5, date3.toISOString().split('T')[0]),
-            new Package("Федоров", "Петров", 3.8, date4.toISOString().split('T')[0]),
-            new Package("Орлов", "Козлов", 2.1, date1.toISOString().split('T')[0]),
-            new Package("Лебедев", "Смирнов", 1.2, date2.toISOString().split('T')[0])
+            new ExpressPackage("Иванов", "Петров", 2.5, dates[0], "express", "TRK001"),
+            new ExpressPackage("Сидоров", "Петров", 1.8, dates[1], "standard", "TRK002"),
+            new BasePackage("Кузнецов", "Смирнов", 3.2, dates[2]),
+            new ExpressPackage("Попов", "Иванова", 0.9, dates[3], "express", "TRK003"),
+            new BasePackage("Новиков", "Петров", 4.1, dates[0]),
+            new ExpressPackage("Васильев", "Смирнов", 2.7, dates[1], "standard", "TRK004"),
+            new BasePackage("Морозов", "Иванова", 1.5, dates[2]),
+            new ExpressPackage("Федоров", "Петров", 3.8, dates[3], "express", "TRK005"),
+            new BasePackage("Орлов", "Козлов", 2.1, dates[0]),
+            new ExpressPackage("Лебедев", "Смирнов", 1.2, dates[1], "standard", "TRK006")
         ];
         this.displayAll();
     }
 }
 
-function FunctionalPackage(sender, recipient, weight, date) {
+function BaseFunctionalPackage(sender, recipient, weight, date) {
     this._sender = sender;
     this._recipient = recipient;
     this._weight = weight;
     this._date = date;
 }
 
-FunctionalPackage.prototype.getSender = function() {
+BaseFunctionalPackage.prototype.getSender = function() {
     return this._sender;
 };
 
-FunctionalPackage.prototype.getRecipient = function() {
+BaseFunctionalPackage.prototype.getRecipient = function() {
     return this._recipient;
 };
 
-FunctionalPackage.prototype.getWeight = function() {
+BaseFunctionalPackage.prototype.getWeight = function() {
     return this._weight;
 };
 
-FunctionalPackage.prototype.getDate = function() {
+BaseFunctionalPackage.prototype.getDate = function() {
     return this._date;
 };
 
-FunctionalPackage.prototype.setSender = function(value) {
+BaseFunctionalPackage.prototype.setSender = function(value) {
     this._sender = value;
 };
 
-FunctionalPackage.prototype.setRecipient = function(value) {
+BaseFunctionalPackage.prototype.setRecipient = function(value) {
     this._recipient = value;
 };
 
-FunctionalPackage.prototype.setWeight = function(value) {
+BaseFunctionalPackage.prototype.setWeight = function(value) {
     this._weight = value;
 };
 
-FunctionalPackage.prototype.setDate = function(value) {
+BaseFunctionalPackage.prototype.setDate = function(value) {
     this._date = value;
 };
 
-FunctionalPackage.createFromForm = function(formData) {
+BaseFunctionalPackage.createFromForm = function(formData) {
     return new this(
         formData.get('sender'),
         formData.get('recipient'),
@@ -222,11 +266,59 @@ FunctionalPackage.createFromForm = function(formData) {
     );
 };
 
-FunctionalPackage.prototype.isFromLastMonth = function() {
+BaseFunctionalPackage.prototype.isFromLastMonth = function() {
     const packageDate = new Date(this._date);
     const currentDate = new Date();
     const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
     return packageDate >= lastMonth && packageDate <= currentDate;
+};
+
+BaseFunctionalPackage.prototype.getPackageInfo = function() {
+    return `Посылка от ${this._sender} к ${this._recipient}, вес: ${this._weight}кг`;
+};
+
+function ExpressFunctionalPackage(sender, recipient, weight, date, priority, trackingNumber) {
+    BaseFunctionalPackage.call(this, sender, recipient, weight, date);
+    this._priority = priority;
+    this._trackingNumber = trackingNumber;
+}
+
+ExpressFunctionalPackage.prototype = Object.create(BaseFunctionalPackage.prototype);
+ExpressFunctionalPackage.prototype.constructor = ExpressFunctionalPackage;
+
+ExpressFunctionalPackage.prototype.getPriority = function() {
+    return this._priority;
+};
+
+ExpressFunctionalPackage.prototype.getTrackingNumber = function() {
+    return this._trackingNumber;
+};
+
+ExpressFunctionalPackage.prototype.setPriority = function(value) {
+    this._priority = value;
+};
+
+ExpressFunctionalPackage.prototype.setTrackingNumber = function(value) {
+    this._trackingNumber = value;
+};
+
+ExpressFunctionalPackage.createFromForm = function(formData) {
+    return new ExpressFunctionalPackage(
+        formData.get('sender'),
+        formData.get('recipient'),
+        parseFloat(formData.get('weight')),
+        formData.get('date'),
+        formData.get('priority') || 'standard',
+        formData.get('trackingNumber') || ''
+    );
+};
+
+ExpressFunctionalPackage.prototype.getPackageInfo = function() {
+    return `${BaseFunctionalPackage.prototype.getPackageInfo.call(this)}, приоритет: ${this._priority}, трек: ${this._trackingNumber || 'нет'}`;
+};
+
+ExpressFunctionalPackage.prototype.calculateDeliveryTime = function() {
+    return this._priority === 'express' ? 1 : 3;
 };
 
 function FunctionalPackageManager() {
@@ -239,7 +331,7 @@ FunctionalPackageManager.prototype.addPackage = function(packageObj) {
 
 FunctionalPackageManager.prototype.addFromForm = function(formElement) {
     const formData = new FormData(formElement);
-    const packageObj = FunctionalPackage.createFromForm(formData);
+    const packageObj = ExpressFunctionalPackage.createFromForm(formData);
     this.addPackage(packageObj);
     formElement.reset();
     this.displayAll();
@@ -262,18 +354,21 @@ FunctionalPackageManager.prototype.displayAll = function() {
                         <th>Получатель</th>
                         <th>Вес (кг)</th>
                         <th>Дата</th>
+                        <th>Тип</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
     
     this.packages.forEach(pkg => {
+        const type = pkg instanceof ExpressFunctionalPackage ? 'Экспресс' : 'Стандарт';
         html += `
             <tr>
                 <td>${pkg.getSender()}</td>
                 <td>${pkg.getRecipient()}</td>
                 <td>${pkg.getWeight()}</td>
                 <td>${pkg.getDate()}</td>
+                <td>${type}</td>
             </tr>
         `;
     });
@@ -320,29 +415,23 @@ FunctionalPackageManager.prototype.generateTestData = function() {
     const currentDate = new Date();
     const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
     
-    const date1 = new Date(lastMonth);
-    date1.setDate(lastMonth.getDate() + 5);
-    
-    const date2 = new Date(lastMonth);
-    date2.setDate(lastMonth.getDate() + 10);
-    
-    const date3 = new Date(lastMonth);
-    date3.setDate(lastMonth.getDate() + 15);
-    
-    const date4 = new Date(lastMonth);
-    date4.setDate(lastMonth.getDate() + 20);
+    const dates = [5, 10, 15, 20].map(days => {
+        const date = new Date(lastMonth);
+        date.setDate(lastMonth.getDate() + days);
+        return date.toISOString().split('T')[0];
+    });
 
     this.packages = [
-        new FunctionalPackage("Иванов", "Петров", 2.5, date1.toISOString().split('T')[0]),
-        new FunctionalPackage("Сидоров", "Петров", 1.8, date2.toISOString().split('T')[0]),
-        new FunctionalPackage("Кузнецов", "Смирнов", 3.2, date3.toISOString().split('T')[0]),
-        new FunctionalPackage("Попов", "Иванова", 0.9, date4.toISOString().split('T')[0]),
-        new FunctionalPackage("Новиков", "Петров", 4.1, date1.toISOString().split('T')[0]),
-        new FunctionalPackage("Васильев", "Смирнов", 2.7, date2.toISOString().split('T')[0]),
-        new FunctionalPackage("Морозов", "Иванова", 1.5, date3.toISOString().split('T')[0]),
-        new FunctionalPackage("Федоров", "Петров", 3.8, date4.toISOString().split('T')[0]),
-        new FunctionalPackage("Орлов", "Козлов", 2.1, date1.toISOString().split('T')[0]),
-        new FunctionalPackage("Лебедев", "Смирнов", 1.2, date2.toISOString().split('T')[0])
+        new ExpressFunctionalPackage("Иванов", "Петров", 2.5, dates[0], "express", "TRK001"),
+        new ExpressFunctionalPackage("Сидоров", "Петров", 1.8, dates[1], "standard", "TRK002"),
+        new BaseFunctionalPackage("Кузнецов", "Смирнов", 3.2, dates[2]),
+        new ExpressFunctionalPackage("Попов", "Иванова", 0.9, dates[3], "express", "TRK003"),
+        new BaseFunctionalPackage("Новиков", "Петров", 4.1, dates[0]),
+        new ExpressFunctionalPackage("Васильев", "Смирнов", 2.7, dates[1], "standard", "TRK004"),
+        new BaseFunctionalPackage("Морозов", "Иванова", 1.5, dates[2]),
+        new ExpressFunctionalPackage("Федоров", "Петров", 3.8, dates[3], "express", "TRK005"),
+        new BaseFunctionalPackage("Орлов", "Козлов", 2.1, dates[0]),
+        new ExpressFunctionalPackage("Лебедев", "Смирнов", 1.2, dates[1], "standard", "TRK006")
     ];
     this.displayAll();
 };

@@ -76,19 +76,19 @@
   @keyframes smile{ 0%{ transform:scaleX(0);} 60%{ transform:scaleX(1.2);} 100%{ transform:scaleX(1);} }
   @keyframes brand-in{ to{ opacity:1; filter:blur(0);} }
 
-  .{ position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:50; pointer-events:none; background:rgba(15,26,32,.88); border:1px solid var(--line); border-radius:12px; padding:10px 16px; box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04); user-select:none; width:max-content; }
-  .__wrap{ display:grid; gap:8px; }
-  .__row{ display:flex; gap:10px; justify-content:center; filter:drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
+  .loader{ position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:50; pointer-events:none; background:rgba(15,26,32,.88); border:1px solid var(--line); border-radius:12px; padding:10px 16px; box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04); user-select:none; width:max-content; }
+  .loader__wrap{ display:grid; gap:8px; }
+  .loader__row{ display:flex; gap:10px; justify-content:center; filter:drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
   .dot{ width:12px; height:12px; border-radius:50%; opacity:.18; transform:translateY(6px) scale(.75); animation:dot-wave var(--pre-cycle) ease-in-out infinite both; animation-delay:calc(var(--rowDelay,0s) + var(--colDelay,0s)); }
   @keyframes dot-wave{ 0%{ opacity:.18; transform:translateY(6px) scale(.75);} 8%{ opacity:.55; transform:translateY(2px) scale(.9);} 14%{ opacity:1; transform:translateY(0) scale(1.12);} 22%{ opacity:.95; transform:translateY(0) scale(1);} 30%{ opacity:.85; transform:translateY(0) scale(.95);} 70%{ opacity:.22; transform:translateY(4px) scale(.8);} 100%{ opacity:.18; transform:translateY(6px) scale(.75);} }
   .row1{ --rowDelay:calc(0 * var(--row-step)); }
   .row2{ --rowDelay:calc(1 * var(--row-step)); }
   .row3{ --rowDelay:calc(2 * var(--row-step)); }
-  .__row .dot:nth-child(1){ --colDelay:calc(0 * var(--col-step)); }
-  .__row .dot:nth-child(2){ --colDelay:calc(1 * var(--col-step)); }
-  .__row .dot:nth-child(3){ --colDelay:calc(2 * var(--col-step)); }
-  .__row .dot:nth-child(4){ --colDelay:calc(3 * var(--col-step)); }
-  .__row .dot:nth-child(5){ --colDelay:calc(4 * var(--col-step)); }
+  .loader__row .dot:nth-child(1){ --colDelay:calc(0 * var(--col-step)); }
+  .loader__row .dot:nth-child(2){ --colDelay:calc(1 * var(--col-step)); }
+  .loader__row .dot:nth-child(3){ --colDelay:calc(2 * var(--col-step)); }
+  .loader__row .dot:nth-child(4){ --colDelay:calc(3 * var(--col-step)); }
+  .loader__row .dot:nth-child(5){ --colDelay:calc(4 * var(--col-step)); }
   .row1 .dot:nth-child(1){ background:#8bd3ff; }
   .row1 .dot:nth-child(2){ background:#b48bff; }
   .row1 .dot:nth-child(3){ background:#34d399; }
@@ -104,9 +104,8 @@
   .row3 .dot:nth-child(3){ background:#ef4444; }
   .row3 .dot:nth-child(4){ background:#8bd3ff; }
   .row3 .dot:nth-child(5){ background:#b48bff; }
-  .__label{ margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+  .loader__label{ margin-top:2px; text-align:center; color:#a9bdd0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
 
-  /* ===== СЛАЙДЕР НА ГЛАВНОЙ ===== */
   .slider-section{
     margin:24px auto;
     max-width:1000px;
@@ -406,232 +405,227 @@
   </div>
 </section>
 
-<div class="" id="" aria-live="polite">
-  <div class="__wrap">
-    <div class="__row row1">
+<div class="loader" id="pageLoader" aria-live="polite">
+  <div class="loader__wrap">
+    <div class="loader__row row1">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
-    <div class="__row row2">
+    <div class="loader__row row2">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
-    <div class="__row row3">
+    <div class="loader__row row3">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
-    <div class="__label">загрузка…</div>
+    <div class="loader__label">загрузка…</div>
   </div>
 </div>
 
-
 <script>
-  (function () {
-    // Формируем данные слайдов из фильмов в прокате (берём максимум 5)
+document.addEventListener('DOMContentLoaded', function () {
     const slidesData = [
-      {% for movie in active_movies|slice:":5" %}
-      {
-        image: "{{ movie.poster.url }}",
-        title: "{{ movie.title|escapejs }}",
-        link: "{% url 'cinema:movie_detail' movie.pk %}"
-      }{% if not forloop.last %},{% endif %}
-      {% endfor %}
+        {% for movie in active_movies|slice:":5" %}
+        {
+            image: "{{ movie.poster.url }}",
+            title: "{{ movie.title|escapejs }}",
+            link: "{% url 'cinema:movie_detail' movie.pk %}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
     ];
 
     if (!slidesData.length) {
-      return;
+        return;
     }
 
     const sliderOptions = {
-      loop: {{ slider_settings.loop|yesno:"true,false" }},
-      navs: {{ slider_settings.navs|yesno:"true,false" }},
-      pags: {{ slider_settings.pags|yesno:"true,false" }},
-      auto: {{ slider_settings.auto|yesno:"true,false" }},
-      stopMouseHover: {{ slider_settings.stop_mouse_hover|yesno:"true,false" }},
-      delay: ({{ slider_settings.delay|default:5 }}) * 1000
+        loop: {{ slider_settings.loop|yesno:"true,false" }},
+        navs: {{ slider_settings.navs|yesno:"true,false" }},
+        pags: {{ slider_settings.pags|yesno:"true,false" }},
+        auto: {{ slider_settings.auto|yesno:"true,false" }},
+        stopMouseHover: {{ slider_settings.stop_mouse_hover|yesno:"true,false" }},
+        delay: ({{ slider_settings.delay|default:5 }}) * 1000
     };
 
     class Slider {
-      constructor(rootElement, slides, options) {
-        this.root = rootElement;
-        this.slides = slides;
-        this.options = Object.assign({
-          loop: true,
-          navs: true,
-          pags: true,
-          auto: true,
-          delay: 5000,
-          stopMouseHover: true
-        }, options || {});
+        constructor(rootElement, slides, options) {
+            this.root = rootElement;
+            this.slides = slides;
+            this.options = Object.assign({
+                loop: true,
+                navs: true,
+                pags: true,
+                auto: true,
+                delay: 5000,
+                stopMouseHover: true
+            }, options || {});
 
-        this.currentIndex = 0;
-        this.timerId = null;
+            this.currentIndex = 0;
+            this.timerId = null;
 
-        this.viewport = this.root.querySelector('.slider__viewport');
-        this.captionEl = this.root.querySelector('.slider__caption');
-        this.counterEl = this.root.querySelector('.slider__counter');
-        this.paginationEl = this.root.querySelector('.slider__pagination');
-        this.prevBtn = this.root.querySelector('.slider__nav--prev');
-        this.nextBtn = this.root.querySelector('.slider__nav--next');
+            this.viewport = this.root.querySelector('.slider__viewport');
+            this.captionEl = this.root.querySelector('.slider__caption');
+            this.counterEl = this.root.querySelector('.slider__counter');
+            this.paginationEl = this.root.querySelector('.slider__pagination');
+            this.prevBtn = this.root.querySelector('.slider__nav--prev');
+            this.nextBtn = this.root.querySelector('.slider__nav--next');
 
-        this.init();
-      }
-
-      init() {
-        this.renderSlides();
-        this.renderPagination();
-        this.updateView();
-        this.bindEvents();
-        this.applyOptionsVisibility();
-        if (this.options.auto) {
-          this.startAuto();
-        }
-      }
-
-      renderSlides() {
-        this.viewport.innerHTML = '';
-        this.slides.forEach((slide, index) => {
-          const a = document.createElement('a');
-          a.href = slide.link;
-          a.className = 'slider__slide';
-          a.dataset.index = String(index);
-
-          const img = document.createElement('img');
-          img.src = slide.image;
-          img.alt = slide.title;
-
-          a.appendChild(img);
-          this.viewport.appendChild(a);
-        });
-      }
-
-      renderPagination() {
-        this.paginationEl.innerHTML = '';
-        if (!this.options.pags) {
-          this.paginationEl.style.display = 'none';
-          return;
-        }
-        this.paginationEl.style.display = 'flex';
-
-        this.slides.forEach((_, index) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'slider__pagination-btn';
-          btn.dataset.index = String(index);
-          btn.setAttribute('aria-label', 'Перейти к слайду ' + (index + 1));
-          this.paginationEl.appendChild(btn);
-        });
-      }
-
-      bindEvents() {
-        if (this.prevBtn) {
-          this.prevBtn.addEventListener('click', () => this.prev());
-        }
-        if (this.nextBtn) {
-          this.nextBtn.addEventListener('click', () => this.next());
+            this.init();
         }
 
-        this.paginationEl.addEventListener('click', (e) => {
-          const target = e.target;
-          if (target && target.classList.contains('slider__pagination-btn')) {
-            const index = Number(target.dataset.index || '0');
-            this.goTo(index);
-          }
-        });
-
-        if (this.options.stopMouseHover) {
-          this.root.addEventListener('mouseenter', () => this.stopAuto());
-          this.root.addEventListener('mouseleave', () => {
+        init() {
+            this.renderSlides();
+            this.renderPagination();
+            this.updateView();
+            this.bindEvents();
+            this.applyOptionsVisibility();
             if (this.options.auto) {
-              this.startAuto();
+                this.startAuto();
             }
-          });
-        }
-      }
-
-      applyOptionsVisibility() {
-        if (this.prevBtn && this.nextBtn) {
-          const display = this.options.navs ? '' : 'none';
-          this.prevBtn.style.display = display;
-          this.nextBtn.style.display = display;
-        }
-      }
-
-      updateView() {
-        const slideEls = this.viewport.querySelectorAll('.slider__slide');
-        slideEls.forEach((el) => el.classList.remove('slider__slide--active'));
-
-        const activeSlide = slideEls[this.currentIndex];
-        if (activeSlide) {
-          activeSlide.classList.add('slider__slide--active');
         }
 
-        const slide = this.slides[this.currentIndex];
-        if (slide) {
-          if (this.captionEl) {
-            this.captionEl.textContent = slide.title;
-          }
-          if (this.counterEl) {
-            this.counterEl.textContent = (this.currentIndex + 1) + ' / ' + this.slides.length;
-          }
+        renderSlides() {
+            this.viewport.innerHTML = '';
+            this.slides.forEach((slide, index) => {
+                const a = document.createElement('a');
+                a.href = slide.link;
+                a.className = 'slider__slide';
+                a.dataset.index = String(index);
+
+                const img = document.createElement('img');
+                img.src = slide.image;
+                img.alt = slide.title;
+
+                a.appendChild(img);
+                this.viewport.appendChild(a);
+            });
         }
 
-        const pagBtns = this.paginationEl.querySelectorAll('.slider__pagination-btn');
-        pagBtns.forEach((btn) => btn.classList.remove('slider__pagination-btn--active'));
-        const activeBtn = pagBtns[this.currentIndex];
-        if (activeBtn) {
-          activeBtn.classList.add('slider__pagination-btn--active');
+        renderPagination() {
+            this.paginationEl.innerHTML = '';
+            if (!this.options.pags) {
+                this.paginationEl.style.display = 'none';
+                return;
+            }
+            this.paginationEl.style.display = 'flex';
+
+            this.slides.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'slider__pagination-btn';
+                btn.dataset.index = String(index);
+                btn.setAttribute('aria-label', 'Перейти к слайду ' + (index + 1));
+                this.paginationEl.appendChild(btn);
+            });
         }
-      }
 
-      goTo(index) {
-        if (index < 0) {
-          if (this.options.loop) {
-            index = this.slides.length - 1;
-          } else {
-            return;
-          }
+        bindEvents() {
+            if (this.prevBtn) {
+                this.prevBtn.addEventListener('click', () => this.prev());
+            }
+            if (this.nextBtn) {
+                this.nextBtn.addEventListener('click', () => this.next());
+            }
+
+            this.paginationEl.addEventListener('click', (e) => {
+                const target = e.target;
+                if (target && target.classList.contains('slider__pagination-btn')) {
+                    const index = Number(target.dataset.index || '0');
+                    this.goTo(index);
+                }
+            });
+
+            if (this.options.stopMouseHover) {
+                this.root.addEventListener('mouseenter', () => this.stopAuto());
+                this.root.addEventListener('mouseleave', () => {
+                    if (this.options.auto) {
+                        this.startAuto();
+                    }
+                });
+            }
         }
-        if (index >= this.slides.length) {
-          if (this.options.loop) {
-            index = 0;
-          } else {
-            return;
-          }
+
+        applyOptionsVisibility() {
+            if (this.prevBtn && this.nextBtn) {
+                const display = this.options.navs ? '' : 'none';
+                this.prevBtn.style.display = display;
+                this.nextBtn.style.display = display;
+            }
         }
-        this.currentIndex = index;
-        this.updateView();
-      }
 
-      next() {
-        this.goTo(this.currentIndex + 1);
-      }
+        updateView() {
+            const slideEls = this.viewport.querySelectorAll('.slider__slide');
+            slideEls.forEach((el) => el.classList.remove('slider__slide--active'));
 
-      prev() {
-        this.goTo(this.currentIndex - 1);
-      }
+            const activeSlide = slideEls[this.currentIndex];
+            if (activeSlide) {
+                activeSlide.classList.add('slider__slide--active');
+            }
 
-      startAuto() {
-        this.stopAuto();
-        this.timerId = window.setInterval(() => {
-          this.next();
-        }, this.options.delay);
-      }
+            const slide = this.slides[this.currentIndex];
+            if (slide) {
+                if (this.captionEl) {
+                    this.captionEl.textContent = slide.title;
+                }
+                if (this.counterEl) {
+                    this.counterEl.textContent = (this.currentIndex + 1) + ' / ' + this.slides.length;
+                }
+            }
 
-      stopAuto() {
-        if (this.timerId !== null) {
-          window.clearInterval(this.timerId);
-          this.timerId = null;
+            const pagBtns = this.paginationEl.querySelectorAll('.slider__pagination-btn');
+            pagBtns.forEach((btn) => btn.classList.remove('slider__pagination-btn--active'));
+            const activeBtn = pagBtns[this.currentIndex];
+            if (activeBtn) {
+                activeBtn.classList.add('slider__pagination-btn--active');
+            }
         }
-      }
+
+        goTo(index) {
+            if (index < 0) {
+                if (this.options.loop) {
+                    index = this.slides.length - 1;
+                } else {
+                    return;
+                }
+            }
+            if (index >= this.slides.length) {
+                if (this.options.loop) {
+                    index = 0;
+                } else {
+                    return;
+                }
+            }
+            this.currentIndex = index;
+            this.updateView();
+        }
+
+        next() {
+            this.goTo(this.currentIndex + 1);
+        }
+
+        prev() {
+            this.goTo(this.currentIndex - 1);
+        }
+
+        startAuto() {
+            this.stopAuto();
+            this.timerId = window.setInterval(() => {
+                this.next();
+            }, this.options.delay);
+        }
+
+        stopAuto() {
+            if (this.timerId !== null) {
+                window.clearInterval(this.timerId);
+                this.timerId = null;
+            }
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-      const sliderRoot = document.getElementById('mainSlider');
-      if (!sliderRoot || !slidesData.length) {
+    const sliderRoot = document.getElementById('mainSlider');
+    if (!sliderRoot || !slidesData.length) {
         return;
-      }
-      new Slider(sliderRoot, slidesData, sliderOptions);
-    });
-  })();
+    }
+    new Slider(sliderRoot, slidesData, sliderOptions);
+});
 </script>
-
 
 {% endblock %}

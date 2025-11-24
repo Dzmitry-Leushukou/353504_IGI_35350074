@@ -184,10 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const birthDateInput = document.getElementById('id_birth_date');
     const ageResult = document.getElementById('ageResult');
     
-    // Дни недели на русском
     const daysOfWeek = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
     
-    // Функция для расчета возраста
     function calculateAge(birthDate) {
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -199,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return age;
     }
     
-    // Функция для проверки возраста
     function checkAge() {
         const birthDateValue = birthDateInput.value;
         
@@ -212,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const birthDate = new Date(birthDateValue);
         const today = new Date();
         
-        // Проверка на будущую дату
         if (birthDate > today) {
             ageResult.innerHTML = '<span style="color: #e50914;">Дата рождения не может быть в будущем</span>';
             ageResult.className = 'age-result age-invalid';
@@ -231,11 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Проверка возраста при изменении поля
     birthDateInput.addEventListener('change', checkAge);
     birthDateInput.addEventListener('input', checkAge);
     
-    // Проверка при загрузке, если поле уже заполнено (например, при ошибке формы)
     if (birthDateInput.value) {
         checkAge();
     }

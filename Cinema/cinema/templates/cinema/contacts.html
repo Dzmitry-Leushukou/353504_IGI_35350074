@@ -24,7 +24,12 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label for="full_name" class="form-label">ФИО *</label>
-            <input type="text" class="form-control" id="full_name" required>
+            <div class="input-group">
+              <input type="text" class="form-control" id="full_name" required>
+              <span class="input-group-text validation-icon" id="full_name-validation-icon" style="display: none;">
+                <i class="fas fa-check text-success"></i>
+              </span>
+            </div>
           </div>
           <div class="col-md-6">
             <label for="position" class="form-label">Должность *</label>
@@ -38,16 +43,31 @@
           </div>
           <div class="col-md-6">
             <label for="phone" class="form-label">Телефон *</label>
-            <input type="text" class="form-control" id="phone" placeholder="+375 (29) 123-45-67" required>
+            <div class="input-group">
+              <input type="text" class="form-control" id="phone" placeholder="+375 (29) 123-45-67" required>
+              <span class="input-group-text validation-icon" id="phone-validation-icon" style="display: none;">
+                <i class="fas fa-check text-success"></i>
+              </span>
+            </div>
             <div class="form-text text-danger" id="phone-validation" style="display: none;"></div>
           </div>
           <div class="col-md-6">
             <label for="email" class="form-label">Email *</label>
-            <input type="email" class="form-control" id="email" required>
+            <div class="input-group">
+              <input type="email" class="form-control" id="email" required>
+              <span class="input-group-text validation-icon" id="email-validation-icon" style="display: none;">
+                <i class="fas fa-check text-success"></i>
+              </span>
+            </div>
           </div>
           <div class="col-md-6">
             <label for="photo_url" class="form-label">URL фотографии</label>
-            <input type="text" class="form-control" id="photo_url" placeholder="https://example.com/photo.jpg">
+            <div class="input-group">
+              <input type="text" class="form-control" id="photo_url" placeholder="https://example.com/photo.jpg">
+              <span class="input-group-text validation-icon" id="url-validation-icon" style="display: none;">
+                <i class="fas fa-check text-success"></i>
+              </span>
+            </div>
             <div class="form-text text-danger" id="url-validation" style="display: none;"></div>
             <div class="form-text">Должен начинаться с http:// или https:// и заканчиваться на расширение изображения (.jpg, .jpeg, .png, .gif, .webp, .bmp)</div>
           </div>
@@ -58,7 +78,12 @@
           </div>
           <div class="col-12">
             <label for="description" class="form-label">Описание работ *</label>
-            <textarea class="form-control" id="description" rows="3" required></textarea>
+            <div class="input-group">
+              <textarea class="form-control" id="description" rows="3" required></textarea>
+              <span class="input-group-text validation-icon" id="description-validation-icon" style="display: none;">
+                <i class="fas fa-check text-success"></i>
+              </span>
+            </div>
           </div>
         </div>
         <div class="mt-4">
@@ -196,6 +221,9 @@
   --invalid-border: #dc3545;
   --invalid-bg: #f8d7da;
   --invalid-shadow: rgba(220, 53, 69, 0.25);
+  --valid-border: #198754;
+  --valid-bg: #d1e7dd;
+  --valid-shadow: rgba(25, 135, 84, 0.25);
   --text-muted: #6c757d;
   --detail-bg: #ffffff;
   --detail-color: #212529;
@@ -232,6 +260,9 @@ body.theme-dark {
   --invalid-border: #e74c3c;
   --invalid-bg: #2d1b1c;
   --invalid-shadow: rgba(231, 76, 60, 0.25);
+  --valid-border: #27ae60;
+  --valid-bg: #1a2e25;
+  --valid-shadow: rgba(39, 174, 96, 0.25);
   --text-muted: #adb5bd;
   --detail-bg: #343a40;
   --detail-color: #f8f9fa;
@@ -285,6 +316,16 @@ th[data-sort].sort-desc .sort-indicator::after {
   border-color: var(--invalid-border) !important;
   background-color: var(--invalid-bg) !important;
   box-shadow: 0 0 0 0.25rem var(--invalid-shadow) !important;
+}
+
+.valid-field {
+  border-color: var(--valid-border) !important;
+  background-color: var(--valid-bg) !important;
+  box-shadow: 0 0 0 0.25rem var(--valid-shadow) !important;
+}
+
+.validation-icon {
+  transition: all 0.3s ease;
 }
 
 :root{
@@ -726,10 +767,6 @@ body.theme-dark .form-control::placeholder {
   opacity: 0.7;
 }
 
-body.theme-dark .form-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23adb5bd' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-}
-
 .form-check-input {
   width: 1.2em;
   height: 1.2em;
@@ -804,6 +841,43 @@ body.theme-dark .card-header .card-title {
   border: none;
 }
 
+.input-group .validation-icon {
+  border-left: none;
+  background-color: var(--form-bg);
+  border-color: var(--form-border);
+}
+
+.input-group .form-control.valid-field + .validation-icon {
+  border-color: var(--valid-border);
+  background-color: var(--valid-bg);
+}
+
+.input-group .form-control.invalid-field + .validation-icon {
+  border-color: var(--invalid-border);
+  background-color: var(--invalid-bg);
+}
+
+.input-group .form-control:focus + .validation-icon {
+  border-color: var(--form-focus-border);
+}
+
+.input-group-text {
+  min-width: 45px;
+  justify-content: center;
+}
+
+#position.valid-field {
+  border-color: var(--valid-border) !important;
+  background-color: var(--valid-bg) !important;
+  box-shadow: 0 0 0 0.25rem var(--valid-shadow) !important;
+}
+
+#position.invalid-field {
+  border-color: var(--invalid-border) !important;
+  background-color: var(--invalid-bg) !important;
+  box-shadow: 0 0 0 0.25rem var(--invalid-shadow) !important;
+}
+
 @media (max-width: 768px) {
   #row-details-content .detail-grid {
     grid-template-columns: 1fr;
@@ -832,6 +906,14 @@ body.theme-dark .card-header .card-title {
   #row-details-content .description-content {
     font-size: 1.1rem;
     padding: 1.5rem;
+  }
+  
+  .input-group {
+    flex-wrap: nowrap;
+  }
+  
+  .validation-icon {
+    min-width: 45px;
   }
 }
 </style>
