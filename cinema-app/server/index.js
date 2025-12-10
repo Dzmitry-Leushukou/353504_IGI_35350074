@@ -1,4 +1,3 @@
-// Entry point for the Cinema App server
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -11,18 +10,21 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Routes will be added here
+
 // Basic route
 app.get('/', (req, res) => {
-  res.send('Cinema App API is running!');
+  res.send('Cinema App API is running');
 });
 
 // Connect to MongoDB and start server
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cinema-app')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/cinema-app')
   .then(() => {
+    console.log('Connected to MongoDB');
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   })
-  .catch(err => {
-    console.error('Database connection error:', err);
+  .catch((error) => {
+    console.error('Database connection error:', error);
   });
