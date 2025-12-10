@@ -92,7 +92,12 @@ const MovieDetail = () => {
 
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/orders`,
-        orderData
+        orderData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
       );
 
       toast.success('Билеты успешно забронированы!');
@@ -111,32 +116,29 @@ const MovieDetail = () => {
   };
 
   const generateSeats = (totalSeats, availableSeats, bookedSeats = []) => {
-  const seats = [];
-  const bookedSeatsCount = totalSeats - availableSeats;
-  
-  // Создаем массив всех мест
-  for (let i = 1; i <= totalSeats; i++) {
-    const seatNumber = `A${i}`;
-    const isBookedBySession = i <= bookedSeatsCount; // Занято в сессии
-    const isBookedInBookedSeats = bookedSeats.includes(seatNumber); // Занято в bookedSeats
-    const isBooked = isBookedBySession || isBookedInBookedSeats;
-    const isSelected = selectedSeats.includes(seatNumber);
+    const seats = [];
     
-    seats.push(
-      <button
-        key={i}
-        className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
-        onClick={() => !isBooked && handleSeatSelect(seatNumber)}
-        disabled={isBooked || !selectedSession}
-        title={isBooked ? 'Занято' : `Место ${seatNumber}`}
-      >
-        {isBooked ? '✗' : i}
-      </button>
-    );
-  }
-  
-  return seats;
-};
+    // Создаем массив всех мест
+    for (let i = 1; i <= totalSeats; i++) {
+      const seatNumber = `A${i}`;
+      const isBooked = bookedSeats.includes(seatNumber); // Проверяем в bookedSeats
+      const isSelected = selectedSeats.includes(seatNumber);
+      
+      seats.push(
+        <button
+          key={i}
+          className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
+          onClick={() => !isBooked && handleSeatSelect(seatNumber)}
+          disabled={isBooked || !selectedSession}
+          title={isBooked ? 'Занято' : `Место ${seatNumber}`}
+        >
+          {isBooked ? '✗' : i}
+        </button>
+      );
+    }
+    
+    return seats;
+  };
 
   if (loading) {
     return (
@@ -294,7 +296,11 @@ const MovieDetail = () => {
               <div className="seats-grid">
                 <div className="screen">ЭКРАН</div>
                 <div className="seats-container">
-                  {generateSeats(selectedSession.totalSeats, selectedSession.availableSeats)}
+                  {generateSeats(
+                    selectedSession.totalSeats, 
+                    selectedSession.availableSeats, 
+                    selectedSession.bookedSeats || []
+                  )}
                 </div>
                 <div className="seats-legend">
                   <div className="legend-item">
