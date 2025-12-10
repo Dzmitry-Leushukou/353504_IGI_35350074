@@ -14,6 +14,9 @@ app.use(express.json());
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const movieRoutes = require('./routes/movies');
+app.use('/api/movies', movieRoutes);
+
 // Basic route
 app.get('/', (req, res) => {
   res.send('Cinema App API is running');

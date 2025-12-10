@@ -8,7 +8,7 @@ const router = express.Router();
 // Регистрация пользователя
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, username, firstName, lastName } = req.body;
 
     // Проверяем, существует ли пользователь с таким email
     const existingUser = await User.findOne({ email });
@@ -23,7 +23,9 @@ router.post('/register', async (req, res) => {
     const newUser = new User({
       email,
       password: hashedPassword,
-      name
+      username,
+      firstName,
+      lastName
     });
 
     await newUser.save();
