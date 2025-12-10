@@ -25,9 +25,9 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    toast('Google авторизация пока не доступна', {
-      icon: '🔒'
-    });
+    // Упрощенная Google авторизация для локальной разработки
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.REACT_APP_GOOGLE_CLIENT_ID}&redirect_uri=${window.location.origin}/google-callback&response_type=token&scope=email%20profile`;
+    window.location.href = googleAuthUrl;
   };
 
   return (

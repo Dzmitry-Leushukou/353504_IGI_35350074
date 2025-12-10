@@ -8,13 +8,15 @@ const { OAuth2Client } = require('google-auth-library');
 
 const router = express.Router();
 
-// Google OAuth client (инициализация с проверкой)
+// Инициализация Google OAuth клиента
 let googleClient;
-if (process.env.GOOGLE_CLIENT_ID) {
+try {
   googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+} catch (error) {
+  console.warn('Google OAuth client not initialized:', error.message);
 }
 
-// Register
+// Регистрация пользователя
 router.post('/register', [
   body('username').isLength({ min: 3 }),
   body('email').isEmail(),
@@ -28,13 +30,13 @@ router.post('/register', [
 
     const { username, email, password, timezone } = req.body;
     
-    // Check if user exists
+    // Проверяем, существует ли пользователь
     let user = await User.findOne({ $or: [{ email }, { username }] });
     if (user) {
       return res.status(400).json({ message: 'Пользователь уже существует' });
     }
 
-    // Create new user
+    // Создаем нового пользователя
     user = new User({
       username,
       email,
@@ -45,7 +47,7 @@ router.post('/register', [
 
     await user.save();
 
-    // Create token
+    // Создаем JWT токен
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -59,8 +61,7 @@ router.post('/register', [
         username: user.username,
         email: user.email,
         role: user.role,
-        timezone: user.timezone,
-        isGoogleAuth: false
+        timezone: user.timezone
       }
     });
   } catch (error) {
@@ -69,7 +70,7 @@ router.post('/register', [
   }
 });
 
-// Login
+// Вход по email/password
 router.post('/login', [
   body('email').isEmail(),
   body('password').exists()
@@ -82,26 +83,19 @@ router.post('/login', [
 
     const { email, password } = req.body;
     
-    // Find user
+    // Ищем пользователя
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Неверные учетные данные' });
     }
 
-    // Check if user registered via Google
-    if (user.isGoogleAuth) {
-      return res.status(400).json({ 
-        message: 'Этот аккаунт зарегистрирован через Google. Пожалуйста, войдите через Google.' 
-      });
-    }
-
-    // Check password
+    // Проверяем пароль
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Неверные учетные данные' });
     }
 
-    // Create token
+    // Создаем JWT токен
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -115,8 +109,7 @@ router.post('/login', [
         username: user.username,
         email: user.email,
         role: user.role,
-        timezone: user.timezone,
-        isGoogleAuth: false
+        timezone: user.timezone
       }
     });
   } catch (error) {
@@ -125,7 +118,7 @@ router.post('/login', [
   }
 });
 
-// Google OAuth login
+// Google OAuth вход
 router.post('/google', async (req, res) => {
   try {
     const { token } = req.body;
@@ -134,22 +127,29 @@ router.post('/google', async (req, res) => {
       return res.status(400).json({ message: 'Токен Google отсутствует' });
     }
 
-    // If no Google client configured, return mock
-    if (!googleClient) {
-      console.warn('Google OAuth not configured, using mock');
+    // Если в режиме разработки и нет Google Client ID, используем мок
+    if (process.env.NODE_ENV === 'development' && !process.env.GOOGLE_CLIENT_ID) {
+      console.log('Development mode: Using mock Google auth');
       
-      // Mock Google user
-      const mockUser = {
-        email: 'test@gmail.com',
-        name: 'Google Test User',
-        picture: 'https://via.placeholder.com/150',
-        sub: 'google123'
-      };
+      // Генерируем мок пользователя Google
+      const mockEmail = `google_user_${Date.now()}@gmail.com`;
+      const mockName = 'Google User';
+      const mockPicture = 'https://via.placeholder.com/150';
+      const mockSub = `google_${Date.now()}`;
       
-      return handleGoogleUser(mockUser, res);
+      return handleGoogleUser({
+        email: mockEmail,
+        name: mockName,
+        picture: mockPicture,
+        sub: mockSub
+      }, res);
     }
 
-    // Verify Google token
+    // Реальная верификация Google токена
+    if (!googleClient) {
+      return res.status(500).json({ message: 'Google OAuth не настроен' });
+    }
+
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
@@ -161,14 +161,14 @@ router.post('/google', async (req, res) => {
   } catch (error) {
     console.error('Google auth error:', error.message);
     
-    // Fallback for development
+    // Fallback для разработки
     if (process.env.NODE_ENV === 'development') {
       console.log('Using development fallback for Google auth');
       const mockUser = {
-        email: 'dev@gmail.com',
-        name: 'Development User',
+        email: `dev_google_${Date.now()}@gmail.com`,
+        name: 'Google Development User',
         picture: 'https://via.placeholder.com/150',
-        sub: 'dev123'
+        sub: `dev_google_${Date.now()}`
       };
       return handleGoogleUser(mockUser, res);
     }
@@ -177,18 +177,19 @@ router.post('/google', async (req, res) => {
   }
 });
 
-// Helper function to handle Google user
+// Обработчик Google пользователя
 async function handleGoogleUser(payload, res) {
   const { email, name, picture, sub } = payload;
   
+  // Ищем существующего пользователя по email или googleId
   let user = await User.findOne({ 
     $or: [{ email }, { googleId: sub }] 
   });
   
   if (!user) {
-    // Create new user from Google data
+    // Создаем нового пользователя из данных Google
     user = new User({
-      username: name,
+      username: name || email.split('@')[0],
       email,
       password: await bcrypt.hash(Math.random().toString(36), 10),
       avatar: picture,
@@ -199,16 +200,16 @@ async function handleGoogleUser(payload, res) {
     
     await user.save();
   } else {
-    // Update existing user with Google info if needed
-    if (!user.googleId) {
-      user.googleId = sub;
-      user.isGoogleAuth = true;
-      if (picture && !user.avatar) user.avatar = picture;
-      await user.save();
-    }
+    // Обновляем существующего пользователя
+    if (!user.googleId) user.googleId = sub;
+    if (!user.isGoogleAuth) user.isGoogleAuth = true;
+    if (picture && !user.avatar) user.avatar = picture;
+    if (name && !user.username.includes('@')) user.username = name;
+    
+    await user.save();
   }
   
-  // Create JWT token
+  // Создаем JWT токен
   const jwtToken = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
@@ -229,29 +230,7 @@ async function handleGoogleUser(payload, res) {
   });
 }
 
-// Google callback for frontend
-router.post('/google-callback', async (req, res) => {
-  try {
-    const { accessToken } = req.body;
-    
-    if (!accessToken) {
-      return res.status(400).json({ message: 'Токен отсутствует' });
-    }
-    
-    // In a real app, you would validate the access token with Google
-    // For now, we'll use a simplified version
-    return res.status(200).json({ 
-      message: 'Callback received',
-      token: accessToken 
-    });
-    
-  } catch (error) {
-    console.error('Google callback error:', error);
-    res.status(500).json({ message: 'Ошибка обработки Google callback' });
-  }
-});
-
-// Get current user
+// Получение текущего пользователя
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password');

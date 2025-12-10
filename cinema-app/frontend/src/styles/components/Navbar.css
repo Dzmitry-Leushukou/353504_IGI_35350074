@@ -281,3 +281,43 @@
     width: 100%;
   }
 }
+
+.admin-link {
+  color: #48bb78 !important;
+  font-weight: 600;
+}
+
+.admin-link:hover {
+  color: #38a169 !important;
+}
+
+.admin-badge {
+  display: inline-block;
+  background: #48bb78;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.access-denied {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.access-denied svg {
+  color: #e53e3e;
+  margin-bottom: 20px;
+}
+
+.access-denied h2 {
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+.access-denied p {
+  color: #718096;
+  font-size: 1.1rem;
+}

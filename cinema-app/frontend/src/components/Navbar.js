@@ -1,10 +1,10 @@
+// Добавим кнопку админ-панели для администраторов
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaFilm, FaUser, FaShoppingCart, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { FaFilm, FaUser, FaShoppingCart, FaSignOutAlt, FaBars, FaTimes, FaUserShield } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/components/Navbar.css';
 
-// Функциональный компонент со стрелочной функцией (требование 2)
 const Navbar = ({ currentTime }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -18,7 +18,10 @@ const Navbar = ({ currentTime }) => {
 
   const handleTimezoneChange = (e) => {
     setTimezone(e.target.value);
-    // В реальном приложении сохраняем в профиль пользователя
+    if (isAuthenticated && user) {
+      // Обновляем временную зону в профиле пользователя
+      localStorage.setItem('user_timezone', e.target.value);
+    }
   };
 
   const toggleMenu = () => {
@@ -57,9 +60,18 @@ const Navbar = ({ currentTime }) => {
             </Link>
             
             {isAuthenticated && (
-              <Link to="/my-orders" className="nav-link" onClick={() => setIsMenuOpen(false)}>
-                <FaShoppingCart /> Мои заказы
-              </Link>
+              <>
+                <Link to="/my-orders" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+                  <FaShoppingCart /> Мои заказы
+                </Link>
+                
+                {/* Кнопка админ-панели */}
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="nav-link admin-link" onClick={() => setIsMenuOpen(false)}>
+                    <FaUserShield /> Админ-панель
+                  </Link>
+                )}
+              </>
             )}
           </div>
 
@@ -79,6 +91,7 @@ const Navbar = ({ currentTime }) => {
               <div className="user-section">
                 <span className="username">
                   <FaUser /> {user?.username}
+                  {user?.role === 'admin' && <span className="admin-badge">Admin</span>}
                 </span>
                 <button onClick={handleLogout} className="logout-btn">
                   <FaSignOutAlt /> Выйти

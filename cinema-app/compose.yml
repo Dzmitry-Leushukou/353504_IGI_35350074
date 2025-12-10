@@ -32,7 +32,7 @@ services:
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/cinema_db?authSource=admin
       - JWT_SECRET=cinema_secret_key_2025
       - POE_API_KEY=zjQsMlkJadTvphtkKQTAkeeOSImzOLgZ2YiVV9aUL8M
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_ID=1055592905262-ol30951045v13rf98degdp13vpa984de.apps.googleusercontent.com
     volumes:
       - ./backend:/app
       - ./uploads:/app/uploads
@@ -60,7 +60,7 @@ services:
     environment:
       - REACT_APP_API_URL=http://localhost:3001
       - REACT_APP_WS_URL=ws://localhost:3001
-      - REACT_APP_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - REACT_APP_GOOGLE_CLIENT_ID=1055592905262-ol30951045v13rf98degdp13vpa984de.apps.googleusercontent.com
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
