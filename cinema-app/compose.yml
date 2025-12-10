@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: cinema-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: cinema_db
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/cinema_db -u admin -p password123 --authenticationDatabase admin --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build: ./backend
+    container_name: cinema-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/cinema_db?authSource=admin
+      - JWT_SECRET=cinema_secret_key_2025
+      - POE_API_KEY=${POE_API_KEY:-mock_key}
+      - POE_API_URL=https://api.poe.com
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: >
+      sh -c "
+      echo 'Waiting for MongoDB to be ready...' &&
+      sleep 10 &&
+      npm run seed &&
+      npm run dev
+      "
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cinema-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_WS_URL=ws://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./frontend/public:/app/public:ro
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  mongodb_data:
+  uploads:

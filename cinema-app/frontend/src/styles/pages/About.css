@@ -1,0 +1,251 @@
+.about-page {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.about-hero {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  margin-bottom: 40px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.about-hero h1 {
+  font-size: 2.8rem;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.about-hero p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.tabs-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 15px 30px;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  color: #4a5568;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 150px;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.tab-content {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.cinema-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  color: #667eea;
+  margin-bottom: 15px;
+}
+
+.stat-card h3 {
+  font-size: 2.5rem;
+  color: #2d3748;
+  margin: 10px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card p {
+  color: #718096;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.cinema-history {
+  background: white;
+  border-radius: 15px;
+  padding: 40px;
+  margin-bottom: 50px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+.cinema-history h2 {
+  color: #2d3748;
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e2e8f0;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.timeline-year {
+  min-width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.timeline-content {
+  flex: 1;
+  background: #f7fafc;
+  border-radius: 10px;
+  padding: 25px;
+  border-left: 4px solid #667eea;
+}
+
+.timeline-content h4 {
+  color: #2d3748;
+  margin-bottom: 10px;
+  font-size: 1.3rem;
+}
+
+.timeline-content p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.contacts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+@media (max-width: 992px) {
+  .contacts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cinema-stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .about-hero {
+    padding: 40px 15px;
+  }
+  
+  .about-hero h1 {
+    font-size: 2.2rem;
+  }
+  
+  .tab-btn {
+    min-width: 120px;
+    padding: 12px 20px;
+  }
+  
+  .timeline::before {
+    left: 25px;
+  }
+  
+  .timeline-year {
+    min-width: 50px;
+    height: 50px;
+    font-size: 1rem;
+  }
+  
+  .timeline-content {
+    padding: 20px;
+  }
+}
