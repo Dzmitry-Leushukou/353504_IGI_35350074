@@ -1,6 +1,0 @@
-Django>=5.0
-pytest
-pytest-django
-pytest-cov
-matplotlib
-requests
