@@ -6,7 +6,8 @@ const {
   getMovieById,
   createMovie,
   updateMovie,
-  deleteMovie
+  deleteMovie,
+  streamTrailer
 } = require('../controllers/movieController');
 
 // GET /api/movies - получение списка фильмов с поиском и сортировкой
@@ -23,5 +24,8 @@ router.put('/:id', authMiddleware, updateMovie);
 
 // DELETE /api/movies/:id - удаление фильма (только для авторизованных пользователей)
 router.delete('/:id', authMiddleware, deleteMovie);
+
+// GET /api/movies/:id/trailer - stream trailer for a movie
+router.get('/:id/trailer', streamTrailer);
 
 module.exports = router;

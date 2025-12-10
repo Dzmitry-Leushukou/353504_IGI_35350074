@@ -107,7 +107,17 @@ const getMovieById = async (req, res) => {
 // Создание нового фильма
 const createMovie = async (req, res) => {
   try {
-    const movieData = req.body;
+    const movieData = { ...req.body };
+    
+    // Check if a trailer file was uploaded
+    if (req.files && req.files.trailer) {
+      const trailerFile = req.files.trailer;
+      
+      movieData.trailer = {
+        data: trailerFile.data,
+        contentType: trailerFile.mimetype
+      };
+    }
     
     // Проверка на дубликаты (по названию и дате выхода)
     const existingMovie = await Movie.findOne({
@@ -146,7 +156,7 @@ const createMovie = async (req, res) => {
       });
     }
     res.status(500).json({
-      success: false,
+      success: true,
       message: 'Server error while creating movie',
       error: error.message
     });
@@ -157,7 +167,20 @@ const createMovie = async (req, res) => {
 const updateMovie = async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updateData = { ...req.body };
+    
+    // Check if a trailer file was uploaded
+    if (req.files && req.files.trailer) {
+      const trailerFile = req.files.trailer;
+      
+      updateData.trailer = {
+        data: trailerFile.data,
+        contentType: trailerFile.mimetype
+      };
+      
+      // Remove trailerUrl if trailer file is provided
+      delete updateData.trailerUrl;
+    }
     
     // Удаляем поля, которые не должны обновляться
     delete updateData.createdAt;
@@ -166,7 +189,7 @@ const updateMovie = async (req, res) => {
     const updatedMovie = await Movie.findByIdAndUpdate(
       id,
       updateData,
-      { 
+      {
         new: true, // Возвращает обновленный документ
         runValidators: true // Запускает валидацию
       }
@@ -251,11 +274,76 @@ const deleteMovie = async (req, res) => {
     });
   }
 };
+  
+const streamTrailer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const movie = await Movie.findById(id);
+    
+    if (!movie) {
+      return res.status(404).json({
+        success: false,
+        message: 'Movie not found'
+      });
+    }
+    
+    if (!movie.trailer || !movie.trailer.data) {
+      return res.status(404).json({
+        success: false,
+        message: 'Trailer not available for this movie'
+      });
+    }
+    
+    // Get trailer data
+    const trailerData = movie.trailer.data;
+    const contentType = movie.trailer.contentType || 'video/mp4';
+    const trailerSize = trailerData.length;
+    
+    // Handle range requests for better buffering and seeking
+    const range = req.headers.range;
+    
+    if (range) {
+      // Parse range header
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : trailerSize - 1;
+      const chunksize = (end - start) + 1;
+      
+      // Set headers for range response
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${trailerSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': contentType,
+      });
+      
+      // Send the requested chunk
+      res.end(trailerData.slice(start, end + 1));
+    } else {
+      // Full file requested
+      res.writeHead(200, {
+        'Content-Length': trailerSize,
+        'Content-Type': contentType,
+      });
+      
+      res.end(trailerData);
+    }
+  } catch (error) {
+    console.error('Error streaming trailer:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while streaming trailer',
+      error: error.message
+    });
+ }
+};
 
 module.exports = {
   getAllMovies,
   getMovieById,
   createMovie,
-  updateMovie,
-  deleteMovie
+ updateMovie,
+  deleteMovie,
+  streamTrailer
 };

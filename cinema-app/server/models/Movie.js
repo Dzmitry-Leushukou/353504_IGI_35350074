@@ -58,10 +58,9 @@ const movieSchema = new mongoose.Schema({
     required: false,
     match: [/^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i, 'Please enter a valid image URL']
   },
-  trailerUrl: {
-    type: String,
-    required: false,
-    match: [/^https?:\/\/.+/i, 'Please enter a valid URL']
+  trailer: {
+    data: Buffer,  // Store the actual video file data
+    contentType: String // Store the content type (e.g., 'video/mp4')
   },
   language: {
     type: String,
