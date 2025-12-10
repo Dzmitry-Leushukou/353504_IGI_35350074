@@ -1,3 +1,4 @@
+// frontend/src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -9,15 +10,14 @@ import MyOrders from './pages/MyOrders';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MovieDetail from './pages/MovieDetail';
+import GoogleCallback from './pages/GoogleCallback';
 import { useAuth } from './contexts/AuthContext';
 import './styles/App.css';
 
-// Декларативный функциональный компонент (требование 1)
 function App() {
   const { isAuthenticated } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   
-  // Обновление времени каждую секунду
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -56,6 +56,7 @@ function App() {
                 !isAuthenticated ? <Register /> : <Navigate to="/" />
               } 
             />
+            <Route path="/auth/google/callback" element={<GoogleCallback />} />
           </Routes>
         </main>
         

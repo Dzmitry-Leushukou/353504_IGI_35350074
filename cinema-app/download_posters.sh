@@ -1,7 +1,10 @@
 #!/bin/bash
-mkdir -p uploads
 
-# Список изображений для скачивания (замените на реальные URL или используйте заглушки)
+# Создаем необходимые папки
+mkdir -p uploads
+mkdir -p uploads/trailers
+
+# Список изображений для скачивания
 declare -A posters=(
   ["harry-potter.jpg"]="https://m.media-amazon.com/images/M/MV5BNjQ3NWNlNmQtMTE5ZS00MDdmLTlkZjUtZTBlM2UxMGFiMTU3XkEyXkFqcGdeQXVyNjUwNzk3NDc@._V1_FMjpg_UX1000_.jpg"
   ["lotr.jpg"]="https://m.media-amazon.com/images/M/MV5BN2EyZjM3NzUtNWUzMi00MTgxLWI0NTctMzY4M2VlOTdjZWRiXkEyXkFqcGdeQXVyNDUzOTQ5MjY@._V1_.jpg"
@@ -15,23 +18,44 @@ declare -A posters=(
   ["forrest-gump.jpg"]="https://m.media-amazon.com/images/M/MV5BNWIwODRlZTUtY2U3ZS00Yzg1LWJhNzYtMmZiYmEyNmU1NjMzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_.jpg"
 )
 
-echo "Downloading poster images..."
+echo "Creating poster images..."
+
+# Создаем заглушки для постеров
 for poster in "${!posters[@]}"; do
-  url="${posters[$poster]}"
-  echo "Downloading $poster..."
-  # Используем curl или wget для скачивания
-  # Если нет доступа к интернету, создадим заглушки
-  if command -v curl &> /dev/null; then
-    curl -s -L "$url" -o "uploads/$poster" --max-time 10 || echo "Failed to download $poster, creating placeholder"
-  elif command -v wget &> /dev/null; then
-    wget -q -O "uploads/$poster" "$url" || echo "Failed to download $poster, creating placeholder"
-  fi
-  
-  # Если файл не скачался, создаем заглушку
-  if [ ! -f "uploads/$poster" ] || [ ! -s "uploads/$poster" ]; then
-    convert -size 300x450 xc:#2d3748 -pointsize 20 -fill white -gravity center -draw "text 0,0 '${poster%.*}'" "uploads/$poster" 2>/dev/null || \
-    echo "No Image" > "uploads/$poster"
+  if [ ! -f "uploads/$poster" ]; then
+    echo "Creating placeholder for $poster..."
+    # Используем ImageMagick или создаем текстовый файл
+    if command -v convert &> /dev/null; then
+      convert -size 300x450 xc:#2d3748 -pointsize 20 -fill white -gravity center -draw "text 0,0 '${poster%.*}'" "uploads/$poster" 2>/dev/null
+    else
+      echo "Placeholder for ${poster%.*}" > "uploads/$poster"
+    fi
   fi
 done
 
-echo "Poster images created in uploads folder"
+echo "Creating trailer placeholder files..."
+
+# Создаем заглушки для трейлеров
+declare -a trailers=(
+  "harry-potter-trailer.mp4"
+  "lotr-trailer.mp4"
+  "intouchables-trailer.mp4"
+  "eurotrip-trailer.mp4"
+  "interstellar-trailer.mp4"
+  "inception-trailer.mp4"
+  "shawshank-trailer.mp4"
+  "godfather-trailer.mp4"
+  "dark-knight-trailer.mp4"
+  "forrest-gump-trailer.mp4"
+)
+
+for trailer in "${trailers[@]}"; do
+  if [ ! -f "uploads/trailers/$trailer" ]; then
+    echo "Creating placeholder for $trailer..."
+    # Создаем минимальный mp4 файл (заглушку)
+    echo "This is a placeholder for $trailer" > "uploads/trailers/$trailer"
+  fi
+done
+
+echo "All files created in uploads folder"
+echo "Note: For actual trailers, replace the placeholder files in uploads/trailers/ with real mp4 files"

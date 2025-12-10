@@ -1,10 +1,10 @@
+// frontend/src/components/MovieCard.js
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaClock, FaTicketAlt } from 'react-icons/fa';
+import { FaStar, FaClock } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import '../styles/components/MovieCard.css';
 
-// Декларативный функциональный компонент с обработчиками событий
 function MovieCard({ movie }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -19,15 +19,9 @@ function MovieCard({ movie }) {
 
   const handleFavoriteClick = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsFavorite(!isFavorite);
     toast.success(isFavorite ? 'Удалено из избранного' : 'Добавлено в избранное');
-  };
-
-  const handleQuickBook = (e) => {
-    e.preventDefault();
-    toast('Быстрое бронирование пока не доступно', {
-      icon: '🎬'
-    });
   };
 
   const formatDuration = (minutes) => {
@@ -63,13 +57,6 @@ function MovieCard({ movie }) {
               aria-label={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
             >
               <FaStar className={isFavorite ? 'filled' : ''} />
-            </button>
-            
-            <button 
-              className="quick-book-btn"
-              onClick={handleQuickBook}
-            >
-              <FaTicketAlt /> Быстрый заказ
             </button>
           </div>
         </div>

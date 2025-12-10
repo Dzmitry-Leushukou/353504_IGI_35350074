@@ -5,7 +5,7 @@ module.exports = (req, res, next) => {
   const authHeader = req.header('Authorization');
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+    return res.status(401).json({ message: 'Нет токена, авторизация отклонена' });
   }
   
   const token = authHeader.replace('Bearer ', '');
@@ -21,6 +21,6 @@ module.exports = (req, res, next) => {
     next();
   } catch (error) {
     console.error('Token verification error:', error.message);
-    res.status(401).json({ message: 'Token is not valid' });
+    res.status(401).json({ message: 'Токен недействителен' });
   }
 };

@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'UTC'
   },
+  avatar: {
+    type: String
+  },
+  googleId: {
+    type: String
+  },
   createdAt: {
     type: Date,
     default: Date.now

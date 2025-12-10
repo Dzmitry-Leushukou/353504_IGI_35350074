@@ -34,6 +34,13 @@ const orderSchema = new mongoose.Schema({
     enum: ['card', 'cash', 'online'],
     default: 'online'
   },
+  isPaid: {
+    type: Boolean,
+    default: false
+  },
+  paymentDate: {
+    type: Date
+  },
   orderDate: {
     type: Date,
     default: Date.now
@@ -60,12 +67,11 @@ const orderSchema = new mongoose.Schema({
 
 // Virtual for user timezone display
 orderSchema.virtual('showDateLocal').get(function() {
-  // This would be handled in the controller based on user timezone
-  return this.showDate;
+  return this.showDate.toLocaleDateString('ru-RU');
 });
 
 orderSchema.virtual('orderDateLocal').get(function() {
-  return this.orderDate;
+  return this.orderDate.toLocaleDateString('ru-RU');
 });
 
 module.exports = mongoose.model('Order', orderSchema);

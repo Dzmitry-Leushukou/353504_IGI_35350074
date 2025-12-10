@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Добавляем useCallback
+// frontend/src/pages/MyOrders.js
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext'; // Правильный импорт
+import { useAuth } from '../contexts/AuthContext';
 import { 
   FaTicketAlt, 
   FaCalendarAlt, 
@@ -9,13 +10,15 @@ import {
   FaTrash,
   FaPrint,
   FaDownload,
-  FaShareAlt
+  FaShareAlt,
+  FaCreditCard,
+  FaCheck
 } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import '../styles/pages/MyOrders.css';
 
 const MyOrders = () => {
-  const { user } = useAuth(); // Используем useAuth вместо useContext
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -26,7 +29,7 @@ const MyOrders = () => {
       setLoading(true);
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/orders/my-orders`, {
         headers: {
-          'User-Timezone': user?.timezone || 'Europe/Moscow'
+          Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
       setOrders(response.data.orders);
@@ -36,39 +39,41 @@ const MyOrders = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.timezone]); // Добавляем зависимости
+  }, []);
 
   useEffect(() => {
     if (user) {
       fetchOrders();
     }
-  }, [user, fetchOrders]); // Добавляем fetchOrders в зависимости
-
-  useEffect(() => {
-    if (!user) return;
-    
-    // Установка таймера для обновления статусов
-    const updateTimer = setInterval(() => {
-      const now = new Date();
-      orders.forEach(order => {
-        if (order.status === 'pending' && new Date(order.showDate) < now) {
-          fetchOrders(); // Обновляем если есть изменения
-        }
-      });
-    }, 60000);
-
-    return () => clearInterval(updateTimer);
-  }, [user, orders, fetchOrders]); // Добавляем зависимости
+  }, [user, fetchOrders]);
 
   const handleCancelOrder = async (orderId) => {
     if (!window.confirm('Вы уверены, что хотите отменить заказ?')) return;
 
     try {
-      await axios.put(`${process.env.REACT_APP_API_URL}/api/orders/${orderId}/cancel`);
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/orders/${orderId}/cancel`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       toast.success('Заказ отменен');
       fetchOrders();
     } catch (error) {
       toast.error('Ошибка отмены заказа');
+    }
+  };
+
+  const handlePayOrder = async (orderId) => {
+    try {
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/orders/${orderId}/pay`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      toast.success('Заказ оплачен!');
+      fetchOrders();
+    } catch (error) {
+      toast.error('Ошибка оплаты заказа');
     }
   };
 
@@ -94,10 +99,12 @@ const MyOrders = () => {
               <p>Электронный билет</p>
             </div>
             <div class="movie-title">${order.movie?.title}</div>
-            <div class="info">Дата: ${order.showDateLocal}</div>
+            <div class="info">Дата: ${new Date(order.showDate).toLocaleDateString('ru-RU')}</div>
+            <div class="info">Время: ${order.showTime}</div>
             <div class="info">Места: ${order.seats.join(', ')}</div>
-            <div class="info">Зал: ${order.sessionId}</div>
+            <div class="info">Зал: ${order.session?.hall || 'A'}</div>
             <div class="info">Цена: ${order.totalPrice} ₽</div>
+            <div class="info">Статус: ${order.isPaid ? 'Оплачен' : 'Не оплачен'}</div>
             <div class="info">Номер заказа: ${order._id}</div>
             <div class="qr-code">[QR Code Placeholder]</div>
             <div class="footer">
@@ -114,11 +121,13 @@ const MyOrders = () => {
   const handleDownloadTicket = (order) => {
     const ticketData = {
       title: order.movie?.title,
-      date: order.showDateLocal,
+      date: new Date(order.showDate).toLocaleDateString('ru-RU'),
+      time: order.showTime,
       seats: order.seats,
-      hall: order.sessionId,
+      hall: order.session?.hall || 'A',
       price: order.totalPrice,
       orderId: order._id,
+      status: order.isPaid ? 'Оплачен' : 'Не оплачен',
       qrData: `ORDER:${order._id}`
     };
 
@@ -137,7 +146,7 @@ const MyOrders = () => {
     if (navigator.share) {
       navigator.share({
         title: `Мой билет на ${order.movie?.title}`,
-        text: `Я иду на ${order.movie?.title} ${order.showDateLocal}`,
+        text: `Я иду на ${order.movie?.title} ${new Date(order.showDate).toLocaleDateString('ru-RU')}`,
         url: window.location.href
       });
     } else {
@@ -160,7 +169,11 @@ const MyOrders = () => {
     if (!window.confirm(`Отменить ${selectedOrders.length} заказов?`)) return;
 
     const promises = selectedOrders.map(orderId =>
-      axios.put(`${process.env.REACT_APP_API_URL}/api/orders/${orderId}/cancel`)
+      axios.put(`${process.env.REACT_APP_API_URL}/api/orders/${orderId}/cancel`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
     );
 
     try {
@@ -176,9 +189,9 @@ const MyOrders = () => {
   const filteredOrders = orders.filter(order => {
     switch (filter) {
       case 'pending':
-        return order.status === 'pending';
-      case 'confirmed':
-        return order.status === 'confirmed';
+        return !order.isPaid && order.status === 'confirmed';
+      case 'paid':
+        return order.isPaid;
       case 'cancelled':
         return order.status === 'cancelled';
       case 'completed':
@@ -188,7 +201,8 @@ const MyOrders = () => {
     }
   });
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status, isPaid) => {
+    if (isPaid) return 'status-paid';
     switch (status) {
       case 'pending': return 'status-pending';
       case 'confirmed': return 'status-confirmed';
@@ -198,7 +212,8 @@ const MyOrders = () => {
     }
   };
 
-  const getStatusText = (status) => {
+  const getStatusText = (status, isPaid) => {
+    if (isPaid) return 'Оплачен';
     switch (status) {
       case 'pending': return 'Ожидание';
       case 'confirmed': return 'Подтвержден';
@@ -236,19 +251,22 @@ const MyOrders = () => {
 
       <div className="orders-controls">
         <div className="filter-tabs">
-          {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(status => (
+          {['all', 'pending', 'paid', 'completed', 'cancelled'].map(status => (
             <button
               key={status}
               className={`filter-tab ${filter === status ? 'active' : ''}`}
               onClick={() => setFilter(status)}
             >
-              {getStatusText(status)}
+              {status === 'all' ? 'Все' : 
+               status === 'pending' ? 'Ожидают оплаты' :
+               status === 'paid' ? 'Оплаченные' :
+               status === 'completed' ? 'Завершенные' : 'Отмененные'}
             </button>
           ))}
         </div>
 
         <div className="timezone-info">
-          <span>Ваша временная зона: {user?.timezone || 'UTC'}</span>
+          <span>Ваша временная зона: {user?.timezone || 'Europe/Moscow'}</span>
           <span>Текущее время: {new Date().toLocaleTimeString()}</span>
         </div>
       </div>
@@ -259,28 +277,36 @@ const MyOrders = () => {
             {filteredOrders.map(order => (
               <div 
                 key={order._id} 
-                className={`order-card ${getStatusColor(order.status)} ${selectedOrders.includes(order._id) ? 'selected' : ''}`}
+                className={`order-card ${getStatusColor(order.status, order.isPaid)} ${selectedOrders.includes(order._id) ? 'selected' : ''}`}
               >
                 <div className="order-select">
                   <input
                     type="checkbox"
                     checked={selectedOrders.includes(order._id)}
                     onChange={() => handleSelectOrder(order._id)}
+                    disabled={order.isPaid || order.status === 'cancelled'}
                   />
                 </div>
 
                 <div className="order-header">
                   <h3>{order.movie?.title}</h3>
-                  <span className={`order-status ${getStatusColor(order.status)}`}>
-                    {getStatusText(order.status)}
-                  </span>
+                  <div className="order-status-section">
+                    <span className={`order-status ${getStatusColor(order.status, order.isPaid)}`}>
+                      {getStatusText(order.status, order.isPaid)}
+                    </span>
+                    {order.isPaid && (
+                      <span className="payment-status paid">
+                        <FaCheck /> Оплачен
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="order-details">
                   <div className="detail-item">
                     <FaCalendarAlt />
                     <span>Дата сеанса:</span>
-                    <strong>{order.showDateLocal}</strong>
+                    <strong>{new Date(order.showDate).toLocaleDateString('ru-RU')}</strong>
                   </div>
                   
                   <div className="detail-item">
@@ -304,17 +330,22 @@ const MyOrders = () => {
 
                 <div className="time-info">
                   <div className="time-item">
-                    <span>Заказ создан (локально):</span>
-                    <small>{order.orderDateLocal}</small>
-                  </div>
-                  <div className="time-item">
-                    <span>Заказ создан (UTC):</span>
-                    <small>{order.orderDateUTC}</small>
+                    <span>Заказ создан:</span>
+                    <small>{new Date(order.createdAt).toLocaleString('ru-RU')}</small>
                   </div>
                 </div>
 
                 <div className="order-actions">
-                  {order.status === 'pending' && (
+                  {!order.isPaid && order.status === 'confirmed' && (
+                    <button
+                      className="btn btn-success"
+                      onClick={() => handlePayOrder(order._id)}
+                    >
+                      <FaCreditCard /> Оплатить
+                    </button>
+                  )}
+                  
+                  {!order.isPaid && order.status === 'confirmed' && (
                     <button
                       className="btn btn-danger"
                       onClick={() => handleCancelOrder(order._id)}
@@ -369,12 +400,12 @@ const MyOrders = () => {
             <strong>{orders.reduce((sum, order) => sum + order.totalPrice, 0)} ₽</strong>
           </div>
           <div className="summary-item">
-            <span>Активные:</span>
-            <strong>{orders.filter(o => o.status === 'pending' || o.status === 'confirmed').length}</strong>
+            <span>Оплачено:</span>
+            <strong>{orders.filter(o => o.isPaid).length}</strong>
           </div>
           <div className="summary-item">
-            <span>Завершенные:</span>
-            <strong>{orders.filter(o => o.status === 'completed').length}</strong>
+            <span>Ожидают оплаты:</span>
+            <strong>{orders.filter(o => !o.isPaid && o.status === 'confirmed').length}</strong>
           </div>
         </div>
       </div>

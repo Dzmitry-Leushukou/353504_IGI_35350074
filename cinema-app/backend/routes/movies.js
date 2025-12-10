@@ -10,14 +10,24 @@ const router = express.Router();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    if (file.fieldname === 'trailer') {
+      cb(null, 'uploads/trailers/');
+    } else {
+      cb(null, 'uploads/');
+    }
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit for trailers
+  }
+});
 
 // Get all movies (public)
 router.get('/', [
@@ -28,18 +38,22 @@ router.get('/', [
   query('limit').optional().isInt({ min: 1, max: 100 })
 ], async (req, res) => {
   try {
-    const { search, genre, sort = 'title', page = 1, limit = 10 } = req.query;
+    const { search, genre, sort = 'title', page = 1, limit = 20 } = req.query;
     
-    let query = { isActive: true };
+    let queryObj = { isActive: true };
     
     // Search functionality
     if (search) {
-      query.$text = { $search: search };
+      queryObj.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { director: { $regex: search, $options: 'i' } }
+      ];
     }
     
     // Filter by genre
     if (genre) {
-      query.genre = { $in: [genre] };
+      queryObj.genre = { $in: [genre] };
     }
     
     // Sorting
@@ -60,12 +74,12 @@ router.get('/', [
     
     const skip = (page - 1) * limit;
     
-    const movies = await Movie.find(query)
+    const movies = await Movie.find(queryObj)
       .sort(sortOption)
       .skip(skip)
       .limit(parseInt(limit));
     
-    const total = await Movie.countDocuments(query);
+    const total = await Movie.countDocuments(queryObj);
     
     res.json({
       movies,
@@ -78,7 +92,7 @@ router.get('/', [
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
@@ -87,19 +101,22 @@ router.get('/:id', async (req, res) => {
   try {
     const movie = await Movie.findById(req.params.id);
     
-    if (!movie || !movie.isActive) {
-      return res.status(404).json({ message: 'Movie not found' });
+    if (!movie) {
+      return res.status(404).json({ message: 'Фильм не найден' });
     }
     
     res.json(movie);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
 // Create movie (admin only)
-router.post('/', authMiddleware, upload.single('poster'), [
+router.post('/', authMiddleware, upload.fields([
+  { name: 'poster', maxCount: 1 },
+  { name: 'trailer', maxCount: 1 }
+]), [
   body('title').notEmpty(),
   body('description').notEmpty(),
   body('genre').isArray(),
@@ -111,7 +128,7 @@ router.post('/', authMiddleware, upload.single('poster'), [
   try {
     // Check if user is admin
     if (req.userRole !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ message: 'Требуются права администратора' });
     }
     
     const errors = validationResult(req);
@@ -121,19 +138,23 @@ router.post('/', authMiddleware, upload.single('poster'), [
     
     const movieData = req.body;
     
-    // Handle file upload
-    if (req.file) {
-      movieData.poster = req.file.filename;
+    // Handle file uploads
+    if (req.files && req.files.poster) {
+      movieData.poster = req.files.poster[0].filename;
+    }
+    
+    if (req.files && req.files.trailer) {
+      movieData.trailer = req.files.trailer[0].filename;
     }
     
     // Parse arrays
     if (typeof movieData.genre === 'string') {
       movieData.genre = JSON.parse(movieData.genre);
     }
-    if (typeof movieData.actors === 'string') {
+    if (movieData.actors && typeof movieData.actors === 'string') {
       movieData.actors = JSON.parse(movieData.actors);
     }
-    if (typeof movieData.sessions === 'string') {
+    if (movieData.sessions && typeof movieData.sessions === 'string') {
       movieData.sessions = JSON.parse(movieData.sessions);
     }
     
@@ -143,32 +164,43 @@ router.post('/', authMiddleware, upload.single('poster'), [
     res.status(201).json(movie);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
 // Update movie (admin only)
-router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => {
+router.put('/:id', authMiddleware, upload.fields([
+  { name: 'poster', maxCount: 1 },
+  { name: 'trailer', maxCount: 1 }
+]), async (req, res) => {
   try {
     if (req.userRole !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ message: 'Требуются права администратора' });
     }
     
     const movie = await Movie.findById(req.params.id);
     if (!movie) {
-      return res.status(404).json({ message: 'Movie not found' });
+      return res.status(404).json({ message: 'Фильм не найден' });
     }
     
     const updateData = req.body;
     
-    // Handle file upload
-    if (req.file) {
-      updateData.poster = req.file.filename;
+    // Handle file uploads
+    if (req.files && req.files.poster) {
+      updateData.poster = req.files.poster[0].filename;
+    }
+    
+    if (req.files && req.files.trailer) {
+      updateData.trailer = req.files.trailer[0].filename;
     }
     
     // Parse arrays if needed
     if (updateData.genre && typeof updateData.genre === 'string') {
       updateData.genre = JSON.parse(updateData.genre);
+    }
+    
+    if (updateData.actors && typeof updateData.actors === 'string') {
+      updateData.actors = JSON.parse(updateData.actors);
     }
     
     Object.assign(movie, updateData);
@@ -177,7 +209,7 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
     res.json(movie);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
@@ -185,21 +217,21 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     if (req.userRole !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ message: 'Требуются права администратора' });
     }
     
     const movie = await Movie.findById(req.params.id);
     if (!movie) {
-      return res.status(404).json({ message: 'Movie not found' });
+      return res.status(404).json({ message: 'Фильм не найден' });
     }
     
     movie.isActive = false;
     await movie.save();
     
-    res.json({ message: 'Movie deactivated' });
+    res.json({ message: 'Фильм деактивирован' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 

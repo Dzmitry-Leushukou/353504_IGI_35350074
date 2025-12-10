@@ -1,15 +1,20 @@
-import React, { useState, useCallback } from 'react'; // Убираем useEffect если он не используется
+// frontend/src/components/AIRecommender.js
+import React, { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { FaRobot, FaSpinner, FaLightbulb } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import '../styles/components/AIRecommender.css';
 
-const AIRecommender = ({ movies }) => {
+const AIRecommender = ({ movies, onRecommendationsChange, initialRecommendations }) => {
   const [preference, setPreference] = useState('');
-  const [recommendations, setRecommendations] = useState('');
+  const [recommendations, setRecommendations] = useState(initialRecommendations || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [chatHistory, setChatHistory] = useState([]);
+
+  useEffect(() => {
+    if (onRecommendationsChange) {
+      onRecommendationsChange(recommendations);
+    }
+  }, [recommendations, onRecommendationsChange]);
 
   const handlePreferenceChange = (e) => {
     setPreference(e.target.value);
@@ -39,15 +44,7 @@ const AIRecommender = ({ movies }) => {
         }
       );
 
-      const newRecommendation = {
-        id: Date.now(),
-        preference,
-        response: response.data.recommendations,
-        timestamp: new Date().toISOString()
-      };
-
       setRecommendations(response.data.recommendations);
-      setChatHistory(prev => [newRecommendation, ...prev.slice(0, 4)]);
       setPreference('');
       
       toast.success('Рекомендации получены!');
@@ -59,10 +56,13 @@ const AIRecommender = ({ movies }) => {
     }
   }, [preference, movies]);
 
-  const handleClearHistory = () => {
-    setChatHistory([]);
+  const handleClearRecommendations = () => {
     setRecommendations('');
-    toast('История очищена');
+    if (onRecommendationsChange) {
+      onRecommendationsChange('');
+    }
+    localStorage.removeItem('ai_recommendations');
+    toast('Рекомендации очищены');
   };
 
   const handleExampleClick = () => {
@@ -110,25 +110,40 @@ const AIRecommender = ({ movies }) => {
           <small>AI проанализирует доступные фильмы и даст рекомендации</small>
         </div>
 
-        <button 
-          type="submit" 
-          className="submit-btn"
-          disabled={isLoading || !preference.trim()}
-        >
-          {isLoading ? (
-            <>
-              <FaSpinner className="spinner" />
-              Анализируем...
-            </>
-          ) : (
-            'Получить рекомендации'
+        <div className="form-buttons">
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={isLoading || !preference.trim()}
+          >
+            {isLoading ? (
+              <>
+                <FaSpinner className="spinner" />
+                Анализируем...
+              </>
+            ) : (
+              'Получить рекомендации'
+            )}
+          </button>
+          
+          {recommendations && (
+            <button 
+              type="button" 
+              className="clear-btn"
+              onClick={handleClearRecommendations}
+              disabled={isLoading}
+            >
+              Очистить рекомендации
+            </button>
           )}
-        </button>
+        </div>
       </form>
 
       {recommendations && (
         <div className="recommendations-container">
-          <h4>Рекомендации AI:</h4>
+          <div className="recommendations-header">
+            <h4>Рекомендации AI:</h4>
+          </div>
           <div className="recommendations-content">
             {recommendations.split('\n').map((line, index) => (
               <p key={index} className="recommendation-line">
@@ -138,43 +153,6 @@ const AIRecommender = ({ movies }) => {
           </div>
         </div>
       )}
-
-      <div className="ai-history">
-        <div className="history-header">
-          <button 
-            className="history-toggle"
-            onClick={() => setShowHistory(!showHistory)}
-          >
-            История запросов {showHistory ? '▲' : '▼'}
-          </button>
-          {chatHistory.length > 0 && (
-            <button 
-              className="clear-history-btn"
-              onClick={handleClearHistory}
-            >
-              Очистить
-            </button>
-          )}
-        </div>
-
-        {showHistory && chatHistory.length > 0 && (
-          <div className="history-list">
-            {chatHistory.map((item) => (
-              <div key={item.id} className="history-item">
-                <div className="history-question">
-                  <strong>Вопрос:</strong> {item.preference}
-                </div>
-                <div className="history-response">
-                  <strong>Ответ:</strong> {item.response.substring(0, 100)}...
-                </div>
-                <div className="history-time">
-                  {new Date(item.timestamp).toLocaleTimeString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+// frontend/src/contexts/AuthContext.js - CORRECTED VERSION
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Check for existing token on app load
     const token = localStorage.getItem('token');
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -21,12 +23,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Function to fetch user data from the backend
   const fetchUser = async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`);
       setUser(response.data);
       setIsAuthenticated(true);
     } catch (error) {
+      console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
     } finally {
@@ -34,6 +38,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login function - calls backend API
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
@@ -43,6 +48,7 @@ export const AuthProvider = ({ children }) => {
       
       const { token, user: userData } = response.data;
       
+      // Store token and set auth header
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
@@ -57,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Register function - calls backend API
   const register = async (username, email, password, timezone) => {
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
@@ -82,16 +89,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout function
   const logout = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);
     toast.success('Выход выполнен');
-  };
-
-  const updateUserTimezone = (timezone) => {
-    setUser(prev => ({ ...prev, timezone }));
   };
 
   return (
@@ -103,7 +107,9 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
-        updateUserTimezone
+        updateUserTimezone: (timezone) => {
+          setUser(prev => ({ ...prev, timezone }));
+        }
       }}
     >
       {children}

@@ -1,28 +1,31 @@
-import React, { useState, useEffect } from 'react';
+// frontend/src/pages/Home.js
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FaFilm, FaCalendarAlt, FaTicketAlt, FaStar } from 'react-icons/fa';
+import { FaFilm, FaCalendarAlt, FaTicketAlt, FaStar, FaPlay } from 'react-icons/fa';
 import MovieList from '../components/MovieList';
 import AIRecommender from '../components/AIRecommender';
 import { toast } from 'react-hot-toast';
 import '../styles/pages/Home.css';
 
-// Главная страница с различными обработчиками событий
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
   const [notification, setNotification] = useState('');
+  
+  // Сохраняем рекомендации в localStorage
+  const [aiRecommendations, setAiRecommendations] = useState(
+    localStorage.getItem('ai_recommendations') || ''
+  );
 
   useEffect(() => {
     fetchMovies();
     
-    // Автоматическое скрытие уведомления через 5 секунд (setTimeout пример)
     const notificationTimer = setTimeout(() => {
       setNotification('');
     }, 5000);
 
-    // Периодическое обновление данных каждые 30 секунд
     const updateTimer = setInterval(() => {
       fetchMovies();
     }, 30000);
@@ -42,7 +45,6 @@ const Home = () => {
       
       setMovies(response.data.movies);
       
-      // Выбираем случайный фильм для показа на главной
       if (response.data.movies.length > 0) {
         const randomIndex = Math.floor(Math.random() * response.data.movies.length);
         setFeaturedMovie(response.data.movies[randomIndex]);
@@ -57,13 +59,19 @@ const Home = () => {
     }
   };
 
-  const handleTrailerClick = () => {
-    setShowTrailer(!showTrailer);
+  const handleTrailerClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowTrailer(true);
   };
 
-  const handleQuickBooking = async (movieId) => {
+  const handleQuickBooking = async (movieId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     try {
-      // Здесь будет логика быстрого бронирования
       toast.success('Функция быстрого бронирования скоро будет доступна!');
     } catch (error) {
       toast.error('Ошибка бронирования');
@@ -79,10 +87,9 @@ const Home = () => {
       return;
     }
     
-    // Сохранение в localStorage (Promise пример)
     new Promise((resolve) => {
       localStorage.setItem('newsletter_email', email);
-      setTimeout(() => resolve(), 1000); // Имитация асинхронной операции
+      setTimeout(() => resolve(), 1000);
     })
     .then(() => {
       toast.success('Вы успешно подписались на рассылку!');
@@ -91,6 +98,11 @@ const Home = () => {
     .catch(() => {
       toast.error('Ошибка подписки');
     });
+  };
+
+  const saveAIRecommendations = (recommendations) => {
+    setAiRecommendations(recommendations);
+    localStorage.setItem('ai_recommendations', recommendations);
   };
 
   if (loading) {
@@ -104,7 +116,6 @@ const Home = () => {
 
   return (
     <div className="home-page">
-      {/* Hero секция */}
       {featuredMovie && (
         <section className="hero-section">
           <div className="hero-content">
@@ -118,16 +129,18 @@ const Home = () => {
             <div className="hero-actions">
               <button 
                 className="btn btn-primary"
-                onClick={() => handleQuickBooking(featuredMovie._id)}
+                onClick={(e) => handleQuickBooking(featuredMovie._id, e)}
               >
                 <FaTicketAlt /> Забронировать
               </button>
-              <button 
-                className="btn btn-secondary"
-                onClick={handleTrailerClick}
-              >
-                Смотреть трейлер
-              </button>
+              {featuredMovie.trailer && (
+                <button 
+                  className="btn btn-secondary"
+                  onClick={handleTrailerClick}
+                >
+                  <FaPlay /> Смотреть трейлер
+                </button>
+              )}
             </div>
           </div>
           <div className="hero-poster">
@@ -139,18 +152,19 @@ const Home = () => {
         </section>
       )}
 
-      {/* AI рекомендации */}
       <section className="ai-section">
-        <AIRecommender movies={movies} />
+        <AIRecommender 
+          movies={movies} 
+          onRecommendationsChange={saveAIRecommendations}
+          initialRecommendations={aiRecommendations}
+        />
       </section>
 
-      {/* Список фильмов */}
       <section className="movies-section">
         <h2>Сейчас в кино</h2>
         <MovieList movies={movies} />
       </section>
 
-      {/* Новостная рассылка */}
       <section className="newsletter-section">
         <h2>Подпишитесь на новости</h2>
         <form onSubmit={handleNewsletterSignup} className="newsletter-form">
@@ -166,11 +180,39 @@ const Home = () => {
         </form>
       </section>
 
-      {/* Уведомление */}
       {notification && (
         <div className="notification">
           {notification}
           <button onClick={() => setNotification('')}>×</button>
+        </div>
+      )}
+
+      {showTrailer && featuredMovie?.trailer && (
+        <div className="trailer-modal-overlay">
+          <div className="trailer-modal">
+            <div className="trailer-modal-header">
+              <h3>Трейлер: {featuredMovie.title}</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowTrailer(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="trailer-modal-content">
+              <video 
+                controls 
+                autoPlay 
+                className="trailer-video"
+              >
+                <source 
+                  src={`${process.env.REACT_APP_API_URL}/uploads/trailers/${featuredMovie.trailer}`} 
+                  type="video/mp4" 
+                />
+                Ваш браузер не поддерживает видео.
+              </video>
+            </div>
+          </div>
         </div>
       )}
     </div>

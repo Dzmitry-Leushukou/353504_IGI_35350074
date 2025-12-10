@@ -15,7 +15,7 @@ const movieSchema = new mongoose.Schema({
     required: true
   },
   duration: {
-    type: Number, // minutes
+    type: Number,
     required: true
   },
   rating: {
@@ -37,8 +37,8 @@ const movieSchema = new mongoose.Schema({
     required: true
   },
   trailer: {
-    type: Buffer,
-    contentType: String
+    type: String,
+    default: ''
   },
   trailerUrl: {
     type: String

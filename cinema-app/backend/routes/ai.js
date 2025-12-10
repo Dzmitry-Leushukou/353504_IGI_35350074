@@ -24,48 +24,55 @@ router.post('/recommend', [
       ? `У меня есть фильмы: ${movieList}. Я хочу посмотреть фильм ${preference}. Какие из перечисленных ты порекомендуешь? Объясни свой выбор кратко.`
       : `У меня есть фильмы: ${movieList}. Какие ты порекомендуешь посмотреть и почему?`;
     
-    // Call Poe API
-    const response = await axios.post(
-      `${process.env.POE_API_URL}/chat`,
-      {
-        messages: [
-          {
-            role: "user",
-            content: prompt
+    // Try to call Poe API
+    try {
+      const response = await axios.post(
+        'https://api.poe.com/bot/fetch',
+        {
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          bot: "chinchilla",
+          stream: false
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.POE_API_KEY}`,
+            'Content-Type': 'application/json'
           }
-        ],
-        model: "claude-3-haiku",
-        stream: false
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.POE_API_KEY}`,
-          'Content-Type': 'application/json'
         }
-      }
-    );
-    
-    // Parse response
-    const recommendations = response.data.choices[0].message.content;
-    
-    // Mock response for development (if API key not available)
-    // const recommendations = `Based on your preference "${preference}", I recommend:\n1. EuroTrip - Perfect for travel comedy\n2. The Lord of the Rings - Epic journey fantasy\n3. 1+1 - Emotional journey of friendship\n\nThese films best capture the essence of journey and adventure.`;
-    
-    res.json({
-      recommendations,
-      timestamp: new Date().toISOString()
-    });
+      );
+      
+      // Parse response
+      const recommendations = response.data.choices?.[0]?.message?.content || 'Рекомендации недоступны';
+      
+      res.json({
+        recommendations,
+        timestamp: new Date().toISOString()
+      });
+    } catch (apiError) {
+      console.error('Poe API error:', apiError.message);
+      
+      // Fallback mock response
+      const mockRecommendations = `На основе вашего предпочтения "${preference}", я рекомендую:\n1. Евротур - комедия о путешествиях по Европе\n2. Властелин колец - эпическое фэнтези путешествие\n3. 1+1 - эмоциональное путешествие дружбы\n\nПричина: эти фильмы лучше всего соответствуют теме путешествия и приключений.`;
+      
+      res.json({
+        recommendations: mockRecommendations,
+        timestamp: new Date().toISOString(),
+        note: 'Mock response (Poe API недоступна)'
+      });
+    }
     
   } catch (error) {
-    console.error('Poe API error:', error.message);
+    console.error('AI recommendation error:', error.message);
     
-    // Fallback mock response
-    const mockRecommendations = `Based on your preference "${req.body.preference}", I recommend:\n1. EuroTrip - Travel comedy across Europe\n2. The Lord of the Rings - Epic fantasy journey\n3. 1+1 - Emotional journey of friendship\n\nReason: These films best match the theme of journey and adventure.`;
-    
+    // Generic fallback
     res.json({
-      recommendations: mockRecommendations,
-      timestamp: new Date().toISOString(),
-      note: 'Mock response (Poe API not configured)'
+      recommendations: 'Извините, сервис рекомендаций временно недоступен. Пожалуйста, попробуйте позже.',
+      timestamp: new Date().toISOString()
     });
   }
 });
@@ -82,12 +89,12 @@ router.post('/analyze-preference', authMiddleware, async (req, res) => {
     
     // Mock AI analysis for development
     const analysis = {
-      preferredGenres: ['Adventure', 'Comedy', 'Drama'],
-      preferredThemes: ['Journey', 'Friendship', 'Self-discovery'],
+      preferredGenres: ['Приключения', 'Комедия', 'Драма'],
+      preferredThemes: ['Путешествие', 'Дружба', 'Саморазвитие'],
       recommendations: [
-        'The Secret Life of Walter Mitty',
-        'Into the Wild',
-        'The Bucket List'
+        'Тайная жизнь Уолтера Митти',
+        'В диких условиях',
+        'Пока не сыграл в ящик'
       ],
       confidenceScore: 0.85
     };
@@ -95,7 +102,7 @@ router.post('/analyze-preference', authMiddleware, async (req, res) => {
     res.json(analysis);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'AI analysis failed' });
+    res.status(500).json({ message: 'Ошибка анализа предпочтений' });
   }
 });
 

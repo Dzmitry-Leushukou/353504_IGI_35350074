@@ -17,17 +17,24 @@ router.get('/my-orders', authMiddleware, [
   try {
     const { status, sort = '-createdAt', page = 1, limit = 10 } = req.query;
     
-    let query = { user: req.userId };
+    let queryObj = { user: req.userId };
     
     // Filter by status
     if (status) {
-      query.status = status;
+      if (status === 'paid') {
+        queryObj.isPaid = true;
+      } else if (status === 'pending') {
+        queryObj.status = 'confirmed';
+        queryObj.isPaid = false;
+      } else {
+        queryObj.status = status;
+      }
     }
     
     const skip = (page - 1) * limit;
     
-    const orders = await Order.find(query)
-      .populate('movie', 'title poster duration')
+    const orders = await Order.find(queryObj)
+      .populate('movie', 'title poster duration price')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
@@ -44,22 +51,22 @@ router.get('/my-orders', authMiddleware, [
         .tz(userTimezone)
         .format('YYYY-MM-DD HH:mm');
       
-      orderObj.orderDateLocal = moment(order.orderDate)
+      orderObj.orderDateLocal = moment(order.createdAt)
         .tz(userTimezone)
-        .format('YYYY-MM-DD HH:mm');
+        .format('YYYY-MM-DD HH:mm:ss');
       
       orderObj.showDateUTC = moment(order.showDate)
         .utc()
         .format('YYYY-MM-DD HH:mm');
       
-      orderObj.orderDateUTC = moment(order.orderDate)
+      orderObj.orderDateUTC = moment(order.createdAt)
         .utc()
-        .format('YYYY-MM-DD HH:mm');
+        .format('YYYY-MM-DD HH:mm:ss');
       
       return orderObj;
     });
     
-    const total = await Order.countDocuments(query);
+    const total = await Order.countDocuments(queryObj);
     
     res.json({
       orders: ordersWithLocalTime,
@@ -82,7 +89,8 @@ router.post('/', authMiddleware, [
   body('sessionId').notEmpty(),
   body('seats').isArray({ min: 1 }),
   body('showDate').isISO8601(),
-  body('showTime').notEmpty()
+  body('showTime').notEmpty(),
+  body('totalPrice').isNumeric()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -90,26 +98,37 @@ router.post('/', authMiddleware, [
       return res.status(400).json({ errors: errors.array() });
     }
     
-    const { movieId, sessionId, seats, showDate, showTime } = req.body;
+    const { movieId, sessionId, seats, showDate, showTime, totalPrice } = req.body;
     
     // Get movie
     const movie = await Movie.findById(movieId);
-    if (!movie || !movie.isActive) {
-      return res.status(404).json({ message: 'Movie not found' });
+    if (!movie) {
+      return res.status(404).json({ message: 'Фильм не найден' });
     }
     
-    // Check session availability
-    const session = movie.sessions.find(s => s._id.toString() === sessionId);
+    // Find the session
+    const session = movie.sessions.id(sessionId);
     if (!session) {
-      return res.status(400).json({ message: 'Session not found' });
+      return res.status(400).json({ message: 'Сеанс не найден' });
     }
     
+    // Check available seats
     if (session.availableSeats < seats.length) {
-      return res.status(400).json({ message: 'Not enough seats available' });
+      return res.status(400).json({ message: 'Недостаточно свободных мест' });
     }
     
-    // Calculate price
-    const totalPrice = movie.price * seats.length;
+    // Check if seats are already taken
+    const existingOrders = await Order.find({
+      movie: movieId,
+      sessionId: sessionId,
+      showDate: new Date(showDate),
+      showTime: showTime,
+      seats: { $in: seats }
+    });
+    
+    if (existingOrders.length > 0) {
+      return res.status(400).json({ message: 'Некоторые места уже заняты' });
+    }
     
     // Create order
     const order = new Order({
@@ -118,9 +137,11 @@ router.post('/', authMiddleware, [
       sessionId,
       seats,
       totalPrice,
+      status: 'confirmed',
+      isPaid: false,
       showDate: new Date(showDate),
       showTime,
-      status: 'pending'
+      paymentMethod: 'online'
     });
     
     await order.save();
@@ -131,12 +152,50 @@ router.post('/', authMiddleware, [
     
     // Populate movie data in response
     const populatedOrder = await Order.findById(order._id)
-      .populate('movie', 'title poster duration');
+      .populate('movie', 'title poster duration price');
     
-    res.status(201).json(populatedOrder);
+    res.status(201).json({
+      message: 'Заказ успешно создан',
+      order: populatedOrder
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+});
+
+// Pay order (authenticated)
+router.put('/:id/pay', authMiddleware, async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.userId
+    }).populate('movie', 'title poster');
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Заказ не найден' });
+    }
+    
+    if (order.isPaid) {
+      return res.status(400).json({ message: 'Заказ уже оплачен' });
+    }
+    
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ message: 'Нельзя оплатить отмененный заказ' });
+    }
+    
+    // Update payment status
+    order.isPaid = true;
+    order.paymentDate = new Date();
+    await order.save();
+    
+    res.json({
+      message: 'Заказ успешно оплачен',
+      order
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
@@ -149,11 +208,15 @@ router.put('/:id/cancel', authMiddleware, async (req, res) => {
     }).populate('movie');
     
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: 'Заказ не найден' });
     }
     
     if (order.status === 'cancelled') {
-      return res.status(400).json({ message: 'Order already cancelled' });
+      return res.status(400).json({ message: 'Заказ уже отменен' });
+    }
+    
+    if (order.status === 'completed') {
+      return res.status(400).json({ message: 'Нельзя отменить завершенный заказ' });
     }
     
     // Update order status
@@ -170,10 +233,13 @@ router.put('/:id/cancel', authMiddleware, async (req, res) => {
       }
     }
     
-    res.json(order);
+    res.json({
+      message: 'Заказ отменен',
+      order
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 
@@ -186,13 +252,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }).populate('movie', 'title poster duration price');
     
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: 'Заказ не найден' });
     }
     
     res.json(order);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 });
 

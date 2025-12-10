@@ -40,6 +40,7 @@ const movies = [
     actors: ["Дэниел Рэдклифф", "Руперт Гринт", "Эмма Уотсон", "Ричард Харрис"],
     price: 350,
     poster: "harry-potter.jpg",
+    trailer: "harry-potter-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-20'), 
@@ -68,6 +69,7 @@ const movies = [
     actors: ["Элайджа Вуд", "Иэн Маккеллен", "Вигго Мортенсен", "Шон Эстин"],
     price: 400,
     poster: "lotr.jpg",
+    trailer: "lotr-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-21'), 
@@ -89,6 +91,7 @@ const movies = [
     actors: ["Франсуа Клюзе", "Омар Си"],
     price: 300,
     poster: "intouchables.jpg",
+    trailer: "intouchables-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-22'), 
@@ -110,6 +113,7 @@ const movies = [
     actors: ["Скотт Мечовиц", "Джейкоб Питтс", "Мишель Трахтенберг"],
     price: 250,
     poster: "eurotrip.jpg",
+    trailer: "eurotrip-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-20'), 
@@ -131,6 +135,7 @@ const movies = [
     actors: ["Мэттью Макконахи", "Энн Хэтэуэй", "Джессика Честейн"],
     price: 450,
     poster: "interstellar.jpg",
+    trailer: "interstellar-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-23'), 
@@ -152,6 +157,7 @@ const movies = [
     actors: ["Леонардо ДиКаприо", "Джозеф Гордон-Левитт", "Эллен Пейдж"],
     price: 380,
     poster: "inception.jpg",
+    trailer: "inception-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-24'), 
@@ -173,6 +179,7 @@ const movies = [
     actors: ["Тим Роббинс", "Морган Фриман", "Боб Гантон"],
     price: 320,
     poster: "shawshank.jpg",
+    trailer: "shawshank-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-25'), 
@@ -194,6 +201,7 @@ const movies = [
     actors: ["Марлон Брандо", "Аль Пачино", "Джеймс Каан"],
     price: 370,
     poster: "godfather.jpg",
+    trailer: "godfather-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-26'), 
@@ -215,6 +223,7 @@ const movies = [
     actors: ["Кристиан Бэйл", "Хит Леджер", "Аарон Экхарт"],
     price: 420,
     poster: "dark-knight.jpg",
+    trailer: "dark-knight-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-27'), 
@@ -236,6 +245,7 @@ const movies = [
     actors: ["Том Хэнкс", "Робин Райт", "Гэри Синиз"],
     price: 350,
     poster: "forrest-gump.jpg",
+    trailer: "forrest-gump-trailer.mp4",
     sessions: [
       { 
         date: new Date('2024-12-28'), 
@@ -288,6 +298,8 @@ async function seedDatabase() {
         seats: ["A1", "A2", "A3"],
         totalPrice: createdMovies[0].price * 3,
         status: "confirmed",
+        isPaid: true,
+        paymentDate: new Date(),
         paymentMethod: "online",
         showDate: createdMovies[0].sessions[0].date,
         showTime: createdMovies[0].sessions[0].time
@@ -298,7 +310,8 @@ async function seedDatabase() {
         sessionId: createdMovies[1].sessions[0]._id.toString(),
         seats: ["B5", "B6"],
         totalPrice: createdMovies[1].price * 2,
-        status: "pending",
+        status: "confirmed",
+        isPaid: false,
         paymentMethod: "card",
         showDate: createdMovies[1].sessions[0].date,
         showTime: createdMovies[1].sessions[0].time
@@ -310,6 +323,8 @@ async function seedDatabase() {
         seats: ["C10"],
         totalPrice: createdMovies[2].price,
         status: "completed",
+        isPaid: true,
+        paymentDate: new Date(),
         paymentMethod: "cash",
         showDate: createdMovies[2].sessions[0].date,
         showTime: createdMovies[2].sessions[0].time

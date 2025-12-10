@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Добавляем useCallback
+// frontend/src/pages/MovieDetail.js
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
@@ -9,7 +10,9 @@ import {
   FaFilm,
   FaArrowLeft,
   FaUser,
-  FaMoneyBillWave
+  FaMoneyBillWave,
+  FaPlay,
+  FaCreditCard
 } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +28,7 @@ const MovieDetail = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   const fetchMovie = useCallback(async () => {
     try {
@@ -44,7 +48,7 @@ const MovieDetail = () => {
 
   useEffect(() => {
     fetchMovie();
-  }, [fetchMovie]); // Теперь fetchMovie в зависимостях
+  }, [fetchMovie]);
 
   const handleSessionSelect = (session) => {
     setSelectedSession(session);
@@ -82,10 +86,11 @@ const MovieDetail = () => {
         sessionId: selectedSession._id,
         seats: selectedSeats,
         showDate: selectedSession.date,
-        showTime: selectedSession.time
+        showTime: selectedSession.time,
+        totalPrice: selectedSeats.length * movie.price
       };
 
-      await axios.post(
+      const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/orders`,
         orderData
       );
@@ -97,7 +102,7 @@ const MovieDetail = () => {
       
       setTimeout(() => {
         navigate('/my-orders');
-      }, 3000);
+      }, 2000);
       
     } catch (error) {
       console.error('Booking error:', error);
@@ -188,9 +193,19 @@ const MovieDetail = () => {
             </div>
             <div className="info-item">
               <FaMoneyBillWave className="icon" />
-              <span>Цена: от {movie.price} ₽</span>
+              <span>Цена: {movie.price} ₽</span>
             </div>
           </div>
+
+          {movie.trailer && (
+            <button 
+              className="btn btn-primary trailer-btn"
+              onClick={() => setShowTrailer(true)}
+              style={{ width: '100%', marginTop: '20px' }}
+            >
+              <FaPlay /> Смотреть трейлер
+            </button>
+          )}
         </div>
 
         <div className="movie-info-section">
@@ -245,6 +260,9 @@ const MovieDetail = () => {
                     <div className="session-seats">
                       Свободно: {session.availableSeats}/{session.totalSeats}
                     </div>
+                    <div className="session-price">
+                      {movie.price} ₽/место
+                    </div>
                   </div>
                 ))}
               </div>
@@ -262,7 +280,7 @@ const MovieDetail = () => {
             
             <div className="booking-info">
               <p><strong>Фильм:</strong> {movie.title}</p>
-              <p><strong>Дата:</strong> {new Date(selectedSession.date).toLocaleDateString()}</p>
+              <p><strong>Дата:</strong> {new Date(selectedSession.date).toLocaleDateString('ru-RU')}</p>
               <p><strong>Время:</strong> {selectedSession.time}</p>
               <p><strong>Зал:</strong> {selectedSession.hall}</p>
             </div>
@@ -320,6 +338,35 @@ const MovieDetail = () => {
               >
                 <FaTicketAlt /> Забронировать ({selectedSeats.length * movie.price} ₽)
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTrailer && movie.trailer && (
+        <div className="trailer-modal-overlay">
+          <div className="trailer-modal">
+            <div className="trailer-modal-header">
+              <h3>Трейлер: {movie.title}</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowTrailer(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="trailer-modal-content">
+              <video 
+                controls 
+                autoPlay 
+                className="trailer-video"
+              >
+                <source 
+                  src={`${process.env.REACT_APP_API_URL}/uploads/trailers/${movie.trailer}`} 
+                  type="video/mp4" 
+                />
+                Ваш браузер не поддерживает видео.
+              </video>
             </div>
           </div>
         </div>
