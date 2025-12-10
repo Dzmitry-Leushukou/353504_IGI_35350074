@@ -27,5 +27,16 @@ services:
       - MONGO_URI=mongodb://cinema_user:cinema_password@mongodb:27017/cinema-app
     restart: always
 
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: cinema-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
+    restart: always
+
 volumes:
   mongodb_data:
