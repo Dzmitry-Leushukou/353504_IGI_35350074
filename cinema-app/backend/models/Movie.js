@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const sessionSchema = new mongoose.Schema({
+  date: Date,
+  time: String,
+  hall: String,
+  availableSeats: Number,
+  totalSeats: Number,
+  bookedSeats: { type: [String], default: [] } // Добавляем массив занятых мест
+});
+
 const movieSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -52,13 +61,7 @@ const movieSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  sessions: [{
-    date: Date,
-    time: String,
-    hall: String,
-    availableSeats: Number,
-    totalSeats: Number
-  }],
+  sessions: [sessionSchema],
   isActive: {
     type: Boolean,
     default: true

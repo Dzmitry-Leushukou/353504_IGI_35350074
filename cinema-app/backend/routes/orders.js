@@ -83,7 +83,7 @@ router.get('/my-orders', authMiddleware, [
   }
 });
 
-// Create order (authenticated)
+// Create order (authenticated) - ОБНОВЛЕННЫЙ с учетом bookedSeats
 router.post('/', authMiddleware, [
   body('movieId').isMongoId(),
   body('sessionId').notEmpty(),
@@ -117,17 +117,12 @@ router.post('/', authMiddleware, [
       return res.status(400).json({ message: 'Недостаточно свободных мест' });
     }
     
-    // Check if seats are already taken
-    const existingOrders = await Order.find({
-      movie: movieId,
-      sessionId: sessionId,
-      showDate: new Date(showDate),
-      showTime: showTime,
-      seats: { $in: seats }
-    });
-    
-    if (existingOrders.length > 0) {
-      return res.status(400).json({ message: 'Некоторые места уже заняты' });
+    // Check if seats are already booked in the session
+    const alreadyBooked = seats.filter(seat => session.bookedSeats.includes(seat));
+    if (alreadyBooked.length > 0) {
+      return res.status(400).json({ 
+        message: `Места ${alreadyBooked.join(', ')} уже заняты` 
+      });
     }
     
     // Create order
@@ -146,7 +141,8 @@ router.post('/', authMiddleware, [
     
     await order.save();
     
-    // Update available seats
+    // Update booked seats and available seats
+    session.bookedSeats = [...session.bookedSeats, ...seats];
     session.availableSeats -= seats.length;
     await movie.save();
     
@@ -199,7 +195,7 @@ router.put('/:id/pay', authMiddleware, async (req, res) => {
   }
 });
 
-// Cancel order (authenticated)
+// Cancel order (authenticated) - ОБНОВЛЕННЫЙ с учетом bookedSeats
 router.put('/:id/cancel', authMiddleware, async (req, res) => {
   try {
     const order = await Order.findOne({
@@ -228,6 +224,10 @@ router.put('/:id/cancel', authMiddleware, async (req, res) => {
     if (movie) {
       const session = movie.sessions.id(order.sessionId);
       if (session) {
+        // Remove seats from bookedSeats
+        session.bookedSeats = session.bookedSeats.filter(
+          seat => !order.seats.includes(seat)
+        );
         session.availableSeats += order.seats.length;
         await movie.save();
       }

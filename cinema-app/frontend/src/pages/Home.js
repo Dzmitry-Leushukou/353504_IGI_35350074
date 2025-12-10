@@ -1,5 +1,6 @@
 // frontend/src/pages/Home.js
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaFilm, FaCalendarAlt, FaTicketAlt, FaStar, FaPlay } from 'react-icons/fa';
 import MovieList from '../components/MovieList';
@@ -13,6 +14,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
   const [notification, setNotification] = useState('');
+  const navigate = useNavigate();
   
   // Сохраняем рекомендации в localStorage
   const [aiRecommendations, setAiRecommendations] = useState(
@@ -65,17 +67,13 @@ const Home = () => {
     setShowTrailer(true);
   };
 
-  const handleQuickBooking = async (movieId, e) => {
+  // ФИКС: Кнопка "Забронировать" ведет на страницу фильма
+  const handleQuickBooking = (movieId, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    
-    try {
-      toast.success('Функция быстрого бронирования скоро будет доступна!');
-    } catch (error) {
-      toast.error('Ошибка бронирования');
-    }
+    navigate(`/movies/${movieId}`);
   };
 
   const handleNewsletterSignup = async (e) => {
@@ -127,6 +125,7 @@ const Home = () => {
               <span><FaFilm /> {featuredMovie.genre[0]}</span>
             </div>
             <div className="hero-actions">
+              {/* ФИКС: Кнопка теперь ведет на страницу фильма */}
               <button 
                 className="btn btn-primary"
                 onClick={(e) => handleQuickBooking(featuredMovie._id, e)}
@@ -147,6 +146,9 @@ const Home = () => {
             <img 
               src={`${process.env.REACT_APP_API_URL}/uploads/${featuredMovie.poster}`} 
               alt={featuredMovie.title}
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/400x600?text=No+Poster';
+              }}
             />
           </div>
         </section>

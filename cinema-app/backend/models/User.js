@@ -28,13 +28,17 @@ const userSchema = new mongoose.Schema({
   },
   timezone: {
     type: String,
-    default: 'UTC'
+    default: 'Europe/Moscow'
   },
   avatar: {
     type: String
   },
   googleId: {
     type: String
+  },
+  isGoogleAuth: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,
@@ -48,9 +52,9 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving (только если не Google auth и пароль изменился)
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password') || this.isGoogleAuth) return next();
   
   try {
     const salt = await bcrypt.genSalt(10);
@@ -63,6 +67,10 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
+  if (this.isGoogleAuth) {
+    // Для Google-пользователей пароль не используется
+    return false;
+  }
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

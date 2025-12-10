@@ -1,74 +1,67 @@
-// frontend/src/App.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Movies from './pages/Movies';
+import MovieDetail from './pages/MovieDetail';
 import About from './pages/About';
-import MyOrders from './pages/MyOrders';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import MovieDetail from './pages/MovieDetail';
+import MyOrders from './pages/MyOrders';
+import Admin from './pages/Admin'; // Добавляем импорт Admin
 import GoogleCallback from './pages/GoogleCallback';
-import { useAuth } from './contexts/AuthContext';
 import './styles/App.css';
+import './styles/index.css';
 
 function App() {
-  const { isAuthenticated } = useAuth();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-  
   return (
-    <Router>
-      <div className="app">
-        <Toaster position="top-right" />
-        <Navbar currentTime={currentTime} />
-        
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/movies" element={<Movies />} />
-            <Route path="/movies/:id" element={<MovieDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route 
-              path="/my-orders" 
-              element={
-                isAuthenticated ? <MyOrders /> : <Navigate to="/login" />
-              } 
-            />
-            <Route 
-              path="/login" 
-              element={
-                !isAuthenticated ? <Login /> : <Navigate to="/" />
-              } 
-            />
-            <Route 
-              path="/register" 
-              element={
-                !isAuthenticated ? <Register /> : <Navigate to="/" />
-              } 
-            />
-            <Route path="/auth/google/callback" element={<GoogleCallback />} />
-          </Routes>
-        </main>
-        
-        <footer className="footer">
-          <div className="footer-content">
-            <p>Кинотеатр &copy; {new Date().getFullYear()}</p>
-            <p>Текущее время: {currentTime.toLocaleTimeString()}</p>
-            <p>Версия: 1.0.0</p>
-          </div>
-        </footer>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Navbar currentTime={new Date()} />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/movies" element={<Movies />} />
+              <Route path="/movies/:id" element={<MovieDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="/admin" element={<Admin />} /> {/* Добавляем маршрут */}
+              <Route path="/google-callback" element={<GoogleCallback />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: '#48bb78',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                duration: 4000,
+                iconTheme: {
+                  primary: '#f56565',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
