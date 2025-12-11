@@ -119,7 +119,42 @@ router.post('/', authMiddleware, upload.fields([
 ]), [
   body('title').notEmpty(),
   body('description').notEmpty(),
-  body('genre').isArray(),
+  body('genre').custom((value) => {
+    // Validate that genre is either an array or a valid JSON string representing an array
+    if (Array.isArray(value)) {
+      return true;
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return true;
+        }
+        throw new Error('Genre must be an array or a JSON string representing an array');
+      } catch (e) {
+        throw new Error('Invalid JSON format for genre');
+      }
+    }
+    throw new Error('Genre must be an array or a JSON string representing an array');
+  }),
+  body('actors').optional().custom((value) => {
+    // Validate that actors is either an array or a valid JSON string representing an array
+    if (Array.isArray(value)) {
+      return true;
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return true;
+        }
+        throw new Error('Actors must be an array or a JSON string representing an array');
+      } catch (e) {
+        throw new Error('Invalid JSON format for actors');
+      }
+    }
+    throw new Error('Actors must be an array or a JSON string representing an array');
+  }),
   body('duration').isInt({ min: 1 }),
   body('year').isInt({ min: 1900, max: new Date().getFullYear() }),
   body('director').notEmpty(),
@@ -172,7 +207,68 @@ router.post('/', authMiddleware, upload.fields([
 router.put('/:id', authMiddleware, upload.fields([
   { name: 'poster', maxCount: 1 },
   { name: 'trailer', maxCount: 1 }
-]), async (req, res) => {
+]), [
+  body('title').optional().notEmpty(),
+  body('description').optional().notEmpty(),
+  body('genre').optional().custom((value) => {
+    // Validate that genre is either an array or a valid JSON string representing an array
+    if (Array.isArray(value)) {
+      return true;
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return true;
+        }
+        throw new Error('Genre must be an array or a JSON string representing an array');
+      } catch (e) {
+        throw new Error('Invalid JSON format for genre');
+      }
+    }
+    throw new Error('Genre must be an array or a JSON string representing an array');
+  }),
+  body('actors').optional().custom((value) => {
+    // Validate that actors is either an array or a valid JSON string representing an array
+    if (Array.isArray(value)) {
+      return true;
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return true;
+        }
+        throw new Error('Actors must be an array or a JSON string representing an array');
+      } catch (e) {
+        throw new Error('Invalid JSON format for actors');
+      }
+    }
+    throw new Error('Actors must be an array or a JSON string representing an array');
+  }),
+  body('sessions').optional().custom((value) => {
+    // Validate that sessions is either an array or a valid JSON string representing an array
+    if (Array.isArray(value)) {
+      return true;
+    }
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return true;
+        }
+        throw new Error('Sessions must be an array or a JSON string representing an array');
+      } catch (e) {
+        throw new Error('Invalid JSON format for sessions');
+      }
+    }
+    throw new Error('Sessions must be an array or a JSON string representing an array');
+  }),
+  body('duration').optional().isInt({ min: 1 }),
+  body('year').optional().isInt({ min: 1900, max: new Date().getFullYear() }),
+  body('director').optional().notEmpty(),
+  body('price').optional().isFloat({ min: 0 })
+], async (req, res) => {
   try {
     if (req.userRole !== 'admin') {
       return res.status(403).json({ message: 'Требуются права администратора' });

@@ -124,11 +124,16 @@ async function seedDatabase() {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://admin:password123@localhost:27017/cinema_db?authSource=admin');
     console.log('Connected to MongoDB for seeding');
 
-    // Очищаем базу данных
-    await User.deleteMany({});
-    await Movie.deleteMany({});
-    await Order.deleteMany({});
-    console.log('Cleared existing data');
+    // Проверяем, есть ли уже данные в коллекциях
+    const userCount = await User.countDocuments();
+    const movieCount = await Movie.countDocuments();
+    const orderCount = await Order.countDocuments();
+
+    if (userCount > 0 || movieCount > 0 || orderCount > 0) {
+      console.log('Database already seeded. Skipping seeding process.');
+      console.log(`Found: ${userCount} users, ${movieCount} movies, ${orderCount} orders`);
+      return;
+    }
 
     console.log('Starting seeding process...');
 
