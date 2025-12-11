@@ -56,15 +56,6 @@ const AIRecommender = ({ movies, onRecommendationsChange, initialRecommendations
     }
   }, [preference, movies]);
 
-  const handleClearRecommendations = () => {
-    setRecommendations('');
-    if (onRecommendationsChange) {
-      onRecommendationsChange('');
-    }
-    localStorage.removeItem('ai_recommendations');
-    toast('Рекомендации очищены');
-  };
-
   const handleExampleClick = () => {
     const examples = [
       'про путешествие',
@@ -125,17 +116,7 @@ const AIRecommender = ({ movies, onRecommendationsChange, initialRecommendations
               'Получить рекомендации'
             )}
           </button>
-          
-          {recommendations && (
-            <button 
-              type="button" 
-              className="clear-btn"
-              onClick={handleClearRecommendations}
-              disabled={isLoading}
-            >
-              Очистить рекомендации
-            </button>
-          )}
+          {/* Убрана кнопка очистки рекомендаций */}
         </div>
       </form>
 

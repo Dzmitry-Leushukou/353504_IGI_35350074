@@ -1,5 +1,5 @@
 // frontend/src/pages/Home.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaFilm, FaCalendarAlt, FaTicketAlt, FaStar, FaPlay } from 'react-icons/fa';
@@ -67,7 +67,6 @@ const Home = () => {
     setShowTrailer(true);
   };
 
-  // ФИКС: Кнопка "Забронировать" ведет на страницу фильма
   const handleQuickBooking = (movieId, e) => {
     if (e) {
       e.preventDefault();
@@ -125,7 +124,6 @@ const Home = () => {
               <span><FaFilm /> {featuredMovie.genre[0]}</span>
             </div>
             <div className="hero-actions">
-              {/* ФИКС: Кнопка теперь ведет на страницу фильма */}
               <button 
                 className="btn btn-primary"
                 onClick={(e) => handleQuickBooking(featuredMovie._id, e)}
