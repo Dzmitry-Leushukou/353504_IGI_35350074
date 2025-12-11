@@ -1,5 +1,5 @@
 // frontend/src/pages/MovieDetail.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
@@ -12,7 +12,12 @@ import {
   FaUser,
   FaMoneyBillWave,
   FaPlay,
-  FaCreditCard
+  FaCreditCard,
+  FaPause,
+  FaVolumeUp,
+  FaVolumeMute,
+  FaDownload,
+  FaSpinner
 } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,6 +34,33 @@ const MovieDetail = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
+  
+  // Состояния для XMLHttpRequest загрузки
+  const [trailerLoading, setTrailerLoading] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [totalSize, setTotalSize] = useState(0);
+  const [loadedSize, setLoadedSize] = useState(0);
+  const [bufferingProgress, setBufferingProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [videoBlobUrl, setVideoBlobUrl] = useState(null);
+  const [xhrStatus, setXhrStatus] = useState('Ожидание...');
+  
+  // Детали загрузки для отображения
+  const [xhrDetails, setXhrDetails] = useState({
+    loaded: '0 B',
+    total: '0 B',
+    speed: '0 B/сек'
+  });
+
+  const videoRef = useRef(null);
+  const xhrRef = useRef(null);
+  const startTimeRef = useRef(0);
 
   const fetchMovie = useCallback(async () => {
     try {
@@ -48,6 +80,16 @@ const MovieDetail = () => {
 
   useEffect(() => {
     fetchMovie();
+    
+    return () => {
+      // Очистка при размонтировании
+      if (videoBlobUrl) {
+        URL.revokeObjectURL(videoBlobUrl);
+      }
+      if (xhrRef.current) {
+        xhrRef.current.abort();
+      }
+    };
   }, [fetchMovie]);
 
   const handleSessionSelect = (session) => {
@@ -118,10 +160,9 @@ const MovieDetail = () => {
   const generateSeats = (totalSeats, availableSeats, bookedSeats = []) => {
     const seats = [];
     
-    // Создаем массив всех мест
     for (let i = 1; i <= totalSeats; i++) {
       const seatNumber = `A${i}`;
-      const isBooked = bookedSeats.includes(seatNumber); // Проверяем в bookedSeats
+      const isBooked = bookedSeats.includes(seatNumber);
       const isSelected = selectedSeats.includes(seatNumber);
       
       seats.push(
@@ -138,6 +179,295 @@ const MovieDetail = () => {
     }
     
     return seats;
+  };
+
+  // Исправленная функция formatBytes
+  const formatBytes = (bytes) => {
+    if (isNaN(bytes) || bytes === 0 || bytes === undefined) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const value = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
+    return isNaN(value) ? '0 B' : `${value} ${sizes[i]}`;
+  };
+
+  // XMLHttpRequest загрузка трейлера
+  const loadTrailerWithXHR = () => {
+    if (!movie?.trailer) {
+      toast.error('Трейлер недоступен');
+      return;
+    }
+
+    setTrailerLoading(true);
+    setLoadProgress(0);
+    setTotalSize(0);
+    setLoadedSize(0);
+    setBufferingProgress(0);
+    setXhrStatus('Начинаем загрузку...');
+    setXhrDetails({
+      loaded: '0 B',
+      total: '0 B',
+      speed: '0 B/сек'
+    });
+
+    const trailerUrl = `${process.env.REACT_APP_API_URL}/uploads/trailers/${movie.trailer}`;
+    
+    // Запоминаем время начала загрузки
+    startTimeRef.current = Date.now();
+    
+    xhrRef.current = new XMLHttpRequest();
+    xhrRef.current.open('GET', trailerUrl, true);
+    xhrRef.current.responseType = 'blob';
+    
+    xhrRef.current.onloadstart = () => {
+      setXhrStatus('Подключаемся к серверу...');
+    };
+    
+    xhrRef.current.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = (event.loaded / event.total) * 100;
+        setLoadProgress(Math.round(percentComplete));
+        setTotalSize(event.total);
+        setLoadedSize(event.loaded);
+        
+        // Обновляем статус с MB вместо Bytes
+        const mbLoaded = (event.loaded / (1024 * 1024)).toFixed(2);
+        const mbTotal = (event.total / (1024 * 1024)).toFixed(2);
+        setXhrStatus(`Загружено: ${mbLoaded} MB / ${mbTotal} MB`);
+        
+        // Вычисляем скорость загрузки
+        const elapsedTime = (Date.now() - startTimeRef.current) / 1000;
+        let speedText = 'Вычисляется...';
+        
+        if (elapsedTime > 0.1 && event.loaded > 0) {
+          const speedBps = event.loaded / elapsedTime;
+          speedText = `${formatBytes(speedBps)}/сек`;
+        }
+        
+        // Обновляем детали
+        setXhrDetails({
+          loaded: formatBytes(event.loaded),
+          total: formatBytes(event.total),
+          speed: speedText
+        });
+      }
+    };
+    
+    xhrRef.current.onload = () => {
+      if (xhrRef.current.status === 200) {
+        const blob = xhrRef.current.response;
+        const blobUrl = URL.createObjectURL(blob);
+        setVideoBlobUrl(blobUrl);
+        setXhrStatus('Загрузка завершена!');
+        setXhrDetails(prev => ({
+          ...prev,
+          speed: 'Завершено'
+        }));
+        
+        // Небольшая задержка перед скрытием индикатора
+        setTimeout(() => {
+          setTrailerLoading(false);
+          // Автоматически запускаем видео
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              setIsPlaying(true);
+            }).catch(() => {
+              console.log('Автоматическое воспроизведение заблокировано');
+            });
+          }
+        }, 500);
+        
+        toast.success('Трейлер загружен!');
+      } else {
+        setXhrStatus('Ошибка загрузки');
+        toast.error('Ошибка загрузки трейлера');
+        setTrailerLoading(false);
+      }
+    };
+    
+    xhrRef.current.onerror = () => {
+      setXhrStatus('Ошибка соединения');
+      toast.error('Ошибка сети при загрузке трейлера');
+      setTrailerLoading(false);
+    };
+    
+    xhrRef.current.onabort = () => {
+      setXhrStatus('Загрузка отменена');
+      toast.info('Загрузка трейлера отменена');
+      setTrailerLoading(false);
+    };
+    
+    xhrRef.current.send();
+  };
+
+  // Улучшенная функция для открытия трейлера с проверкой кэша
+  const checkCacheAndLoad = () => {
+    setShowTrailer(true);
+    
+    // Если уже есть blob URL (видео уже было загружено)
+    if (videoBlobUrl) {
+      // Видео уже загружено, показываем сразу
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.play().then(() => {
+            setIsPlaying(true);
+          }).catch(() => {
+            console.log('Автовоспроизведение заблокировано');
+          });
+        }
+      }, 100);
+      return;
+    }
+    
+    // Иначе начинаем загрузку через XMLHttpRequest
+    loadTrailerWithXHR();
+  };
+
+  // Закрытие трейлера
+  const handleCloseTrailer = () => {
+    setShowTrailer(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+    
+    // Отменяем загрузку, если она идет
+    if (xhrRef.current && trailerLoading) {
+      xhrRef.current.abort();
+    }
+  };
+
+  // Видео-функции
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+    }
+  };
+
+  const handleMuteToggle = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
+  const handleSeek = (e) => {
+    const time = parseFloat(e.target.value);
+    setCurrentTime(time);
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  };
+
+  const handleVideoProgress = () => {
+    if (videoRef.current) {
+      if (videoRef.current.buffered.length > 0 && duration > 0) {
+        const bufferedEnd = videoRef.current.buffered.end(videoRef.current.buffered.length - 1);
+        const progress = (bufferedEnd / duration) * 100;
+        setBufferingProgress(progress);
+      }
+    }
+  };
+
+  const handleVideoCanPlay = () => {
+    // Если видео готово к воспроизведению, но еще не играет
+    if (videoRef.current && !isPlaying && !trailerLoading) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(() => {
+        // Автоплей может быть заблокирован браузером
+        console.log('Автоматическое воспроизведение заблокировано');
+      });
+    }
+  };
+
+  const handleDownloadTrailer = async () => {
+    if (!movie?.trailer) {
+      toast.error('Трейлер недоступен для скачивания');
+      return;
+    }
+
+    setIsDownloading(true);
+    setDownloadProgress(0);
+
+    try {
+      const xhr = new XMLHttpRequest();
+      const trailerUrl = `${process.env.REACT_APP_API_URL}/uploads/trailers/${movie.trailer}`;
+      
+      xhr.open('GET', trailerUrl, true);
+      xhr.responseType = 'blob';
+      
+      xhr.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setDownloadProgress(Math.round(percentComplete));
+        }
+      });
+      
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const blob = xhr.response;
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `trailer_${movie.title.replace(/\s+/g, '_')}.mp4`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          
+          toast.success('Трейлер скачан успешно!');
+        } else {
+          toast.error('Ошибка скачивания трейлера');
+        }
+        setIsDownloading(false);
+        setDownloadProgress(0);
+      };
+      
+      xhr.onerror = () => {
+        toast.error('Ошибка скачивания трейлера');
+        setIsDownloading(false);
+        setDownloadProgress(0);
+      };
+      
+      xhr.send();
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Ошибка скачивания трейлера');
+      setIsDownloading(false);
+      setDownloadProgress(0);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   if (loading) {
@@ -206,7 +536,7 @@ const MovieDetail = () => {
           {movie.trailer && (
             <button 
               className="btn btn-primary trailer-btn"
-              onClick={() => setShowTrailer(true)}
+              onClick={checkCacheAndLoad}
               style={{ width: '100%', marginTop: '20px' }}
             >
               <FaPlay /> Смотреть трейлер
@@ -353,30 +683,160 @@ const MovieDetail = () => {
         </div>
       )}
 
-      {showTrailer && movie.trailer && (
+      {showTrailer && (
         <div className="trailer-modal-overlay">
           <div className="trailer-modal">
             <div className="trailer-modal-header">
               <h3>Трейлер: {movie.title}</h3>
               <button 
                 className="close-btn"
-                onClick={() => setShowTrailer(false)}
+                onClick={handleCloseTrailer}
               >
                 ×
               </button>
             </div>
+            
             <div className="trailer-modal-content">
-              <video 
-                controls 
-                autoPlay 
-                className="trailer-video"
-              >
-                <source 
-                  src={`${process.env.REACT_APP_API_URL}/uploads/trailers/${movie.trailer}`} 
-                  type="video/mp4" 
-                />
-                Ваш браузер не поддерживает видео.
-              </video>
+              {/* Индикатор XMLHttpRequest загрузки */}
+              {trailerLoading && (
+                <div className="video-loading-indicator">
+                  <div className="spinner">
+                    <FaSpinner className="spinning-icon" />
+                  </div>
+                  <p>Загрузка трейлера...</p>
+                  
+                  <div className="xhr-progress-container">
+                    <div className="xhr-progress-label">
+                      <span>{xhrStatus}</span>
+                      <span>{loadProgress}%</span>
+                    </div>
+                    <div className="xhr-progress-bar">
+                      <div 
+                        className="xhr-progress-fill"
+                        style={{ width: `${loadProgress}%` }}
+                      ></div>
+                    </div>
+                    <div className="xhr-details">
+                      <span>
+                        {xhrDetails.loaded} / {xhrDetails.total}
+                      </span>
+                      <span>Скорость: {xhrDetails.speed}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="buffering-progress">
+                    <div className="buffering-progress-bar" 
+                         style={{ width: `${bufferingProgress}%` }}
+                    ></div>
+                    <span>Буферизация: {bufferingProgress.toFixed(1)}%</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Видео контейнер */}
+              {movie.trailer ? (
+                <div className="video-container">
+                  <video 
+                    ref={videoRef}
+                    controls={!trailerLoading}
+                    className="trailer-video"
+                    src={videoBlobUrl}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onTimeUpdate={handleTimeUpdate}
+                    onProgress={handleVideoProgress}
+                    onCanPlay={handleVideoCanPlay}
+                    onEnded={() => setIsPlaying(false)}
+                    onClick={handlePlayPause}
+                    preload="none"
+                  >
+                    Ваш браузер не поддерживает видео.
+                  </video>
+                  
+                  {/* Кастомные контролы показываем, когда видео не загружается */}
+                  {!trailerLoading && (
+                    <div className="video-controls">
+                      <div className="controls-top">
+                        <div className="playback-controls">
+                          <button 
+                            className="control-btn"
+                            onClick={handlePlayPause}
+                          >
+                            {isPlaying ? <FaPause /> : <FaPlay />}
+                          </button>
+                          
+                          <div className="time-display">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                          </div>
+                        </div>
+                        
+                        <div className="volume-controls">
+                          <button 
+                            className="control-btn"
+                            onClick={handleMuteToggle}
+                          >
+                            {isMuted || volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
+                          </button>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={volume}
+                            onChange={handleVolumeChange}
+                            className="volume-slider"
+                          />
+                        </div>
+                        
+                        <button 
+                          className="control-btn download-btn"
+                          onClick={handleDownloadTrailer}
+                          disabled={isDownloading}
+                        >
+                          <FaDownload />
+                          {isDownloading && (
+                            <div className="download-progress-indicator">
+                              <div 
+                                className="download-progress-bar"
+                                style={{ width: `${downloadProgress}%` }}
+                              ></div>
+                              <span>{downloadProgress}%</span>
+                            </div>
+                          )}
+                        </button>
+                      </div>
+                      
+                      <div className="progress-controls">
+                        <div className="progress-container">
+                          <input
+                            type="range"
+                            min="0"
+                            max={duration || 100}
+                            value={currentTime}
+                            onChange={handleSeek}
+                            className="progress-slider"
+                          />
+                          <div 
+                            className="buffering-bar"
+                            style={{ width: `${bufferingProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Индикатор буферизации в реальном времени */}
+                  {!trailerLoading && bufferingProgress < 100 && (
+                    <div className="buffering-indicator">
+                      <span className="dot"></span>
+                      <span>Буферизация: {bufferingProgress.toFixed(0)}%</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="no-trailer">
+                  <p>Трейлер для этого фильма недоступен</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
