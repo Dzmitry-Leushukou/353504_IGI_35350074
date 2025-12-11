@@ -30,10 +30,16 @@ router.post('/register', [
 
     const { username, email, password, timezone } = req.body;
     
-    // Проверяем, существует ли пользователь
-    let user = await User.findOne({ $or: [{ email }, { username }] });
+    // Проверяем, существует ли пользователь с таким email
+    let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'Пользователь уже существует' });
+      return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+    }
+
+    // Проверяем, существует ли пользователь с таким username
+    let userWithUsername = await User.findOne({ username });
+    if (userWithUsername) {
+      return res.status(400).json({ message: 'Имя пользователя уже занято' });
     }
 
     // Создаем нового пользователя
@@ -87,6 +93,11 @@ router.post('/login', [
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Неверные учетные данные' });
+    }
+
+    // Проверяем, не является ли пользователь Google-пользователем
+    if (user.isGoogleAuth) {
+      return res.status(401).json({ message: 'Этот аккаунт использует вход через Google. Пожалуйста, войдите через Google.' });
     }
 
     // Проверяем пароль
@@ -228,19 +239,23 @@ async function handleGoogleUser(payload, res) {
     console.log('Found existing user:', !!user);
     
     if (!user) {
+      // Генерируем уникальное имя пользователя
+      const baseUsername = name || normalizedEmail.split('@')[0];
+      const username = await User.generateUniqueUsername(baseUsername);
+      
       // Создаем нового пользователя из данных Google
       user = new User({
-        username: name || normalizedEmail.split('@')[0],
+        username,
         email: normalizedEmail,
         password: await bcrypt.hash(Math.random().toString(36) + Date.now(), 10),
-        avatar: picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || normalizedEmail.split('@')[0])}&background=random`,
+        avatar: picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`,
         timezone: 'Europe/Moscow',
         googleId: sub,
         isGoogleAuth: true
       });
       
       await user.save();
-      console.log(`Created new Google user: ${user.email}`);
+      console.log(`Created new Google user: ${user.email} with username: ${user.username}`);
     } else {
       // Обновляем существующего пользователя
       if (!user.googleId) {
@@ -251,9 +266,6 @@ async function handleGoogleUser(payload, res) {
       }
       if (picture && !user.avatar) {
         user.avatar = picture;
-      }
-      if (name && (user.username === normalizedEmail.split('@')[0] || !user.username)) {
-        user.username = name;
       }
       
       await user.save();
@@ -283,6 +295,17 @@ async function handleGoogleUser(payload, res) {
     });
   } catch (error) {
     console.error('Error in handleGoogleUser:', error);
+    
+    // Обрабатываем ошибки дублирования
+    if (error.code === 11000) {
+      if (error.keyPattern && error.keyPattern.email) {
+        return res.status(400).json({ message: 'Пользователь с таким email уже существует' });
+      }
+      if (error.keyPattern && error.keyPattern.googleId) {
+        return res.status(400).json({ message: 'Этот Google аккаунт уже привязан к другому пользователю' });
+      }
+    }
+    
     res.status(500).json({ message: 'Ошибка обработки пользователя Google' });
   }
 }

@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
     minlength: 3
   },
@@ -18,7 +17,9 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function() {
+      return !this.isGoogleAuth; // Пароль обязателен только для не-Google пользователей
+    },
     minlength: 6
   },
   role: {
@@ -34,7 +35,9 @@ const userSchema = new mongoose.Schema({
     type: String
   },
   googleId: {
-    type: String
+    type: String,
+    unique: true,
+    sparse: true // Разрешает null значения для не-Google пользователей
   },
   isGoogleAuth: {
     type: Boolean,
@@ -51,6 +54,9 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Убираем уникальный индекс с username, чтобы разрешить дублирование
+userSchema.index({ username: 1 }, { unique: false });
 
 // Hash password before saving (только если не Google auth и пароль изменился)
 userSchema.pre('save', async function(next) {
@@ -72,6 +78,24 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
     return false;
   }
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Метод для генерации уникального имени пользователя
+userSchema.statics.generateUniqueUsername = async function(baseUsername) {
+  let username = baseUsername;
+  let counter = 1;
+  
+  // Проверяем, существует ли пользователь с таким именем
+  let existingUser = await this.findOne({ username });
+  
+  // Если существует, добавляем числа пока не найдем уникальное
+  while (existingUser) {
+    username = `${baseUsername}${counter}`;
+    existingUser = await this.findOne({ username });
+    counter++;
+  }
+  
+  return username;
 };
 
 module.exports = mongoose.model('User', userSchema);

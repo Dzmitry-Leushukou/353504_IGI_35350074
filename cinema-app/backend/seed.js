@@ -58,7 +58,64 @@ const movies = [
       }
     ]
   },
-  // ... остальные фильмы (оставьте как есть)
+  {
+    title: "Властелин колец: Братство кольца",
+    description: "Хоббит Фродо получает опасную миссию — уничтожить Кольцо Всевластья.",
+    genre: ["Фэнтези", "Приключения", "Экшн"],
+    duration: 178,
+    rating: 8.8,
+    year: 2001,
+    director: "Питер Джексон",
+    actors: ["Элайджа Вуд", "Вигго Мортенсен", "Иэн Маккеллен", "Шон Эстин"],
+    price: 400,
+    poster: "lotr.jpg",
+    trailer: "lotr-trailer.mp4",
+    sessions: [
+      { 
+        date: new Date('2024-12-21'), 
+        time: "19:00", 
+        hall: "Зал 1", 
+        availableSeats: 120, 
+        totalSeats: 150 
+      },
+      { 
+        date: new Date('2024-12-22'), 
+        time: "16:00", 
+        hall: "Зал 3", 
+        availableSeats: 90, 
+        totalSeats: 100 
+      }
+    ]
+  },
+  {
+    title: "Побег из Шоушенка",
+    description: "Несправедливо осужденный банкир проводит 19 лет в тюрьме, не теряя надежды на свободу.",
+    genre: ["Драма", "Криминал"],
+    duration: 142,
+    rating: 9.3,
+    year: 1994,
+    director: "Фрэнк Дарабонт",
+    actors: ["Тим Роббинс", "Морган Фриман", "Боб Гантон"],
+    price: 300,
+    poster: "shawshank.jpg",
+    trailer: "shawshank-trailer.mp4",
+    sessions: [
+      { 
+        date: new Date('2024-12-19'), 
+        time: "20:00", 
+        hall: "Зал 2", 
+        availableSeats: 60, 
+        totalSeats: 80 
+      },
+      { 
+        date: new Date('2024-12-20'), 
+        time: "22:00", 
+        hall: "Зал 3", 
+        availableSeats: 70, 
+        totalSeats: 100 
+      }
+    ]
+  }
 ];
 
 async function seedDatabase() {
@@ -67,17 +124,13 @@ async function seedDatabase() {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://admin:password123@localhost:27017/cinema_db?authSource=admin');
     console.log('Connected to MongoDB for seeding');
 
-    // Проверяем, есть ли уже данные в базе
-    const userCount = await User.countDocuments();
-    const movieCount = await Movie.countDocuments();
-    
-    if (userCount > 0 || movieCount > 0) {
-      console.log('Database already has data. Skipping seeding.');
-      console.log(`Users in DB: ${userCount}, Movies in DB: ${movieCount}`);
-      return;
-    }
+    // Очищаем базу данных
+    await User.deleteMany({});
+    await Movie.deleteMany({});
+    await Order.deleteMany({});
+    console.log('Cleared existing data');
 
-    console.log('Database is empty. Starting seeding process...');
+    console.log('Starting seeding process...');
 
     // Хешируем пароли и создаем пользователей
     const hashedUsers = await Promise.all(
@@ -98,45 +151,51 @@ async function seedDatabase() {
     const createdMovies = await Movie.insertMany(movies);
     console.log(`Added ${createdMovies.length} movies`);
 
+    // Ждем чтобы убедиться что фильмы сохранены и имеют _id
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Получаем свежие данные фильмов с сессиями
+    const moviesWithSessions = await Movie.find();
+    
     // Создаем несколько тестовых заказов
     const testOrders = [
       {
         user: createdUsers[1]._id,
-        movie: createdMovies[0]._id,
-        sessionId: createdMovies[0].sessions[0]._id.toString(),
+        movie: moviesWithSessions[0]._id,
+        sessionId: moviesWithSessions[0].sessions[0]._id ? moviesWithSessions[0].sessions[0]._id.toString() : moviesWithSessions[0].sessions[0]._id,
         seats: ["A1", "A2", "A3"],
-        totalPrice: createdMovies[0].price * 3,
+        totalPrice: moviesWithSessions[0].price * 3,
         status: "confirmed",
         isPaid: true,
         paymentDate: new Date(),
         paymentMethod: "online",
-        showDate: createdMovies[0].sessions[0].date,
-        showTime: createdMovies[0].sessions[0].time
+        showDate: moviesWithSessions[0].sessions[0].date,
+        showTime: moviesWithSessions[0].sessions[0].time
       },
       {
         user: createdUsers[1]._id,
-        movie: createdMovies[1]._id,
-        sessionId: createdMovies[1].sessions[0]._id.toString(),
+        movie: moviesWithSessions[1]._id,
+        sessionId: moviesWithSessions[1].sessions[0]._id ? moviesWithSessions[1].sessions[0]._id.toString() : moviesWithSessions[1].sessions[0]._id,
         seats: ["B5", "B6"],
-        totalPrice: createdMovies[1].price * 2,
+        totalPrice: moviesWithSessions[1].price * 2,
         status: "confirmed",
         isPaid: false,
         paymentMethod: "card",
-        showDate: createdMovies[1].sessions[0].date,
-        showTime: createdMovies[1].sessions[0].time
+        showDate: moviesWithSessions[1].sessions[0].date,
+        showTime: moviesWithSessions[1].sessions[0].time
       },
       {
         user: createdUsers[2]._id,
-        movie: createdMovies[2]._id,
-        sessionId: createdMovies[2].sessions[0]._id.toString(),
+        movie: moviesWithSessions[2]._id,
+        sessionId: moviesWithSessions[2].sessions[0]._id ? moviesWithSessions[2].sessions[0]._id.toString() : moviesWithSessions[2].sessions[0]._id,
         seats: ["C10"],
-        totalPrice: createdMovies[2].price,
+        totalPrice: moviesWithSessions[2].price,
         status: "completed",
         isPaid: true,
         paymentDate: new Date(),
         paymentMethod: "cash",
-        showDate: createdMovies[2].sessions[0].date,
-        showTime: createdMovies[2].sessions[0].time
+        showDate: moviesWithSessions[2].sessions[0].date,
+        showTime: moviesWithSessions[2].sessions[0].time
       }
     ];
 
@@ -144,9 +203,15 @@ async function seedDatabase() {
     console.log(`Added ${createdOrders.length} orders`);
 
     // Обновляем количество доступных мест
-    for (const order of testOrders) {
+    for (const order of createdOrders) {
       const movie = await Movie.findById(order.movie);
-      const session = movie.sessions.id(order.sessionId);
+      if (!movie) continue;
+      
+      // Ищем сессию по _id
+      const session = movie.sessions.find(s => 
+        s._id && s._id.toString() === order.sessionId
+      );
+      
       if (session) {
         session.availableSeats -= order.seats.length;
         await movie.save();
@@ -160,8 +225,11 @@ async function seedDatabase() {
     console.log('Администратор:');
     console.log('  Email: admin@cinema.com');
     console.log('  Пароль: admin123');
-    console.log('\nОбычный пользователь:');
+    console.log('\nОбычный пользователь 1:');
     console.log('  Email: user1@test.com');
+    console.log('  Пароль: user123');
+    console.log('\nОбычный пользователь 2:');
+    console.log('  Email: user2@test.com');
     console.log('  Пароль: user123');
 
   } catch (error) {
