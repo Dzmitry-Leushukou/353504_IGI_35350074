@@ -1,5 +1,4 @@
-// Добавим кнопку админ-панели для администраторов
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaFilm, FaUser, FaShoppingCart, FaSignOutAlt, FaBars, FaTimes, FaUserShield } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,6 +9,16 @@ const Navbar = ({ currentTime }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [timezone, setTimezone] = useState('Europe/Moscow');
+  const [localTime, setLocalTime] = useState(new Date());
+
+  useEffect(() => {
+    // Обновляем время каждую секунду
+    const intervalId = setInterval(() => {
+      setLocalTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -38,8 +47,8 @@ const Navbar = ({ currentTime }) => {
           </Link>
           
           <div className="time-display">
-            <span>Локальное: {currentTime.toLocaleTimeString()}</span>
-            <span>UTC: {currentTime.toUTCString().split(' ')[4]}</span>
+            <span>Локальное: {localTime.toLocaleTimeString()}</span>
+            <span>UTC: {localTime.toUTCString().split(' ')[4]}</span>
           </div>
         </div>
 

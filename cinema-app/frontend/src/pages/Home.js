@@ -13,7 +13,6 @@ const Home = () => {
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
-  const [notification, setNotification] = useState('');
   const navigate = useNavigate();
   
   // Сохраняем рекомендации в localStorage
@@ -24,17 +23,8 @@ const Home = () => {
   useEffect(() => {
     fetchMovies();
     
-    const notificationTimer = setTimeout(() => {
-      setNotification('');
-    }, 5000);
-
-    const updateTimer = setInterval(() => {
-      fetchMovies();
-    }, 30000);
-
     return () => {
-      clearTimeout(notificationTimer);
-      clearInterval(updateTimer);
+      // Очищаем таймеры при размонтировании
     };
   }, []);
 
@@ -48,11 +38,11 @@ const Home = () => {
       setMovies(response.data.movies);
       
       if (response.data.movies.length > 0) {
+        // Каждый раз при загрузке выбираем случайный фильм
         const randomIndex = Math.floor(Math.random() * response.data.movies.length);
         setFeaturedMovie(response.data.movies[randomIndex]);
       }
       
-      setNotification(`Обновлено: ${new Date().toLocaleTimeString()}`);
     } catch (error) {
       console.error('Error fetching movies:', error);
       toast.error('Ошибка загрузки фильмов');
@@ -179,13 +169,6 @@ const Home = () => {
           </button>
         </form>
       </section>
-
-      {notification && (
-        <div className="notification">
-          {notification}
-          <button onClick={() => setNotification('')}>×</button>
-        </div>
-      )}
 
       {showTrailer && featuredMovie?.trailer && (
         <div className="trailer-modal-overlay">
