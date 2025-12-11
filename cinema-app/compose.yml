@@ -33,6 +33,7 @@ services:
       - JWT_SECRET=cinema_secret_key_2025
       - POE_API_KEY=zjQsMlkJadTvphtkKQTAkeeOSImzOLgZ2YiVV9aUL8M
       - GOOGLE_CLIENT_ID=1055592905262-ol30951045v13rf98degdp13vpa984de.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
     volumes:
       - ./backend:/app
       - ./uploads:/app/uploads

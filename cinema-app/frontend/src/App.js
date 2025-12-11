@@ -1,3 +1,4 @@
+// frontend/src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -10,8 +11,8 @@ import About from './pages/About';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import MyOrders from './pages/MyOrders';
-import Admin from './pages/Admin'; // Добавляем импорт Admin
-import GoogleCallback from './pages/GoogleCallback';
+import Admin from './pages/Admin';
+import GoogleCallback from './pages/GoogleCallback'; // Добавьте этот импорт
 import './styles/App.css';
 import './styles/index.css';
 
@@ -30,8 +31,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/my-orders" element={<MyOrders />} />
-              <Route path="/admin" element={<Admin />} /> {/* Добавляем маршрут */}
-              <Route path="/google-callback" element={<GoogleCallback />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/google-callback" element={<GoogleCallback />} /> {/* Добавьте этот маршрут */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </main>

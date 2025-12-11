@@ -118,116 +118,173 @@ router.post('/login', [
   }
 });
 
-// Google OAuth вход
+// Google OAuth вход - ИСПРАВЛЕННАЯ ВЕРСИЯ
 router.post('/google', async (req, res) => {
   try {
+    console.log('Google OAuth request received');
     const { token } = req.body;
     
     if (!token) {
+      console.log('No token provided');
       return res.status(400).json({ message: 'Токен Google отсутствует' });
     }
 
-    // Если в режиме разработки и нет Google Client ID, используем мок
-    if (process.env.NODE_ENV === 'development' && !process.env.GOOGLE_CLIENT_ID) {
+    console.log('Token received, length:', token.length);
+
+    // В режиме разработки используем мок
+    if (process.env.NODE_ENV === 'development') {
       console.log('Development mode: Using mock Google auth');
       
-      // Генерируем мок пользователя Google
-      const mockEmail = `google_user_${Date.now()}@gmail.com`;
-      const mockName = 'Google User';
-      const mockPicture = 'https://via.placeholder.com/150';
-      const mockSub = `google_${Date.now()}`;
-      
-      return handleGoogleUser({
-        email: mockEmail,
-        name: mockName,
-        picture: mockPicture,
-        sub: mockSub
-      }, res);
+      // Проверяем, есть ли реальный Google Client ID
+      if (!process.env.GOOGLE_CLIENT_ID) {
+        console.log('No Google Client ID, using full mock');
+        const mockEmail = `google_user_${Date.now()}@gmail.com`;
+        const mockName = 'Google User';
+        const mockPicture = 'https://via.placeholder.com/150';
+        const mockSub = `google_${Date.now()}`;
+        
+        return await handleGoogleUser({
+          email: mockEmail,
+          name: mockName,
+          picture: mockPicture,
+          sub: mockSub
+        }, res);
+      }
     }
 
     // Реальная верификация Google токена
     if (!googleClient) {
+      console.log('Google client not initialized');
       return res.status(500).json({ message: 'Google OAuth не настроен' });
     }
 
-    const ticket = await googleClient.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
+    console.log('Verifying Google token with client ID:', process.env.GOOGLE_CLIENT_ID);
     
-    const payload = ticket.getPayload();
-    return handleGoogleUser(payload, res);
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      
+      const payload = ticket.getPayload();
+      console.log('Google token verified, user email:', payload.email);
+      
+      return await handleGoogleUser(payload, res);
+    } catch (verifyError) {
+      console.error('Google token verification failed:', verifyError.message);
+      
+      // В режиме разработки используем fallback
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using development fallback for Google auth');
+        const mockUser = {
+          email: `dev_google_${Date.now()}@gmail.com`,
+          name: 'Google Development User',
+          picture: 'https://via.placeholder.com/150',
+          sub: `dev_google_${Date.now()}`
+        };
+        return await handleGoogleUser(mockUser, res);
+      }
+      
+      throw verifyError;
+    }
     
   } catch (error) {
     console.error('Google auth error:', error.message);
+    console.error('Full error:', error);
     
-    // Fallback для разработки
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Using development fallback for Google auth');
-      const mockUser = {
-        email: `dev_google_${Date.now()}@gmail.com`,
-        name: 'Google Development User',
-        picture: 'https://via.placeholder.com/150',
-        sub: `dev_google_${Date.now()}`
-      };
-      return handleGoogleUser(mockUser, res);
-    }
-    
-    res.status(500).json({ message: 'Ошибка авторизации через Google' });
+    res.status(500).json({ 
+      message: 'Ошибка авторизации через Google',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
-// Обработчик Google пользователя
+// Обработчик Google пользователя - ИСПРАВЛЕННАЯ ВЕРСИЯ
 async function handleGoogleUser(payload, res) {
-  const { email, name, picture, sub } = payload;
-  
-  // Ищем существующего пользователя по email или googleId
-  let user = await User.findOne({ 
-    $or: [{ email }, { googleId: sub }] 
-  });
-  
-  if (!user) {
-    // Создаем нового пользователя из данных Google
-    user = new User({
-      username: name || email.split('@')[0],
-      email,
-      password: await bcrypt.hash(Math.random().toString(36), 10),
-      avatar: picture,
-      timezone: 'Europe/Moscow',
-      googleId: sub,
-      isGoogleAuth: true
+  try {
+    console.log('Processing Google user with payload:', {
+      email: payload.email,
+      name: payload.name,
+      sub: payload.sub
     });
     
-    await user.save();
-  } else {
-    // Обновляем существующего пользователя
-    if (!user.googleId) user.googleId = sub;
-    if (!user.isGoogleAuth) user.isGoogleAuth = true;
-    if (picture && !user.avatar) user.avatar = picture;
-    if (name && !user.username.includes('@')) user.username = name;
+    const { email, name, picture, sub } = payload;
     
-    await user.save();
-  }
-  
-  // Создаем JWT токен
-  const jwtToken = jwt.sign(
-    { userId: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-  
-  res.json({
-    token: jwtToken,
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      timezone: user.timezone,
-      avatar: user.avatar,
-      isGoogleAuth: true
+    if (!email) {
+      return res.status(400).json({ message: 'Email не получен от Google' });
     }
-  });
+
+    // Нормализуем email
+    const normalizedEmail = email.toLowerCase();
+    
+    // Ищем существующего пользователя по email или googleId
+    let user = await User.findOne({ 
+      $or: [
+        { email: normalizedEmail },
+        { googleId: sub }
+      ] 
+    });
+    
+    console.log('Found existing user:', !!user);
+    
+    if (!user) {
+      // Создаем нового пользователя из данных Google
+      user = new User({
+        username: name || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
+        password: await bcrypt.hash(Math.random().toString(36) + Date.now(), 10),
+        avatar: picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || normalizedEmail.split('@')[0])}&background=random`,
+        timezone: 'Europe/Moscow',
+        googleId: sub,
+        isGoogleAuth: true
+      });
+      
+      await user.save();
+      console.log(`Created new Google user: ${user.email}`);
+    } else {
+      // Обновляем существующего пользователя
+      if (!user.googleId) {
+        user.googleId = sub;
+      }
+      if (!user.isGoogleAuth) {
+        user.isGoogleAuth = true;
+      }
+      if (picture && !user.avatar) {
+        user.avatar = picture;
+      }
+      if (name && (user.username === normalizedEmail.split('@')[0] || !user.username)) {
+        user.username = name;
+      }
+      
+      await user.save();
+      console.log(`Updated existing user with Google auth: ${user.email}`);
+    }
+    
+    // Создаем JWT токен
+    const jwtToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    console.log('JWT token created for user:', user.email);
+    
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        timezone: user.timezone,
+        avatar: user.avatar,
+        isGoogleAuth: true
+      }
+    });
+  } catch (error) {
+    console.error('Error in handleGoogleUser:', error);
+    res.status(500).json({ message: 'Ошибка обработки пользователя Google' });
+  }
 }
 
 // Получение текущего пользователя
